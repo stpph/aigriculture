@@ -98,7 +98,8 @@ async function initApp() {
 async function loadUser(user) {
   currentUser = user;
   const m = user.user_metadata || {};
-  document.getElementById('top-user').textContent = (m.prenume||'Fermier')+' '+(m.nume||'');
+const topUser = document.getElementById('top-user');
+  if (topUser) topUser.textContent = (m.prenume||'Fermier')+' '+(m.nume||'');
   document.getElementById('top-judet').innerHTML = '<i class="ti ti-map-pin"></i> '+(m.judet||'România');
   document.getElementById('sidebar-user-name').textContent = (m.prenume||'Fermier')+' '+(m.nume||'');
   document.getElementById('sidebar-user-judet').textContent = m.judet||'România';
@@ -1135,6 +1136,7 @@ function editeazaUtilaj(id) {
   document.getElementById('utilaj-revizie').value=u.data_ultima_revizie||''; document.getElementById('utilaj-status').value=u.status||'functional';
   document.getElementById('utilaj-obs').value=u.observatii||'';
   document.getElementById('utilaj-nume').focus();
+document.getElementById('utilaj-ore-revizie').value=u.ore_la_ultima_revizie||'';
 }
 async function stergeUtilaj(id) { if(!confirm('Sigur ștergeți acest utilaj?'))return; showLoading(true); await sb.from('utilaje').delete().eq('id',id).eq('user_id',currentUser.id); showLoading(false); showToast('Utilaj șters.','info'); await loadUtilaje(); updateDashboard(); }
 function renderListaUtilaje() {
@@ -1151,8 +1153,7 @@ function renderListaUtilaje() {
         <span class="badge ${statusColors[u.status]||'badge-wheat'}">${statusLabels[u.status]||u.status}</span>
       </div>
       <div style="font-size:12px;color:var(--gray-600);margin-bottom:8px"><i class="ti ti-activity"></i> ${u.ore_motor||0} h motor · Revizie la ${u.interval_revizie_ore||250} h</div>
-      ${u.data_ultima_revizie?`<div style="font-size:12px;color:var(--gray-600)"><i class="ti ti-calendar-check"></i> Ultima revizie: ${fmtData(u.data_ultima_revizie)}</div>`:''}
-      <div style="display:flex;gap:6px;margin-top:10px">
+${u.data_ultima_revizie?'<div style="font-size:12px;color:var(--gray-600)"><i class="ti ti-calendar-check"></i> Ultima revizie: '+fmtData(u.data_ultima_revizie)+(u.ore_la_ultima_revizie?' la '+u.ore_la_ultima_revizie+' h':'')+'</div>':''}      <div style="display:flex;gap:6px;margin-top:10px">
         <button class="btn btn-ghost btn-sm" onclick="editeazaUtilaj('${u.id}')" style="flex:1"><i class="ti ti-edit"></i> Editează</button>
         <button class="btn btn-danger btn-sm" onclick="stergeUtilaj('${u.id}')" style="width:auto;padding:6px 10px"><i class="ti ti-trash"></i></button>
       </div>

@@ -818,5 +818,38 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     font-size: 18px;
   }
 }
+@media (max-width: 768px) {
+  .user-badge { display: none !important; }
+  #top-judet { display: none !important; }
+  .top-weather-badge { display: none !important; }
+  
+  .topbar {
+    padding: 0 10px;
+    gap: 6px;
+  }
+
+  .logo .logo-griculture { display: none; }
+  
+  .user-info {
+    gap: 4px;
+    margin-left: auto;
+  }
+
+  .logout-btn span { display: none; }
+  .logout-btn { padding: 6px 8px; }
+
+  .stat-val {
+    font-size: 20px !important;
+    word-break: break-all;
+  }
+
+  .content-area {
+    width: 100vw;
+  }
+
+  .sidebar {
+    width: 260px;
+  }
 }
- 
+
+}
