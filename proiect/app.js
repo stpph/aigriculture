@@ -1160,7 +1160,12 @@ async function marcheazaRevizie(id) {
 async function loadCheltuieli() {
   if (!currentUser) return;
   const { data,error } = await sb.from('cheltuieli').select('*').eq('user_id',currentUser.id).order('data',{ascending:false});
-  if (!error&&data) { cheltuieliData=data; renderTabelCheltuieli(null); updateSumeContabilitate(); renderCatBars(); }
+if (!error&&data) { 
+  cheltuieliData=data; 
+  updateSumeContabilitate(); 
+  renderCatBars();
+  if (document.getElementById('tabel-cheltuieli')) renderTabelCheltuieli(null);
+}
 }
 function updateSumeContabilitate() {
   const totalCheltuieli=cheltuieliData.filter(c=>c.tip==='cheltuiala').reduce((s,c)=>s+parseFloat(c.suma||0),0);
