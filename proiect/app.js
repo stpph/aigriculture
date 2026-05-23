@@ -1317,10 +1317,8 @@ const ingrCant=parseFloat(document.getElementById('ingr-cantitate').value)||0;
     const costMot=sup*(parseFloat(document.getElementById('mot-l').value)||0)*(parseFloat(document.getElementById('mot-pret').value)||0);
   const pest=parseFloat(document.getElementById('pest-val').value)||0, alt=parseFloat(document.getElementById('alt-val').value)||0;
   if (costSam>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Seminte / Material Sadit',parcela,suma:costSam,data:today,descriere:'Seminte: '+sup+' ha'});
-  if (costIngr>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Ingrasaminte / Tratamente',parcela,suma:costIngr,data:today,descriere:'Ingrasaminte: '+sup+' ha'});
-  if (costMot>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Combustibil',parcela,suma:costMot,data:today,descriere:'Motorina: '+sup+' ha'});
-  if (pest>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Ingrasaminte / Tratamente',parcela,suma:pest,data:today,descriere:'Pesticide'});
-  if (alt>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Altele',parcela,suma:alt,data:today,descriere:'Alte cheltuieli'});
+if (costIngr>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Ingrasaminte',parcela,suma:costIngr,data:today,descriere:'Ingrasaminte: '+(ingrCant||0)+' kg/ha x '+sup+' ha'});  if (costMot>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Combustibil',parcela,suma:costMot,data:today,descriere:'Motorina: '+sup+' ha'});
+if (pest>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Tratamente fitosanitare',parcela,suma:pest,data:today,descriere:'Pesticide (valoare totala)'});  if (alt>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Altele',parcela,suma:alt,data:today,descriere:'Alte cheltuieli'});
   if (!rows.length) { showToast('Completati cel putin o valoare in calculator.','error'); return; }
   setLoading('calc-adauga-btn',true,'','Se salveaza...');
   const { error } = await sb.from('cheltuieli').insert(rows);
