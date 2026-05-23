@@ -791,6 +791,26 @@ async function salveazaRecolta() {
   const { error } = await sb.from('recolte').insert([{user_id:currentUser.id,parcela_id:parcelaId||null,parcela_nume:parcelaNume,cultura:document.getElementById('rec-cultura').value,sezon:document.getElementById('rec-sezon').value,cantitate_tone:cant,suprafata_ha:sup,pret_vanzare_ron_tona:parseFloat(document.getElementById('rec-pret').value)||null,calitate:document.getElementById('rec-calitate').value,cumparator:document.getElementById('rec-cumparator').value.trim()||null,data_recolta:document.getElementById('rec-data').value||null,observatii:document.getElementById('rec-obs').value.trim()||null}]);
   setLoading('rec-btn',false,'ti-plus','Salvează recoltă');
   if (error) { showToast('Eroare: '+error.message,'error'); return; }
+  // Daca are pret de vanzare, adaugam automat in contabilitate
+const pretVanzare = parseFloat(document.getElementById('rec-pret').value) || 0;
+const cantitate = parseFloat(document.getElementById('rec-cantitate').value) || 0;
+if (pretVanzare > 0 && cantitate > 0) {
+  const venitTotal = pretVanzare * cantitate;
+  const parcelaOpt = document.getElementById('rec-parcela');
+  const parcelaNume = parcelaOpt.options[parcelaOpt.selectedIndex]?.text || '';
+  const cultura = document.getElementById('rec-cultura').value;
+  const sezon = document.getElementById('rec-sezon').value;
+  await sb.from('cheltuieli').insert([{
+    user_id: currentUser.id,
+    tip: 'venit',
+    categorie: 'Vanzare Recolta',
+    parcela: parcelaNume,
+    suma: venitTotal,
+    data: document.getElementById('rec-data').value || new Date().toISOString().split('T')[0],
+    descriere: 'Vanzare ' + cultura + ' sezon ' + sezon + ' · ' + cantitate + ' t x ' + pretVanzare + ' RON/t'
+  }]);
+  await loadCheltuieli();
+}
   showToast('Recoltă salvată!','success');
   ['rec-cantitate','rec-suprafata','rec-pret','rec-cumparator','rec-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('rec-randament-preview').style.display='none';
@@ -1155,9 +1175,9 @@ async function adaugaCheltuiala() {
   await loadCheltuieli(); updateDashboard();
 }
 async function stergeCheltuiala(id) { showLoading(true); await sb.from('cheltuieli').delete().eq('id',id).eq('user_id',currentUser.id); showLoading(false); showToast('Înregistrare ștearsă.','info'); await loadCheltuieli(); updateDashboard(); }
-function renderTabelCheltuieli(filter) {
+function renderTabelCheltuieli(filter, customList) {
   const tbody=document.getElementById('tabel-cheltuieli'); if (!tbody) return;
-  const list=filter?cheltuieliData.filter(c=>c.categorie===filter):cheltuieliData;
+  let list = customList || (filter ? cheltuieliData.filter(c=>c.categorie===filter) : cheltuieliData);
   if (!list.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio inregistrare.</td></tr>'; return; }
   tbody.innerHTML=list.map(c=>{
     const culoare=c.tip==='venit'?'var(--ai-green)':'var(--danger)';
@@ -1171,19 +1191,49 @@ function renderTabelCheltuieli(filter) {
       +'<td>'+escapeHTML(c.descriere||'-')+'</td>'
       +'<td style="font-weight:600;color:'+culoare+'">'+semn+parseFloat(c.suma).toLocaleString('ro-RO')+' RON</td>'
       +'<td><span class="badge '+badgeClasa+'">'+tipLabel+'</span></td>'
-    +'<td><button class="btn btn-danger btn-sm" onclick="stergeCheltuiala(\''+c.id+'\')" style="width:auto;padding:5px 10px"><i class="ti ti-trash"></i></button></td>'
+      +'<td><button class="btn btn-danger btn-sm" onclick="stergeCheltuiala(\''+c.id+'\')" style="width:auto;padding:5px 10px"><i class="ti ti-trash"></i></button></td>'
       +'</tr>';
   }).join('');
+}function filtreazaCheltuieli() {
+  const f = document.getElementById('filter-cat').value;
+  let list = cheltuieliTipFilter ? cheltuieliData.filter(c => c.tip === cheltuieliTipFilter) : cheltuieliData;
+  if (f) list = list.filter(c => c.categorie === f);
+  if (cheltuieliSortCol) {
+    list = [...list].sort((a, b) => {
+      if (cheltuieliSortCol === 'data') {
+        return (new Date(a.data) - new Date(b.data)) * cheltuieliSortDir;
+      }
+      if (cheltuieliSortCol === 'suma') {
+        return (parseFloat(a.suma) - parseFloat(b.suma)) * cheltuieliSortDir;
+      }
+      return 0;
+    });
+  }
+  renderTabelCheltuieli(null, list);
 }
-function filtreazaCheltuieli() { const f=document.getElementById('filter-cat').value; renderTabelCheltuieli(f||null); }
-function updateSume() {
-  const chelt=cheltuieliData.filter(c=>c.tip==='cheltuiala').reduce((s,c)=>s+parseFloat(c.suma),0);
-  const ven=cheltuieliData.filter(c=>c.tip==='venit').reduce((s,c)=>s+parseFloat(c.suma),0);
-  const sold=ven-chelt;
-  if (document.getElementById('c-total')) document.getElementById('c-total').textContent=fmtRON(chelt);
-  if (document.getElementById('c-intrari')) document.getElementById('c-intrari').textContent=fmtRON(ven);
-  const soldEl=document.getElementById('c-sold');
-  if (soldEl) { soldEl.textContent=(sold>=0?'+':'')+fmtRON(Math.abs(sold)); soldEl.style.color=sold>=0?'var(--ai-green)':'var(--danger)'; }
+let cheltuieliSortCol = null;
+let cheltuieliSortDir = 1;
+let cheltuieliTipFilter = '';
+
+function filtreazaTipCheltuieli(tip) {
+  cheltuieliTipFilter = tip;
+  // Actualizam butoanele
+  document.getElementById('filter-tip-toate').className = 'btn btn-sm ' + (!tip ? 'btn-primary' : 'btn-ghost');
+  document.getElementById('filter-tip-chelt').className = 'btn btn-sm ' + (tip==='cheltuiala' ? 'btn-danger' : 'btn-ghost');
+  document.getElementById('filter-tip-venit').className = 'btn btn-sm ' + (tip==='venit' ? 'btn-primary' : 'btn-ghost');
+  filtreazaCheltuieli();
+}
+
+function sorteazaCheltuieli(col) {
+  if (cheltuieliSortCol === col) {
+    cheltuieliSortDir *= -1;
+  } else {
+    cheltuieliSortCol = col;
+    cheltuieliSortDir = 1;
+  }
+  document.getElementById('sort-data').textContent = col==='data' ? (cheltuieliSortDir===1?'↑':'↓') : '↕';
+  document.getElementById('sort-suma').textContent = col==='suma' ? (cheltuieliSortDir===1?'↑':'↓') : '↕';
+  filtreazaCheltuieli();
 }
 function renderCatBars() {
   const catMap={};
@@ -1203,7 +1253,8 @@ function calculeazaTotal() {
 
  const ingrCant = parseFloat(document.getElementById('ingr-cantitate').value) || 0;
   const ingrPret = parseFloat(document.getElementById('ingr-pret').value) || 0;
-  const ingrUnitate = document.getElementById('ingr-unitate')?.value || 'kg';
+  const ingrUnitateEl = document.getElementById('ingr-unitate');
+const ingrUnitate = ingrUnitateEl ? ingrUnitateEl.value : 'kg';
   let costIngr = 0;
   if (ingrUnitate === 'tona') {
     // tone/ha x pret/tona x suprafata

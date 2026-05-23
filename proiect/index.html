@@ -133,7 +133,6 @@
       <button class="nav-btn" onclick="switchTab('calendar',this)"><i class="ti ti-calendar-stats"></i><span>Calendar Agricol</span></button>
       <button class="nav-btn" onclick="switchTab('lucrari',this)"><i class="ti ti-tractor"></i><span>Lucrări Agricole</span></button>
       <button class="nav-btn" onclick="switchTab('recolte',this)"><i class="ti ti-grain"></i><span>Recolte & Producție</span></button>
-      <button class="nav-btn" onclick="switchTab('rotatie',this)"><i class="ti ti-arrows-shuffle"></i><span>Rotație Culturi</span></button>
       <button class="nav-btn" onclick="switchTab('fitosanitar',this)"><i class="ti ti-flask"></i><span>Registru Fitosanitar</span></button>
       <button class="nav-btn" onclick="switchTab('utilaje',this)"><i class="ti ti-engine"></i><span>Utilaje</span></button>
       <button class="nav-btn" onclick="switchTab('meteo',this)"><i class="ti ti-cloud-sun"></i><span>Meteo</span></button>
@@ -215,9 +214,18 @@
 <div class="tab" id="tab-calendar">
   <div class="section-title"><i class="ti ti-calendar-stats"></i> Calendar Ani Agricoli</div>
 
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-weight:700;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+      <i class="ti ti-rotate" style="color:var(--wheat)"></i> Rotatia Culturilor — Recomandari
+    </div>
+    <div id="cal-rotatii-alerte">
+      <div style="color:var(--gray-400);font-size:13px;text-align:center;padding:16px">Se incarca...</div>
+    </div>
+  </div>
+
   <div class="grid2" style="margin-bottom:16px">
     <div class="card">
-      <div style="font-weight:700;font-size:15px;margin-bottom:14px">Adaugă an agricol</div>
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px">Adauga an agricol</div>
       <div class="form-row">
         <div>
           <label>An agricol</label>
@@ -230,45 +238,49 @@
           </select>
         </div>
         <div>
-          <label>Parcelă</label>
-          <select id="cal-parcela"><option value="">Selectează...</option></select>
+          <label>Parcela</label>
+          <select id="cal-parcela"><option value="">Selecteaza...</option></select>
         </div>
       </div>
       <div class="form-row">
         <div>
-          <label>Cultură</label>
+          <label>Cultura</label>
           <select id="cal-cultura">
-            <option>Porumb</option><option>Grâu</option><option>Floarea-soarelui</option>
-            <option>Rapiță</option><option>Orz</option><option>Soia</option><option>Altele</option>
+            <option>Porumb</option><option>Grau</option><option>Floarea-soarelui</option>
+            <option>Rapita</option><option>Orz</option><option>Orzoaica</option>
+            <option>Soia</option><option>Sfecla de zahar</option><option>Cartofi</option>
+            <option>Mazare</option><option>Fasole</option><option>Lucerna</option>
+            <option>Triticale</option><option>Secara</option><option>In pentru ulei</option>
+            <option>Coriandru</option><option>Mustar</option><option>Altele</option>
           </select>
         </div>
         <div>
           <label>Status</label>
           <select id="cal-status">
             <option value="planificat">Planificat</option>
-            <option value="in_desfasurare">În desfășurare</option>
+            <option value="in_desfasurare">In desfasurare</option>
             <option value="finalizat">Finalizat</option>
           </select>
         </div>
       </div>
       <div class="form-row">
-        <div><label>Data semănatului</label><input type="date" id="cal-semanat"></div>
-        <div><label>Data recoltei</label><input type="date" id="cal-recolta"></div>
+        <div><label>Data semanat</label><input type="date" id="cal-semanat"></div>
+        <div><label>Data recolta</label><input type="date" id="cal-recolta"></div>
       </div>
       <div class="form-row">
-        <div><label>Producție (tone)</label><input type="number" id="cal-productie" placeholder="0.00" step="0.01" min="0" oninput="calcCalProductie()"></div>
-        <div><label>Suprafață (ha)</label><input type="number" id="cal-suprafata" placeholder="0.00" step="0.01" min="0" oninput="calcCalProductie()"></div>
+        <div><label>Productie (tone)</label><input type="number" id="cal-productie" placeholder="0.00" step="0.01" min="0" oninput="calcCalProductie()"></div>
+        <div><label>Suprafata (ha)</label><input type="number" id="cal-suprafata" placeholder="0.00" step="0.01" min="0" oninput="calcCalProductie()"></div>
       </div>
       <div id="cal-tha-preview" style="display:none;background:var(--ai-green-light);padding:10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ai-green-dark);margin-bottom:12px">
         Randament: <span id="cal-tha-val">—</span> t/ha
       </div>
-      <div class="form-group"><label>Note</label><textarea id="cal-note" rows="2" placeholder="Observații despre acest an agricol..."></textarea></div>
-      <button class="btn btn-primary" id="cal-btn" onclick="salveazaAnAgricol()"><i class="ti ti-plus"></i> Salvează</button>
+      <div class="form-group"><label>Note</label><textarea id="cal-note" rows="2" placeholder="Observatii despre acest an agricol..."></textarea></div>
+      <button class="btn btn-primary" id="cal-btn" onclick="salveazaAnAgricol()"><i class="ti ti-plus"></i> Salveaza</button>
     </div>
 
     <div class="card">
       <div style="font-weight:700;font-size:15px;margin-bottom:14px">Sumar ani agricoli</div>
-      <div id="cal-sumar"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Niciun an agricol înregistrat.</div></div>
+      <div id="cal-sumar"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Niciun an agricol inregistrat.</div></div>
     </div>
   </div>
 
@@ -277,7 +289,7 @@
       <div style="font-weight:700;font-size:15px">Istoric ani agricoli</div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <select id="cal-filter-an" onchange="filtreazaCalendar()" style="width:auto;padding:7px 11px;font-size:12px">
-          <option value="">Toți anii</option>
+          <option value="">Toti anii</option>
           <option value="2025-2026">2025-2026</option>
           <option value="2024-2025">2024-2025</option>
           <option value="2023-2024">2023-2024</option>
@@ -312,8 +324,7 @@
                   </div>
                 </div>
                 <div><label>Cultură</label>
-                  <select id="p-cultura"><option value="">Selectează...</option><option>Porumb</option><option>Grâu</option><option>Floarea-soarelui</option><option>Rapiță</option><option>Orz</option><option>Soia</option><option>Altele</option></select>
-                </div>
+<select id="p-cultura"><option value="">Selecteaza...</option><option>Porumb</option><option>Grau</option><option>Floarea-soarelui</option><option>Rapita</option><option>Orz</option><option>Orzoaica</option><option>Soia</option><option>Sfecla de zahar</option><option>Cartofi</option><option>Mazare</option><option>Fasole</option><option>Lucerna</option><option>Triticale</option><option>Secara</option><option>In pentru ulei</option><option>Coriandru</option><option>Mustar</option><option>Altele</option></select>                </div>
               </div>
               <div class="form-row">
                 <div><label>Localitate</label><input type="text" id="p-loc" placeholder="ex: Iași"></div>
@@ -433,8 +444,7 @@
               <div style="font-weight:700;font-size:15px;margin-bottom:14px">Înregistrează recoltă</div>
               <div class="form-row">
                 <div><label>Parcelă</label><select id="rec-parcela" onchange="autocompletezaSuprafataRecolta()"><option value="">Selectează parcela</option></select></div>
-                <div><label>Cultură</label><select id="rec-cultura"><option>Porumb</option><option>Grâu</option><option>Floarea-soarelui</option><option>Rapiță</option><option>Orz</option><option>Soia</option><option>Altele</option></select></div>
-              </div>
+<select id="rec-cultura"><option>Porumb</option><option>Grau</option><option>Floarea-soarelui</option><option>Rapita</option><option>Orz</option><option>Orzoaica</option><option>Soia</option><option>Sfecla de zahar</option><option>Cartofi</option><option>Mazare</option><option>Fasole</option><option>Lucerna</option><option>Triticale</option><option>Secara</option><option>In pentru ulei</option><option>Coriandru</option><option>Mustar</option><option>Altele</option></select>              </div>
               <div class="form-row">
                 <div><label>Sezon (ex: 2024)</label><input type="text" id="rec-sezon" placeholder="2024"></div>
                 <div><label>Data recoltei</label><input type="date" id="rec-data"></div>
@@ -500,8 +510,7 @@
                 <div><label>Sezon</label><input type="text" id="rot-sezon" placeholder="ex: 2023"></div>
               </div>
               <div class="form-group"><label>Cultură</label>
-                <select id="rot-cultura"><option>Porumb</option><option>Grâu</option><option>Floarea-soarelui</option><option>Rapiță</option><option>Orz</option><option>Soia</option><option>Altele</option></select>
-              </div>
+<select id="rot-cultura"><option>Porumb</option><option>Grau</option><option>Floarea-soarelui</option><option>Rapita</option><option>Orz</option><option>Orzoaica</option><option>Soia</option><option>Sfecla de zahar</option><option>Cartofi</option><option>Mazare</option><option>Fasole</option><option>Lucerna</option><option>Triticale</option><option>Secara</option><option>In pentru ulei</option><option>Coriandru</option><option>Mustar</option><option>Altele</option></select>              </div>
               <button class="btn btn-primary" onclick="salveazaRotatie()"><i class="ti ti-plus"></i> Adaugă</button>
             </div>
             <div class="card">
@@ -529,8 +538,7 @@
               <div style="font-weight:700;font-size:15px;margin-bottom:14px">Înregistrează tratament</div>
               <div class="form-row">
                 <div><label>Parcelă</label><select id="fito-parcela"><option value="">Selectează...</option></select></div>
-                <div><label>Cultură</label><select id="fito-cultura"><option>Porumb</option><option>Grâu</option><option>Floarea-soarelui</option><option>Rapiță</option><option>Orz</option><option>Soia</option><option>Altele</option></select></div>
-              </div>
+<select id="fito-cultura"><option>Porumb</option><option>Grau</option><option>Floarea-soarelui</option><option>Rapita</option><option>Orz</option><option>Orzoaica</option><option>Soia</option><option>Sfecla de zahar</option><option>Cartofi</option><option>Mazare</option><option>Fasole</option><option>Lucerna</option><option>Triticale</option><option>Secara</option><option>In pentru ulei</option><option>Coriandru</option><option>Mustar</option><option>Altele</option></select>              </div>
               <div class="form-row">
                 <div><label>Data aplicării</label><input type="date" id="fito-data"></div>
                 <div><label>Tip tratament</label>
@@ -779,12 +787,16 @@
             </div>
           </div>
 <div class="card" style="margin-top:4px">
-            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
               <div style="font-weight:700;font-size:15px">Istoric Tranzactii</div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <div style="display:flex;gap:4px">
+                  <button id="filter-tip-toate" class="btn btn-primary btn-sm" onclick="filtreazaTipCheltuieli('')" style="width:auto">Toate</button>
+                  <button id="filter-tip-chelt" class="btn btn-ghost btn-sm" onclick="filtreazaTipCheltuieli('cheltuiala')" style="width:auto;color:var(--danger);border-color:var(--danger)">Cheltuieli</button>
+                  <button id="filter-tip-venit" class="btn btn-ghost btn-sm" onclick="filtreazaTipCheltuieli('venit')" style="width:auto;color:var(--ai-green);border-color:var(--ai-green)">Venituri</button>
+                </div>
                 <select id="filter-cat" onchange="filtreazaCheltuieli()" style="width:auto;padding:7px 11px;font-size:12px">
-                  <option value="">Toate categoriile</option>
-                  <option>Seminte / Material Sadit</option>
+                  <option value="">Toate categoriile</option>                  <option>Seminte / Material Sadit</option>
                   <option>Ingrasaminte</option>
                   <option>Tratamente fitosanitare</option>
                   <option>Combustibil</option>
@@ -798,8 +810,15 @@
               </div>
             </div>
             <div style="overflow-x:auto">
-              <table><thead><tr><th>Data</th><th>Categorie</th><th>Parcela</th><th>Descriere</th><th>Suma</th><th>Tip</th><th></th></tr></thead>
-              <tbody id="tabel-cheltuieli"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio inregistrare.</td></tr></tbody></table>
+<thead><tr>
+  <th style="cursor:pointer" onclick="sorteazaCheltuieli('data')">Data <span id="sort-data">↕</span></th>
+  <th>Categorie</th>
+  <th>Parcela</th>
+  <th>Descriere</th>
+  <th style="cursor:pointer" onclick="sorteazaCheltuieli('suma')">Suma <span id="sort-suma">↕</span></th>
+  <th>Tip</th>
+  <th></th>
+</tr></thead>              <tbody id="tabel-cheltuieli"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio inregistrare.</td></tr></tbody></table>
             </div>
           </div>
         </div>
