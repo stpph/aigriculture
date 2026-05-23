@@ -71,8 +71,7 @@ function switchTab(id, btn) {
   document.getElementById('sidebar')?.classList.remove('open');
   document.getElementById('sidebar-overlay')?.classList.remove('active');
   // Hook-uri per tab
-  if (id === 'contabilitate') { renderTabelCheltuieli(null); updateSumeContabilitate(); renderCatBars(); }
-  if (id === 'profitabilitate') calculeazaProfitabilitate();
+if (id === 'contabilitate') { if(typeof renderTabelCheltuieli === 'function') renderTabelCheltuieli(null); updateSumeContabilitate(); renderCatBars(); }  if (id === 'profitabilitate') calculeazaProfitabilitate();
   if (id === 'rotatie') renderRotatieTabel();
   if (id === 'stiri' && toateStirile.length === 0) incarcaStiri();
 if (id === 'calendar') { renderCalTimeline(); renderCalSumar(); renderRotatieAlerte(); }
@@ -907,6 +906,65 @@ function updateRecStat() {
   document.getElementById('rec-randament-med').textContent=randMed.toFixed(2)+' t/ha';
   document.getElementById('rec-venit-total').textContent=fmtRON(totalVenit);
 }
+function arataDetaliiRecolte(tip) {
+  const titluri = {tone:'Total recoltat pe culturi', randament:'Randament mediu pe culturi', venit:'Venituri pe culturi'};
+  
+  // Grupam pe cultura
+  const culturi = {};
+  recolteData.forEach(r => {
+    const c = r.cultura || 'Necunoscut';
+    if (!culturi[c]) culturi[c] = {tone:0, ha:0, venit:0, count:0};
+    culturi[c].tone += parseFloat(r.cantitate_tone||0);
+    culturi[c].ha += parseFloat(r.suprafata_ha||0);
+    culturi[c].venit += parseFloat(r.venit_total||0);
+    culturi[c].count++;
+  });
+
+  const culoriCulturi = {'Porumb':'#16a34a','Grau':'#d97706','Grâu':'#d97706','Floarea-soarelui':'#2563eb','Rapita':'#7c3aed','Rapiță':'#7c3aed','Orz':'#059669','Soia':'#0891b2'};
+
+  const randuri = Object.entries(culturi).sort((a,b) => {
+    if (tip==='tone') return b[1].tone - a[1].tone;
+    if (tip==='venit') return b[1].venit - a[1].venit;
+    const rA = a[1].ha>0?a[1].tone/a[1].ha:0;
+    const rB = b[1].ha>0?b[1].tone/b[1].ha:0;
+    return rB - rA;
+  });
+
+  const totalTone = recolteData.reduce((s,r)=>s+parseFloat(r.cantitate_tone||0),0);
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = '<div style="background:var(--white);border-radius:20px;width:100%;max-width:500px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.3)">'
+    +'<div style="padding:20px 24px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">'
+    +'<div style="font-family:\'Lora\',serif;font-size:18px;font-weight:600;color:var(--soil)">'+titluri[tip]+'</div>'
+    +'<button onclick="this.closest(\'[style*=fixed]\').remove()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray-400)">×</button>'
+    +'</div>'
+    +'<div style="padding:20px 24px">'
+    + randuri.map(([cultura, d]) => {
+        const col = culoriCulturi[cultura] || '#6b7280';
+        const rand = d.ha>0?(d.tone/d.ha).toFixed(2):'—';
+        const pct = totalTone>0?Math.round(d.tone/totalTone*100):0;
+        let valoare, sublabel;
+        if (tip==='tone') { valoare=d.tone.toFixed(1)+' t'; sublabel=pct+'% din total'; }
+        else if (tip==='venit') { valoare=fmtRON(d.venit); sublabel=d.tone.toFixed(1)+' t vandute'; }
+        else { valoare=rand+' t/ha'; sublabel=d.tone.toFixed(1)+' t pe '+d.ha.toFixed(1)+' ha'; }
+        return '<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--gray-100)">'
+          +'<div style="display:flex;align-items:center;gap:10px">'
+          +'<div style="width:12px;height:12px;border-radius:3px;background:'+col+'"></div>'
+          +'<div><div style="font-weight:700;font-size:14px">'+escapeHTML(cultura)+'</div>'
+          +'<div style="font-size:12px;color:var(--gray-500)">'+sublabel+'</div></div>'
+          +'</div>'
+          +'<div style="font-weight:700;font-size:15px;color:var(--soil)">'+valoare+'</div>'
+          +'</div>';
+      }).join('')
+    +'</div>'
+    +'<div style="padding:14px 24px;border-top:1px solid var(--gray-200);text-align:right">'
+    +'<button onclick="this.closest(\'[style*=fixed]\').remove()" class="btn btn-primary" style="width:auto;padding:8px 20px">Inchide</button>'
+    +'</div></div>';
+
+  document.body.appendChild(modal);
+  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+}
 function renderRecGrafic() {
   const cultMap={};
   recolteData.forEach(r=>{cultMap[r.cultura]=(cultMap[r.cultura]||0)+parseFloat(r.cantitate_tone||0);});
@@ -1158,8 +1216,7 @@ async function marcheazaRevizie(id) {
 // ============================================================
 async function loadCheltuieli() {
   if (!currentUser) return;
-  const { data,error } = await sb.from('cheltuieli').select('*').eq('user_id',currentUser.id).order('data',{ascending:false});
-  if (!error&&data) {
+const { data,error } = await sb.from('cheltuieli').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});  if (!error&&data) {
     cheltuieliData=data;
     updateSumeContabilitate();
     renderCatBars();
@@ -1888,6 +1945,7 @@ async function stergeAnAgricol(id) {
 
 function filtreazaCalendar() {
   renderCalTimeline();
+  renderCalSumar();
 }
 
 function renderCalTimeline() {
@@ -1950,10 +2008,14 @@ function renderCalTimeline() {
     manuale.forEach(m => { if (!toateParcele.has(m.parcela_id)) toateParcele.set(m.id, {sursa:'manual', manual:m}); });
 
     let filtrate = [...toateParcele.values()];
-    if (fp) filtrate = filtrate.filter(x => {
-      const n = x.sursa === 'parcela' ? x.parcela.nume : x.manual.parcela_nume;
-      return n === fp;
-    });
+    if (fp) {
+  const parcelaGasita = parceleData.find(p => p.id === fp);
+  const numeParc = parcelaGasita ? parcelaGasita.nume : fp;
+  filtrate = filtrate.filter(x => {
+    const n = x.sursa === 'parcela' ? x.parcela.nume : x.manual.parcela_nume;
+    return n === numeParc;
+  });
+}
 
     if (!filtrate.length) return '';
 
@@ -2155,20 +2217,49 @@ function arataTimelineParcela(nume, an) {
 
 function renderCalSumar() {
   const cont=document.getElementById('cal-sumar'); if (!cont) return;
-  if (!aniAgricoliData.length) { cont.innerHTML='<div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Niciun an agricol inregistrat.</div>'; return; }
-  const aniUnici=[...new Set(aniAgricoliData.map(x=>x.an_agricol))].sort((a,b)=>b.localeCompare(a));
-  cont.innerHTML=aniUnici.slice(0,4).map(an=>{
-    const items=aniAgricoliData.filter(x=>x.an_agricol===an);
-    const totalTone=items.reduce((s,x)=>s+parseFloat(x.productie_tone||0),0);
-    const finalizate=items.filter(x=>x.status==='finalizat').length;
+
+  // Agregam datele din recolte si lucrari per an agricol
+  const aniMap={};
+
+  recolteData.forEach(r=>{
+    if (!r.data_recolta) return;
+    const d=new Date(r.data_recolta);
+    const luna=d.getMonth();
+    const an=d.getFullYear();
+    const anAgricol=luna>=9?(an+'-'+(an+1)):((an-1)+'-'+an);
+    if (!aniMap[anAgricol]) aniMap[anAgricol]={tone:0,parcele:new Set(),lucrari:0};
+    aniMap[anAgricol].tone+=parseFloat(r.cantitate_tone||0);
+    if (r.parcela_nume) aniMap[anAgricol].parcele.add(r.parcela_nume);
+  });
+
+  lucrariData.forEach(l=>{
+    if (!l.data_lucrare) return;
+    const d=new Date(l.data_lucrare);
+    const luna=d.getMonth();
+    const an=d.getFullYear();
+    const anAgricol=luna>=9?(an+'-'+(an+1)):((an-1)+'-'+an);
+    if (!aniMap[anAgricol]) aniMap[anAgricol]={tone:0,parcele:new Set(),lucrari:0};
+    aniMap[anAgricol].lucrari++;
+    if (l.parcela_nume) aniMap[anAgricol].parcele.add(l.parcela_nume);
+  });
+
+  const ani=Object.keys(aniMap).sort((a,b)=>b.localeCompare(a));
+
+  if (!ani.length) {
+    cont.innerHTML='<div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Nicio activitate inregistrata.</div>';
+    return;
+  }
+
+  cont.innerHTML=ani.slice(0,4).map(an=>{
+    const d=aniMap[an];
     return '<div style="background:var(--gray-50);border-radius:10px;padding:12px;margin-bottom:10px;border-left:3px solid var(--ai-green)">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">'
       +'<div style="font-weight:700;font-size:14px">'+an+'</div>'
-      +'<span class="badge badge-green">'+finalizate+'/'+items.length+' parcele</span>'
+      +'<span class="badge badge-green">'+d.parcele.size+' parcele</span>'
       +'</div>'
       +'<div style="font-size:12px;color:var(--gray-500)">'
-      +(totalTone>0?'<span style="color:var(--ai-green);font-weight:700">'+totalTone.toFixed(1)+' t</span> productie totala · ':'')
-      +items.length+' inregistrari'
+      +(d.tone>0?'<span style="color:var(--ai-green);font-weight:700">'+d.tone.toFixed(1)+' t</span> recoltate · ':'')
+      +d.lucrari+' lucrari efectuate'
       +'</div></div>';
   }).join('');
 }
