@@ -317,8 +317,7 @@ function renderCulturaBars() {
   });
 }
 function updateAllParcelaSelects() {
-  const selIds=['luc-parcela','luc-filter-parcela','rot-parcela','c-parcela','calc-parcela','cal-filter-parcela'];
-  selIds.forEach(selId=>{
+const selIds=['luc-parcela','luc-filter-parcela','rot-parcela','c-parcela','calc-parcela','cal-filter-parcela','filter-parcela-chelt'];  selIds.forEach(selId=>{
     const sel=document.getElementById(selId); if (!sel) return;
     const val=sel.value;
     sel.innerHTML='<option value="">Toate parcelele</option>';
@@ -1160,12 +1159,12 @@ async function marcheazaRevizie(id) {
 async function loadCheltuieli() {
   if (!currentUser) return;
   const { data,error } = await sb.from('cheltuieli').select('*').eq('user_id',currentUser.id).order('data',{ascending:false});
-if (!error&&data) { 
-  cheltuieliData=data; 
-  updateSumeContabilitate(); 
-  renderCatBars();
-  if (document.getElementById('tabel-cheltuieli')) renderTabelCheltuieli(null);
-}
+  if (!error&&data) {
+    cheltuieliData=data;
+    updateSumeContabilitate();
+    renderCatBars();
+    renderTabelCheltuieli(null);
+  }
 }
 function updateSumeContabilitate() {
   const totalCheltuieli=cheltuieliData.filter(c=>c.tip==='cheltuiala').reduce((s,c)=>s+parseFloat(c.suma||0),0);
@@ -1211,18 +1210,17 @@ function renderTabelCheltuieli(filter, customList) {
       +'<td><button class="btn btn-danger btn-sm" onclick="stergeCheltuiala(\''+c.id+'\')" style="width:auto;padding:5px 10px"><i class="ti ti-trash"></i></button></td>'
       +'</tr>';
   }).join('');
-}function filtreazaCheltuieli() {
+}
+function filtreazaCheltuieli() {
   const f = document.getElementById('filter-cat').value;
+  const fp = document.getElementById('filter-parcela-chelt')?.value || '';
   let list = cheltuieliTipFilter ? cheltuieliData.filter(c => c.tip === cheltuieliTipFilter) : cheltuieliData;
   if (f) list = list.filter(c => c.categorie === f);
+  if (fp) list = list.filter(c => c.parcela === fp);
   if (cheltuieliSortCol) {
     list = [...list].sort((a, b) => {
-      if (cheltuieliSortCol === 'data') {
-        return (new Date(a.data) - new Date(b.data)) * cheltuieliSortDir;
-      }
-      if (cheltuieliSortCol === 'suma') {
-        return (parseFloat(a.suma) - parseFloat(b.suma)) * cheltuieliSortDir;
-      }
+      if (cheltuieliSortCol === 'data') return (new Date(a.data) - new Date(b.data)) * cheltuieliSortDir;
+      if (cheltuieliSortCol === 'suma') return (parseFloat(a.suma) - parseFloat(b.suma)) * cheltuieliSortDir;
       return 0;
     });
   }
