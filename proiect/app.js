@@ -736,6 +736,20 @@ function autocompletezaSuprafataRecolta() {
   document.getElementById('rec-cultura').value = parcela.cultura;
   calcRandament();
 }
+function autocompletezaSuprafataCalculator() {
+  const sel = document.getElementById('calc-parcela');
+  if (!sel.value) return;
+  const parcela = parceleData.find(p => p.id === sel.value);
+  if (!parcela) return;
+  document.getElementById('calc-ha').value = parcela.suprafata_ha;
+  calculeazaTotal();
+}
+
+function updateIngrLabel() {
+  const unitate = document.getElementById('ingr-unitate').value;
+  const label = document.getElementById('ingr-pret-label');
+  if (label) label.textContent = unitate === 'tona' ? 'Pret/tona (RON/tona)' : 'Pret/kg (RON/kg)';
+}
 function calcRandament() {
   const cant=parseFloat(document.getElementById('rec-cantitate').value)||0;
   const sup=parseFloat(document.getElementById('rec-suprafata').value)||0;
@@ -1180,16 +1194,39 @@ function renderCatBars() {
   cont.innerHTML=Object.entries(catMap).sort((a,b)=>b[1]-a[1]).map(([c,v])=>`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:13px"><span>${escapeHTML(c)}</span><b>${fmtRON(v)}</b></div><div class="progress-bar"><div class="progress-fill" style="width:${Math.round(v/maxVal*100)}%"></div></div></div>`).join('');
 }
 function calculeazaTotal() {
-  const sup=parseFloat(document.getElementById('calc-ha').value)||0;
-  const costSam=sup*(parseFloat(document.getElementById('sam-cantitate').value)||0)*(parseFloat(document.getElementById('sam-pret').value)||0);
-  const costIngr=sup*(parseFloat(document.getElementById('ingr-cantitate').value)||0)*(parseFloat(document.getElementById('ingr-pret').value)||0);
-  const costMot=sup*(parseFloat(document.getElementById('mot-l').value)||0)*(parseFloat(document.getElementById('mot-pret').value)||0);
-  const pest=parseFloat(document.getElementById('pest-val').value)||0, alt=parseFloat(document.getElementById('alt-val').value)||0;
-  document.getElementById('sub-sam').textContent=fmtRON(costSam);
-  document.getElementById('sub-ingr').textContent=fmtRON(costIngr);
-  document.getElementById('sub-mot').textContent=fmtRON(costMot);
-  document.getElementById('sub-diverse').textContent=fmtRON(pest+alt);
-  document.getElementById('total-estimat').textContent=fmtRON(costSam+costIngr+costMot+pest+alt);
+  const sup = parseFloat(document.getElementById('calc-ha').value) || 0;
+
+  const samCant = parseFloat(document.getElementById('sam-cantitate').value) || 0;
+  const samPret = parseFloat(document.getElementById('sam-pret').value) || 0;
+  const costSam = samCant * samPret * sup;
+  document.getElementById('sub-sam').textContent = fmtRON(costSam);
+
+  const ingrCant = parseFloat(document.getElementById('ingr-cantitate').value) || 0;
+  const ingrPret = parseFloat(document.getElementById('ingr-pret').value) || 0;
+  const costIngr = ingrCant * ingrPret * sup;
+  document.getElementById('sub-ingr').textContent = fmtRON(costIngr);
+
+  const motL = parseFloat(document.getElementById('mot-l').value) || 0;
+  const motPret = parseFloat(document.getElementById('mot-pret').value) || 0;
+  const costMot = motL * motPret * sup;
+  document.getElementById('sub-mot').textContent = fmtRON(costMot);
+
+  const pestPerHa = parseFloat(document.getElementById('pest-val').value) || 0;
+  const costPest = pestPerHa * sup;
+  const pestPreview = document.getElementById('pest-total-preview');
+  if (pestPreview) pestPreview.textContent = fmtRON(costPest);
+  document.getElementById('sub-diverse').textContent = fmtRON(costPest);
+
+  const alt = parseFloat(document.getElementById('alt-val').value) || 0;
+  const subAlt = document.getElementById('sub-alt');
+  if (subAlt) subAlt.textContent = fmtRON(alt);
+
+  const total = costSam + costIngr + costMot + costPest + alt;
+  const totalEl = document.getElementById('total-estimat');
+  if (totalEl) totalEl.textContent = fmtRON(total);
+
+  const costHaEl = document.getElementById('calc-cost-ha');
+  if (costHaEl) costHaEl.textContent = sup > 0 ? fmtRON(total / sup) + '/ha' : '—';
 }
 async function adaugaDinCalculator() {
   const sup=parseFloat(document.getElementById('calc-ha').value)||0;

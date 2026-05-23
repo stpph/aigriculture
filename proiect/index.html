@@ -720,8 +720,7 @@
               <div style="font-weight:700;font-size:15px;margin-bottom:14px">Înregistrare nouă</div>
               <div class="form-row">
                 <div><label>Tip</label><select id="c-tip"><option value="cheltuiala">Cheltuială</option><option value="venit">Venit / Subvenție</option></select></div>
-                <div><label>Categorie</label><select id="c-cat"><option>Semințe / Material Sădit</option><option>Îngrășăminte / Tratamente</option><option>Combustibil</option><option>Reparații / Utilaje</option><option>Muncă / Zilieri</option><option>Vânzare Recoltă</option><option>Subvenție APIA</option><option>Altele</option></select></div>
-              </div>
+<div><label>Categorie</label><select id="c-cat"><option>Seminte / Material Sadit</option><option>Ingrasaminte</option><option>Tratamente fitosanitare</option><option>Combustibil</option><option>Reparatii / Utilaje</option><option>Munca / Zilieri</option><option>Vanzare Recolta</option><option>Subventie APIA</option><option>Altele</option></select></div>              </div>
               <div class="form-group"><label>Parcelă asociată</label><select id="c-parcela"><option value="Toate parcelele">Toate parcelele</option></select></div>
               <div class="form-row">
                 <div><label>Sumă (RON)</label><input type="number" id="c-suma" placeholder="0.00" step="0.01"></div>
@@ -735,55 +734,76 @@
               <div id="cat-bars"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Nicio cheltuială înregistrată.</div></div>
             </div>
           </div>
-          <!-- Calculator -->
+       <!-- Calculator -->
           <div class="card" style="border:2px solid rgba(46,139,46,0.2);background:linear-gradient(145deg,#fff,#f8fdf8)">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><i class="ti ti-calculator" style="font-size:22px;color:var(--ai-green)"></i><div style="font-weight:700;font-size:16px;color:var(--ai-green)">Calculator Costuri de Producție</div></div>
-            <div style="font-size:12px;color:var(--gray-600);margin-bottom:18px">Calculați costurile estimate și adăugați-le automat în registru.</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><i class="ti ti-calculator" style="font-size:22px;color:var(--ai-green)"></i><div style="font-weight:700;font-size:16px;color:var(--ai-green)">Calculator Costuri de Productie</div></div>
+            <div style="font-size:12px;color:var(--gray-600);margin-bottom:18px">Calculati costurile estimate si adaugati-le automat in registru.</div>
             <div class="form-row" style="margin-bottom:16px">
-              <div><label>Parcelă</label><select id="calc-parcela"><option value="">Toate parcelele</option></select></div>
-              <div><label>Suprafață de calcul (ha)</label><input type="number" id="calc-ha" placeholder="0.00" step="0.01" min="0" oninput="calculeazaTotal()"></div>
+              <div><label>Parcela</label><select id="calc-parcela" onchange="autocompletezaSuprafataCalculator()"><option value="">Toate parcelele</option></select></div>
+              <div><label>Suprafata de calcul (ha)</label><input type="number" id="calc-ha" placeholder="0.00" step="0.01" min="0" oninput="calculeazaTotal()"></div>
             </div>
             <div class="grid2" style="gap:12px;margin-bottom:16px">
-              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-wheat"></i> Semințe</div>
+              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-wheat"></i> Seminte</div>
                 <div class="form-row" style="margin-bottom:8px"><div><label>Cantitate</label><input type="number" id="sam-cantitate" placeholder="0" min="0" oninput="calculeazaTotal()"></div><div><label>Unitate</label><select id="sam-unitate" onchange="calculeazaTotal()"><option value="kg">kg/ha</option><option value="sac">sac/ha</option></select></div></div>
-                <div><label>Preț/unitate (RON)</label><input type="number" id="sam-pret" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
+                <div><label>Pret/unitate (RON/unitate)</label><input type="number" id="sam-pret" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
                 <div style="margin-top:8px;font-size:12px;color:var(--ai-green);font-weight:700">Subtotal: <span id="sub-sam">0 RON</span></div>
               </div>
-              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-leaf"></i> Îngrășăminte</div>
-                <div class="form-row" style="margin-bottom:8px"><div><label>Cantitate</label><input type="number" id="ingr-cantitate" placeholder="0" min="0" oninput="calculeazaTotal()"></div><div><label>Unitate</label><select id="ingr-unitate" onchange="calculeazaTotal()"><option value="kg">kg/ha</option><option value="tona">tone/ha</option></select></div></div>
-                <div><label>Preț/unitate (RON)</label><input type="number" id="ingr-pret" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
+              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-leaf"></i> Ingrasaminte</div>
+                <div class="form-row" style="margin-bottom:8px">
+                  <div><label>Cantitate</label><input type="number" id="ingr-cantitate" placeholder="0" min="0" oninput="calculeazaTotal()"></div>
+                  <div><label>Unitate</label><select id="ingr-unitate" onchange="updateIngrLabel();calculeazaTotal()"><option value="kg">kg/ha</option><option value="tona">tone/ha</option></select></div>
+                </div>
+                <div><label id="ingr-pret-label">Pret/kg (RON/kg)</label><input type="number" id="ingr-pret" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
                 <div style="margin-top:8px;font-size:12px;color:var(--ai-green);font-weight:700">Subtotal: <span id="sub-ingr">0 RON</span></div>
               </div>
-              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-gas-station"></i> Motorină</div>
-                <div class="form-row" style="margin-bottom:8px"><div><label>Litri/ha</label><input type="number" id="mot-l" placeholder="0" min="0" oninput="calculeazaTotal()"></div><div><label>Preț/litru (RON)</label><input type="number" id="mot-pret" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div></div>
+              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-gas-station"></i> Motorina</div>
+                <div class="form-row" style="margin-bottom:8px"><div><label>Litri/ha</label><input type="number" id="mot-l" placeholder="0" min="0" oninput="calculeazaTotal()"></div><div><label>Pret/litru (RON)</label><input type="number" id="mot-pret" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div></div>
                 <div style="margin-top:8px;font-size:12px;color:var(--ai-green);font-weight:700">Subtotal: <span id="sub-mot">0 RON</span></div>
               </div>
-              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-droplet"></i> Pesticide & Altele</div>
-                <div class="form-group"><label>Pesticide (RON total)</label><input type="number" id="pest-val" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
-                <div class="form-group"><label>Altele (RON total)</label><input type="number" id="alt-val" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
+              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-droplet"></i> Pesticide</div>
+                <div class="form-group"><label>Cost pesticide (RON/ha)</label><input type="number" id="pest-val" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
+                <div style="font-size:12px;color:var(--gray-500);margin-top:4px">Total: <span id="pest-total-preview">0 RON</span></div>
                 <div style="margin-top:8px;font-size:12px;color:var(--ai-green);font-weight:700">Subtotal: <span id="sub-diverse">0 RON</span></div>
+              </div>
+              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-dots-circle-horizontal"></i> Altele</div>
+                <div class="form-group"><label>Altele (RON total)</label><input type="number" id="alt-val" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
+                <div style="margin-top:8px;font-size:12px;color:var(--ai-green);font-weight:700">Subtotal: <span id="sub-alt">0 RON</span></div>
               </div>
             </div>
             <div style="background:var(--grad-earth);color:#fff;border-radius:12px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
-              <div><div style="font-size:11px;opacity:0.6;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.8px">Total estimat cheltuieli</div><div style="font-size:30px;font-weight:700;font-family:'Playfair Display',serif" id="total-estimat">0 RON</div></div>
-              <button class="btn btn-wheat" id="calc-adauga-btn" onclick="adaugaDinCalculator()" style="width:auto;padding:12px 24px"><i class="ti ti-database-plus"></i> Adaugă la cheltuieli</button>
+              <div>
+                <div style="font-size:11px;opacity:0.6;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.8px">Total estimat cheltuieli</div>
+                <div style="font-size:30px;font-weight:700;font-family:'Lora',serif" id="total-estimat">0 RON</div>
+                <div style="font-size:12px;opacity:0.7;margin-top:4px">Cost/ha: <span id="calc-cost-ha">—</span></div>
+              </div>
+              <button class="btn btn-wheat" id="calc-adauga-btn" onclick="adaugaDinCalculator()" style="width:auto;padding:12px 24px"><i class="ti ti-database-plus"></i> Adauga la cheltuieli</button>
             </div>
           </div>
-          <div class="card" style="margin-top:4px">
+<div class="card" style="margin-top:4px">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
-              <div style="font-weight:700;font-size:15px">Istoric Tranzacții</div>
+              <div style="font-weight:700;font-size:15px">Istoric Tranzactii</div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-                <select id="filter-cat" onchange="filtreazaCheltuieli()" style="width:auto;padding:7px 11px;font-size:12px"><option value="">Toate categoriile</option><option>Semințe / Material Sădit</option><option>Îngrășăminte / Tratamente</option><option>Combustibil</option><option>Reparații / Utilaje</option><option>Muncă / Zilieri</option><option>Vânzare Recoltă</option><option>Subvenție APIA</option><option>Altele</option></select>
+                <select id="filter-cat" onchange="filtreazaCheltuieli()" style="width:auto;padding:7px 11px;font-size:12px">
+                  <option value="">Toate categoriile</option>
+                  <option>Seminte / Material Sadit</option>
+                  <option>Ingrasaminte</option>
+                  <option>Tratamente fitosanitare</option>
+                  <option>Combustibil</option>
+                  <option>Reparatii / Utilaje</option>
+                  <option>Munca / Zilieri</option>
+                  <option>Vanzare Recolta</option>
+                  <option>Subventie APIA</option>
+                  <option>Altele</option>
+                </select>
                 <button class="btn btn-primary btn-sm" onclick="exportaPDF()" style="width:auto"><i class="ti ti-file-type-pdf"></i> Export PDF</button>
               </div>
             </div>
             <div style="overflow-x:auto">
-              <table><thead><tr><th>Dată</th><th>Categorie</th><th>Parcelă</th><th>Descriere</th><th>Sumă</th><th>Tip</th><th></th></tr></thead>
-              <tbody id="tabel-cheltuieli"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio înregistrare.</td></tr></tbody></table>
+              <table><thead><tr><th>Data</th><th>Categorie</th><th>Parcela</th><th>Descriere</th><th>Suma</th><th>Tip</th><th></th></tr></thead>
+              <tbody id="tabel-cheltuieli"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio inregistrare.</td></tr></tbody></table>
             </div>
           </div>
         </div>
-
         <!-- ====== PROFITABILITATE ====== -->
         <div class="tab" id="tab-profitabilitate">
           <div class="section-title"><i class="ti ti-chart-bar"></i> Analiză Profitabilitate</div>
