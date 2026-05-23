@@ -1574,10 +1574,12 @@ async function trimiteChat() {
     chatHistory.forEach(m=>{
       if (m.role==='user'||m.role==='assistant') messages.push({role:m.role,content:String(m.content||'')});
     });
-  const response=await fetch
-body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1000,messages:messages})    });
+    const response=await fetch('/api/groq',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1000,messages:messages})
+    });
     const data=await response.json();
-    console.log('Groq response:', data);
     document.getElementById(typingId)?.remove();
     const reply=data.choices?.[0]?.message?.content||'Nu am putut genera un raspuns.';
     chatHistory.push({role:'assistant',content:reply});
