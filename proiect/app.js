@@ -1190,26 +1190,19 @@ async function adaugaCheltuiala() {
   document.getElementById('c-suma').value=''; document.getElementById('c-desc').value='';
   await loadCheltuieli(); updateDashboard();
 }
-async function stergeCheltuiala(id) { showLoading(true); await sb.from('cheltuieli').delete().eq('id',id).eq('user_id',currentUser.id); showLoading(false); showToast('Înregistrare ștearsă.','info'); await loadCheltuieli(); updateDashboard(); }
-function renderTabelCheltuieli(filter, customList) {
-  const tbody=document.getElementById('tabel-cheltuieli'); if (!tbody) return;
-  let list = customList || (filter ? cheltuieliData.filter(c=>c.categorie===filter) : cheltuieliData);
-  if (!list.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio inregistrare.</td></tr>'; return; }
-  tbody.innerHTML=list.map(c=>{
-    const culoare=c.tip==='venit'?'var(--ai-green)':'var(--danger)';
-    const semn=c.tip==='venit'?'+':'-';
-    const badgeClasa=c.tip==='venit'?'badge-green':'badge-red';
-    const tipLabel=c.tip==='venit'?'Venit':'Cheltuiala';
-    return '<tr>'
-      +'<td>'+fmtData(c.data)+'</td>'
-      +'<td>'+escapeHTML(c.categorie)+'</td>'
-      +'<td>'+escapeHTML(c.parcela||'-')+'</td>'
-      +'<td>'+escapeHTML(c.descriere||'-')+'</td>'
-      +'<td style="font-weight:600;color:'+culoare+'">'+semn+parseFloat(c.suma).toLocaleString('ro-RO')+' RON</td>'
-      +'<td><span class="badge '+badgeClasa+'">'+tipLabel+'</span></td>'
-      +'<td><button class="btn btn-danger btn-sm" onclick="stergeCheltuiala(\''+c.id+'\')" style="width:auto;padding:5px 10px"><i class="ti ti-trash"></i></button></td>'
-      +'</tr>';
-  }).join('');
+async function stergeCheltuiala(id) {
+  showLoading(true);
+  await sb.from('cheltuieli').delete().eq('id',id).eq('user_id',currentUser.id);
+  showLoading(false);
+  showToast('Inregistrare stearsa.','info');
+  const { data,error } = await sb.from('cheltuieli').select('*').eq('user_id',currentUser.id).order('data',{ascending:false});
+  if (!error&&data) {
+    cheltuieliData=data;
+    updateSumeContabilitate();
+    renderCatBars();
+    filtreazaCheltuieli();
+  }
+  updateDashboard();
 }
 function filtreazaCheltuieli() {
   const f = document.getElementById('filter-cat').value;
