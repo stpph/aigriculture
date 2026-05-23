@@ -748,7 +748,7 @@ function autocompletezaSuprafataCalculator() {
 function updateIngrLabel() {
   const unitate = document.getElementById('ingr-unitate').value;
   const label = document.getElementById('ingr-pret-label');
-  if (label) label.textContent = unitate === 'tona' ? 'Pret/tona (RON/tona)' : 'Pret/kg (RON/kg)';
+  if (label) label.textContent = unitate === 'tona' ? 'Pret/tona (RON/tona)' : 'Pret/tona (RON/tona)';
 }
 function calcRandament() {
   const cant=parseFloat(document.getElementById('rec-cantitate').value)||0;
@@ -1201,9 +1201,17 @@ function calculeazaTotal() {
   const costSam = samCant * samPret * sup;
   document.getElementById('sub-sam').textContent = fmtRON(costSam);
 
-  const ingrCant = parseFloat(document.getElementById('ingr-cantitate').value) || 0;
+ const ingrCant = parseFloat(document.getElementById('ingr-cantitate').value) || 0;
   const ingrPret = parseFloat(document.getElementById('ingr-pret').value) || 0;
-  const costIngr = ingrCant * ingrPret * sup;
+  const ingrUnitate = document.getElementById('ingr-unitate').value;
+  let costIngr = 0;
+  if (ingrUnitate === 'tona') {
+    // tone/ha x pret/tona x suprafata
+    costIngr = ingrCant * ingrPret * sup;
+  } else {
+    // kg/ha → convertit in tone → x pret/tona x suprafata
+    costIngr = (ingrCant / 1000) * ingrPret * sup;
+  }
   document.getElementById('sub-ingr').textContent = fmtRON(costIngr);
 
   const motL = parseFloat(document.getElementById('mot-l').value) || 0;

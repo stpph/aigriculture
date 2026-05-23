@@ -749,11 +749,10 @@
                 <div style="margin-top:8px;font-size:12px;color:var(--ai-green);font-weight:700">Subtotal: <span id="sub-sam">0 RON</span></div>
               </div>
               <div class="calc-section"><div class="calc-section-title"><i class="ti ti-leaf"></i> Ingrasaminte</div>
-                <div class="form-row" style="margin-bottom:8px">
-                  <div><label>Cantitate</label><input type="number" id="ingr-cantitate" placeholder="0" min="0" oninput="calculeazaTotal()"></div>
-                  <div><label>Unitate</label><select id="ingr-unitate" onchange="updateIngrLabel();calculeazaTotal()"><option value="kg">kg/ha</option><option value="tona">tone/ha</option></select></div>
+               <div class="form-row" style="margin-bottom:8px">
+                  <div><label>Cantitate (kg/ha)</label><input type="number" id="ingr-cantitate" placeholder="0" min="0" oninput="calculeazaTotal()"></div>
                 </div>
-                <div><label id="ingr-pret-label">Pret/kg (RON/kg)</label><input type="number" id="ingr-pret" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
+               <div><label id="ingr-pret-label">Pret/tona (RON/tona)</label><input type="number" id="ingr-pret" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
                 <div style="margin-top:8px;font-size:12px;color:var(--ai-green);font-weight:700">Subtotal: <span id="sub-ingr">0 RON</span></div>
               </div>
               <div class="calc-section"><div class="calc-section-title"><i class="ti ti-gas-station"></i> Motorina</div>
