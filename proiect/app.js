@@ -1305,8 +1305,9 @@ async function adaugaDinCalculator() {
   const today=new Date().toISOString().split('T')[0];
   const rows=[];
   const costSam=sup*(parseFloat(document.getElementById('sam-cantitate').value)||0)*(parseFloat(document.getElementById('sam-pret').value)||0);
-  const costIngr=sup*(parseFloat(document.getElementById('ingr-cantitate').value)||0)*(parseFloat(document.getElementById('ingr-pret').value)||0);
-  const costMot=sup*(parseFloat(document.getElementById('mot-l').value)||0)*(parseFloat(document.getElementById('mot-pret').value)||0);
+const ingrCant=parseFloat(document.getElementById('ingr-cantitate').value)||0;
+  const ingrPret=parseFloat(document.getElementById('ingr-pret').value)||0;
+  const costIngr=sup*(ingrCant/1000)*ingrPret;  const costMot=sup*(parseFloat(document.getElementById('mot-l').value)||0)*(parseFloat(document.getElementById('mot-pret').value)||0);
   const pest=parseFloat(document.getElementById('pest-val').value)||0, alt=parseFloat(document.getElementById('alt-val').value)||0;
   if (costSam>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Seminte / Material Sadit',parcela,suma:costSam,data:today,descriere:'Seminte: '+sup+' ha'});
   if (costIngr>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Ingrasaminte / Tratamente',parcela,suma:costIngr,data:today,descriere:'Ingrasaminte: '+sup+' ha'});
