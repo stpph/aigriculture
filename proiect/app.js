@@ -74,7 +74,7 @@ function switchTab(id, btn) {
   if (id === 'profitabilitate') calculeazaProfitabilitate();
   if (id === 'rotatie') renderRotatieTabel();
   if (id === 'stiri' && toateStirile.length === 0) incarcaStiri();
-if (id === 'calendar') { renderCalTimeline(); renderCalSumar(); }
+if (id === 'calendar') { renderCalTimeline(); renderCalSumar(); renderRotatieAlerte(); }
 }
 
 // ============================================================
@@ -1159,7 +1159,18 @@ async function marcheazaRevizie(id) {
 async function loadCheltuieli() {
   if (!currentUser) return;
   const { data,error } = await sb.from('cheltuieli').select('*').eq('user_id',currentUser.id).order('data',{ascending:false});
-  if (!error&&data) { cheltuieliData=data; renderTabelCheltuieli(); updateSume(); renderCatBars(); }
+  if (!error&&data) { cheltuieliData=data; renderTabelCheltuieli(); updateSumeContabilitate(); renderCatBars(); }
+}
+function updateSumeContabilitate() {
+  const totalCheltuieli=cheltuieliData.filter(c=>c.tip==='cheltuiala').reduce((s,c)=>s+parseFloat(c.suma||0),0);
+  const totalVenituri=cheltuieliData.filter(c=>c.tip==='venit').reduce((s,c)=>s+parseFloat(c.suma||0),0);
+  const sold=totalVenituri-totalCheltuieli;
+  const cTotal=document.getElementById('c-total');
+  const cIntrari=document.getElementById('c-intrari');
+  const cSold=document.getElementById('c-sold');
+  if (cTotal) cTotal.textContent=fmtRON(totalCheltuieli);
+  if (cIntrari) cIntrari.textContent=fmtRON(totalVenituri);
+  if (cSold) { cSold.textContent=fmtRON(sold); cSold.style.color=sold>=0?'var(--ai-green)':'var(--danger)'; }
 }
 async function adaugaCheltuiala() {
   const tip=document.getElementById('c-tip').value, cat=document.getElementById('c-cat').value;
@@ -2139,6 +2150,75 @@ function renderCalSumar() {
       +items.length+' inregistrari'
       +'</div></div>';
   }).join('');
+}
+function renderRotatieAlerte() {
+  const cont = document.getElementById('cal-rotatii-alerte'); if (!cont) return;
+  if (!parceleData.length) { cont.innerHTML=''; return; }
+
+  const alerte = [];
+  const recomandari = [];
+
+  parceleData.forEach(parcela => {
+    const istoricParcela = rotatieData.filter(r => r.parcela_id === parcela.id)
+      .sort((a,b) => b.sezon.localeCompare(a.sezon));
+
+    if (istoricParcela.length < 2) return;
+
+    // Verificam monocultura
+    const ultimele3 = istoricParcela.slice(0, 3);
+    const toateAceeasiCultura = ultimele3.every(r => r.cultura === ultimele3[0].cultura);
+    if (ultimele3.length >= 2 && toateAceeasiCultura) {
+      alerte.push({
+        parcela: parcela.nume,
+        cultura: ultimele3[0].cultura,
+        ani: ultimele3.length,
+        tip: 'pericol'
+      });
+      return;
+    }
+
+    // Recomandam cultura optima
+    const ultimaCultura = istoricParcela[0].cultura;
+    const recomandariCulturi = {
+      'Grau': ['Floarea-soarelui', 'Rapita', 'Soia'],
+      'Grâu': ['Floarea-soarelui', 'Rapita', 'Soia'],
+      'Porumb': ['Grau', 'Rapita', 'Soia'],
+      'Floarea-soarelui': ['Grau', 'Porumb', 'Orz'],
+      'Rapita': ['Grau', 'Porumb', 'Orz'],
+      'Rapiță': ['Grau', 'Porumb', 'Orz'],
+      'Soia': ['Grau', 'Porumb', 'Floarea-soarelui'],
+      'Orz': ['Floarea-soarelui', 'Rapita', 'Soia']
+    };
+    const rec = recomandariCulturi[ultimaCultura];
+    if (rec) {
+      recomandari.push({
+        parcela: parcela.nume,
+        ultimaCultura: ultimaCultura,
+        recomandate: rec
+      });
+    }
+  });
+
+  if (!alerte.length && !recomandari.length) {
+    cont.innerHTML = '<div style="color:var(--ai-green);font-size:13px;text-align:center;padding:16px"><i class="ti ti-circle-check" style="font-size:20px;display:block;margin-bottom:6px"></i>Rotatia culturilor este optima!</div>';
+    return;
+  }
+
+  cont.innerHTML =
+    alerte.map(a =>
+      '<div class="alert-box" style="border-color:#f0b0b0;background:#fce8e8;margin-bottom:8px">'
+      +'<i class="ti ti-alert-triangle" style="color:var(--danger);font-size:18px"></i>'
+      +'<div><b style="color:var(--danger)">Atentie: Monocultura '+a.ani+' ani — '+escapeHTML(a.parcela)+'</b>'
+      +'<div style="font-size:12px;color:var(--gray-600);margin-top:2px">'+escapeHTML(a.cultura)+' cultivat '+a.ani+' ani consecutiv. Schimbati cultura pentru sezonul urmator!</div>'
+      +'</div></div>'
+    ).join('')
+    + recomandari.map(r =>
+      '<div class="alert-box" style="margin-bottom:8px">'
+      +'<i class="ti ti-bulb" style="color:var(--wheat);font-size:18px"></i>'
+      +'<div><b>Recomandare rotatie — '+escapeHTML(r.parcela)+'</b>'
+      +'<div style="font-size:12px;color:var(--gray-600);margin-top:2px">Dupa '+escapeHTML(r.ultimaCultura)+', recomandam: <b>'+r.recomandate.join(', ')+'</b></div>'
+      +'</div></div>'
+    ).join('');
 }
 // Inregistrare Service Worker PWA
 if ('serviceWorker' in navigator) {
