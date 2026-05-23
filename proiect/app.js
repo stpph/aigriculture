@@ -71,6 +71,7 @@ function switchTab(id, btn) {
   document.getElementById('sidebar')?.classList.remove('open');
   document.getElementById('sidebar-overlay')?.classList.remove('active');
   // Hook-uri per tab
+  if (id === 'contabilitate') { renderTabelCheltuieli(null); updateSumeContabilitate(); renderCatBars(); }
   if (id === 'profitabilitate') calculeazaProfitabilitate();
   if (id === 'rotatie') renderRotatieTabel();
   if (id === 'stiri' && toateStirile.length === 0) incarcaStiri();
@@ -1159,7 +1160,7 @@ async function marcheazaRevizie(id) {
 async function loadCheltuieli() {
   if (!currentUser) return;
   const { data,error } = await sb.from('cheltuieli').select('*').eq('user_id',currentUser.id).order('data',{ascending:false});
-  if (!error&&data) { cheltuieliData=data; renderTabelCheltuieli(); updateSumeContabilitate(); renderCatBars(); }
+  if (!error&&data) { cheltuieliData=data; renderTabelCheltuieli(null); updateSumeContabilitate(); renderCatBars(); }
 }
 function updateSumeContabilitate() {
   const totalCheltuieli=cheltuieliData.filter(c=>c.tip==='cheltuiala').reduce((s,c)=>s+parseFloat(c.suma||0),0);
@@ -1307,7 +1308,8 @@ async function adaugaDinCalculator() {
   const costSam=sup*(parseFloat(document.getElementById('sam-cantitate').value)||0)*(parseFloat(document.getElementById('sam-pret').value)||0);
 const ingrCant=parseFloat(document.getElementById('ingr-cantitate').value)||0;
   const ingrPret=parseFloat(document.getElementById('ingr-pret').value)||0;
-  const costIngr=sup*(ingrCant/1000)*ingrPret;  const costMot=sup*(parseFloat(document.getElementById('mot-l').value)||0)*(parseFloat(document.getElementById('mot-pret').value)||0);
+  const costIngr=sup*(ingrCant/1000)*ingrPret;
+    const costMot=sup*(parseFloat(document.getElementById('mot-l').value)||0)*(parseFloat(document.getElementById('mot-pret').value)||0);
   const pest=parseFloat(document.getElementById('pest-val').value)||0, alt=parseFloat(document.getElementById('alt-val').value)||0;
   if (costSam>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Seminte / Material Sadit',parcela,suma:costSam,data:today,descriere:'Seminte: '+sup+' ha'});
   if (costIngr>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Ingrasaminte / Tratamente',parcela,suma:costIngr,data:today,descriere:'Ingrasaminte: '+sup+' ha'});
