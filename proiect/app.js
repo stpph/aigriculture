@@ -1166,6 +1166,26 @@ async function loadCheltuieli() {
     renderTabelCheltuieli(null);
   }
 }
+function renderTabelCheltuieli(filter, customList) {
+  const tbody=document.getElementById('tabel-cheltuieli'); if (!tbody) return;
+  let list = customList || (filter ? cheltuieliData.filter(c=>c.categorie===filter) : cheltuieliData);
+  if (!list.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio inregistrare.</td></tr>'; return; }
+  tbody.innerHTML=list.map(c=>{
+    const culoare=c.tip==='venit'?'var(--ai-green)':'var(--danger)';
+    const semn=c.tip==='venit'?'+':'-';
+    const badgeClasa=c.tip==='venit'?'badge-green':'badge-red';
+    const tipLabel=c.tip==='venit'?'Venit':'Cheltuiala';
+    return '<tr>'
+      +'<td>'+fmtData(c.data)+'</td>'
+      +'<td>'+escapeHTML(c.categorie)+'</td>'
+      +'<td>'+escapeHTML(c.parcela||'-')+'</td>'
+      +'<td>'+escapeHTML(c.descriere||'-')+'</td>'
+      +'<td style="font-weight:600;color:'+culoare+'">'+semn+parseFloat(c.suma).toLocaleString('ro-RO')+' RON</td>'
+      +'<td><span class="badge '+badgeClasa+'">'+tipLabel+'</span></td>'
+      +'<td><button class="btn btn-danger btn-sm" onclick="stergeCheltuiala(\''+c.id+'\')" style="width:auto;padding:5px 10px"><i class="ti ti-trash"></i></button></td>'
+      +'</tr>';
+  }).join('');
+}
 function updateSumeContabilitate() {
   const totalCheltuieli=cheltuieliData.filter(c=>c.tip==='cheltuiala').reduce((s,c)=>s+parseFloat(c.suma||0),0);
   const totalVenituri=cheltuieliData.filter(c=>c.tip==='venit').reduce((s,c)=>s+parseFloat(c.suma||0),0);
