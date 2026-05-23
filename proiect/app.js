@@ -1216,7 +1216,11 @@ function filtreazaCheltuieli() {
   const fp = document.getElementById('filter-parcela-chelt')?.value || '';
   let list = cheltuieliTipFilter ? cheltuieliData.filter(c => c.tip === cheltuieliTipFilter) : cheltuieliData;
   if (f) list = list.filter(c => c.categorie === f);
-  if (fp) list = list.filter(c => c.parcela === fp);
+if (fp) {
+  const parcelaGasita = parceleData.find(p => p.id === fp);
+  const numeParc = parcelaGasita ? parcelaGasita.nume : fp;
+  list = list.filter(c => c.parcela === numeParc);
+}
   if (cheltuieliSortCol) {
     list = [...list].sort((a, b) => {
       if (cheltuieliSortCol === 'data') return (new Date(a.data) - new Date(b.data)) * cheltuieliSortDir;

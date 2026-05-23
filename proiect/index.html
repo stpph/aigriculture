@@ -791,6 +791,9 @@
               <div style="font-weight:700;font-size:15px">Istoric Tranzactii</div>
               <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
                 <div style="display:flex;gap:4px">
+                 <select id="filter-parcela-chelt" onchange="filtreazaCheltuieli()" style="width:auto;padding:7px 11px;font-size:12px">
+  <option value="">Toate parcelele</option>
+</select>
                   <button id="filter-tip-toate" class="btn btn-primary btn-sm" onclick="filtreazaTipCheltuieli('')" style="width:auto">Toate</button>
                   <button id="filter-tip-chelt" class="btn btn-ghost btn-sm" onclick="filtreazaTipCheltuieli('cheltuiala')" style="width:auto;color:var(--danger);border-color:var(--danger)">Cheltuieli</button>
                   <button id="filter-tip-venit" class="btn btn-ghost btn-sm" onclick="filtreazaTipCheltuieli('venit')" style="width:auto;color:var(--ai-green);border-color:var(--ai-green)">Venituri</button>
