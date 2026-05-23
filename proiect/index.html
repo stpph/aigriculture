@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f2d14">
+  <!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f2d14">
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AIgriculture">
+  <link rel="apple-touch-icon" href="/icons/icon-192x192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192x192.png">
+  <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152x152.png">
+  <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144x144.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/icon-512x512.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192x192.png">
+  <!-- END PWA -->
+  <title>AIgriculture</title>
+  <title>AIgriculture</title>
+  <link rel="stylesheet" href="style.css">
+ <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css"/>
+ <style>
+  .app-shell { display: flex !important; flex-direction: row !important; width: 100% !important; }
+  .content-area { flex: 1 1 auto !important; min-width: 0 !important; min-height: calc(100vh - 64px) !important; overflow-y: auto !important; display: block !important; position: relative !important; }
+  .content { display: block !important; padding: 28px !important; width: 100% !important; box-sizing: border-box !important; }
+  .tab { display: none; }
+  .tab.active { display: block !important; width: 100% !important; min-height: 50px !important; }
+</style>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading-overlay" style="display:none;align-items:center;justify-content:center">
+  <div class="loading-spinner">
+    <i class="ti ti-loader" style="font-size:28px;display:block;margin-bottom:10px;color:var(--ai-green)"></i>
+    Se încarcă...
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- ==================== AUTH ==================== -->
+<div class="screen active" id="screen-auth">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <span class="logo-ai">ai</span>
+        <i class="ti ti-leaf logo-leaf"></i>
+        <span class="logo-griculture">griculture</span>
+      </div>
+      <div class="auth-sub">Platforma inteligentă pentru fermierii români</div>
+      <div id="auth-content">
+        <div class="auth-tabs">
+          <button class="auth-tab active" id="tab-login-btn" onclick="switchAuthTab('login')">Autentificare</button>
+          <button class="auth-tab" id="tab-reg-btn" onclick="switchAuthTab('register')">Cont nou</button>
+        </div>
+        <div id="auth-msg-box"></div>
+        <div id="login-form">
+          <div class="form-group"><label>Email</label><input type="email" id="login-email" placeholder="fermier@exemplu.ro" onkeydown="if(event.key==='Enter')doLogin()"></div>
+          <div class="form-group"><label>Parolă</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+          <button class="btn btn-primary" id="login-btn" onclick="doLogin()"><i class="ti ti-login"></i> Intră în cont</button>
+          <div style="text-align:center;margin-top:16px;font-size:13px;color:var(--gray-600)">Nu ai cont? <a href="#" onclick="switchAuthTab('register');return false;" style="color:var(--ai-green);font-weight:600">Înregistrează-te gratuit</a></div>
+        </div>
+        <div id="register-form" style="display:none">
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0"><label>Prenume</label><input type="text" id="reg-prenume" placeholder="Ion"></div>
+            <div class="form-group" style="margin-bottom:0"><label>Nume</label><input type="text" id="reg-nume" placeholder="Popescu"></div>
+          </div>
+          <div class="form-group" style="margin-top:12px"><label>Email</label><input type="email" id="reg-email" placeholder="fermier@exemplu.ro"></div>
+          <div class="form-row">
+            <div class="form-group" style="margin-bottom:0"><label>Județ</label>
+              <select id="reg-judet"><option value="">Selectează...</option><option>Alba</option><option>Arad</option><option>Argeș</option><option>Bacău</option><option>Bihor</option><option>Bistrița-Năsăud</option><option>Botoșani</option><option>Brăila</option><option>Brașov</option><option>Buzău</option><option>Călărași</option><option>Caraș-Severin</option><option>Cluj</option><option>Constanța</option><option>Covasna</option><option>Dâmbovița</option><option>Dolj</option><option>Galați</option><option>Giurgiu</option><option>Gorj</option><option>Harghita</option><option>Hunedoara</option><option>Ialomița</option><option>Iași</option><option>Ilfov</option><option>Maramureș</option><option>Mehedinți</option><option>Mureș</option><option>Neamț</option><option>Olt</option><option>Prahova</option><option>Sălaj</option><option>Satu Mare</option><option>Sibiu</option><option>Suceava</option><option>Teleorman</option><option>Timiș</option><option>Tulcea</option><option>Vâlcea</option><option>Vaslui</option><option>Vrancea</option></select>
+            </div>
+            <div class="form-group" style="margin-bottom:0"><label>Tip fermă</label>
+              <select id="reg-tip"><option>Mică (sub 50 ha)</option><option>Medie (50–200 ha)</option><option>Mare (peste 200 ha)</option></select>
+            </div>
+          </div>
+          <div class="form-group" style="margin-top:12px"><label>Parolă (minim 6 caractere)</label><input type="password" id="reg-pass" placeholder="••••••••"></div>
+          <div class="form-group"><label>Confirmă parola</label><input type="password" id="reg-pass2" placeholder="••••••••" onkeydown="if(event.key==='Enter')doRegister()"></div>
+          <button class="btn btn-primary" id="reg-btn" onclick="doRegister()"><i class="ti ti-user-plus"></i> Creează cont gratuit</button>
+        </div>
+      </div>
+      <div id="auth-success" style="display:none">
+        <div class="success-screen">
+          <div class="success-icon"><i class="ti ti-circle-check"></i></div>
+          <div class="success-title">Cont creat cu succes!</div>
+          <div class="success-sub" id="success-msg-text">Bun venit în AIgriculture!</div>
+          <button class="btn btn-primary" onclick="goToApp()"><i class="ti ti-arrow-right"></i> Intră în platformă</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== APP ==================== -->
+<div class="screen" id="screen-app">
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:14px">
+      <button id="sidebar-toggle" onclick="toggleSidebar()" class="hamburger-btn"><i class="ti ti-menu-2"></i></button>
+      <div class="logo"><span class="logo-ai">ai</span><i class="ti ti-leaf logo-leaf"></i><span class="logo-griculture">griculture</span></div>
+    </div>
+    <div class="user-info">
+      <span class="top-weather-badge" id="top-weather"></span>
+      <span style="color:rgba(255,255,255,0.5);font-size:12px" id="top-judet"></span>
+      <div class="user-badge" id="top-user"></div>
+      <button onclick="toggleDarkMode()" id="dark-btn" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:6px 10px;border-radius:8px;cursor:pointer;font-size:16px;margin-right:4px" title="Dark mode"><i class="ti ti-moon" id="dark-icon"></i></button>
+      <button class="logout-btn" onclick="doLogout()"><i class="ti ti-logout"></i> Ieși</button>
+    </div>
+  </div>
+
+  <div class="app-shell">
+    <!-- SIDEBAR -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-section-label">Platformă</div>
+      <button class="nav-btn active" onclick="switchTab('dashboard',this)"><i class="ti ti-layout-dashboard"></i><span>Tablou de bord</span></button>
+
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-label">Fermă</div>
+      <button class="nav-btn" onclick="switchTab('parcele',this)"><i class="ti ti-map-2"></i><span>Parcele & Hartă</span></button>
+      <button class="nav-btn" onclick="switchTab('calendar',this)"><i class="ti ti-calendar-stats"></i><span>Calendar Agricol</span></button>
+      <button class="nav-btn" onclick="switchTab('lucrari',this)"><i class="ti ti-tractor"></i><span>Lucrări Agricole</span></button>
+      <button class="nav-btn" onclick="switchTab('recolte',this)"><i class="ti ti-grain"></i><span>Recolte & Producție</span></button>
+      <button class="nav-btn" onclick="switchTab('rotatie',this)"><i class="ti ti-arrows-shuffle"></i><span>Rotație Culturi</span></button>
+      <button class="nav-btn" onclick="switchTab('fitosanitar',this)"><i class="ti ti-flask"></i><span>Registru Fitosanitar</span></button>
+      <button class="nav-btn" onclick="switchTab('utilaje',this)"><i class="ti ti-engine"></i><span>Utilaje</span></button>
+      <button class="nav-btn" onclick="switchTab('meteo',this)"><i class="ti ti-cloud-sun"></i><span>Meteo</span></button>
+
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-label">Business</div>
+      <button class="nav-btn" onclick="switchTab('contabilitate',this)"><i class="ti ti-coins"></i><span>Contabilitate</span></button>
+      <button class="nav-btn" onclick="switchTab('profitabilitate',this)"><i class="ti ti-chart-bar"></i><span>Profitabilitate</span></button>
+      <button class="nav-btn" onclick="switchTab('stiri',this)"><i class="ti ti-news"></i><span>Știri Agribusiness</span></button>
+
+      <div class="sidebar-divider"></div>
+      <div class="sidebar-section-label">Utilitar</div>
+      <button class="nav-btn" onclick="switchTab('asistent',this)"><i class="ti ti-robot"></i><span>Asistent AI</span></button>
+      <button class="nav-btn" onclick="switchTab('note',this)"><i class="ti ti-notes"></i><span>Note & Memento-uri</span></button>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-footer-info">
+          <strong id="sidebar-user-name">Fermier</strong>
+          <span id="sidebar-user-judet">România</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- OVERLAY mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+    <!-- CONTENT -->
+    <div class="content-area">
+      <div class="content">
+
+        <!-- ====== DASHBOARD ====== -->
+        <div class="tab active" id="tab-dashboard">
+          <div class="setup-banner" id="setup-banner" style="display:none">
+            <i class="ti ti-info-circle" style="font-size:18px;flex-shrink:0"></i>
+            <div><b>Bun venit!</b> Începe prin a adăuga prima parcelă în <b>Parcele & Hartă</b>.</div>
+          </div>
+          <div class="grid4" style="margin-bottom:20px">
+            <div class="stat-card stat-green"><div class="stat-icon"><i class="ti ti-map-2"></i></div><div class="stat-val" id="d-ha">0</div><div class="stat-label">Hectare totale</div></div>
+            <div class="stat-card stat-blue"><div class="stat-icon" style="color:var(--ai-blue)"><i class="ti ti-plant-2"></i></div><div class="stat-val" id="d-parcele">0</div><div class="stat-label">Parcele active</div></div>
+            <div class="stat-card stat-wheat"><div class="stat-icon" style="color:var(--wheat)"><i class="ti ti-temperature"></i></div><div class="stat-val" id="d-temp-azi">--°</div><div class="stat-label">Temperatură azi</div></div>
+            <div class="stat-card stat-red"><div class="stat-icon" style="color:var(--danger)"><i class="ti ti-receipt"></i></div><div class="stat-val" id="d-chelt">0</div><div class="stat-label">Cheltuieli RON</div></div>
+          </div>
+          <div class="grid4" style="margin-bottom:20px">
+            <div class="stat-card stat-green"><div class="stat-icon"><i class="ti ti-grain"></i></div><div class="stat-val" id="d-recolte">0</div><div class="stat-label">Tone recoltate</div></div>
+            <div class="stat-card stat-blue"><div class="stat-icon" style="color:var(--ai-blue)"><i class="ti ti-tractor"></i></div><div class="stat-val" id="d-lucrari">0</div><div class="stat-label">Lucrări efectuate</div></div>
+            <div class="stat-card stat-wheat"><div class="stat-icon" style="color:var(--wheat)"><i class="ti ti-engine"></i></div><div class="stat-val" id="d-utilaje">0</div><div class="stat-label">Utilaje active</div></div>
+            <div class="stat-card stat-green"><div class="stat-icon"><i class="ti ti-trending-up"></i></div><div class="stat-val" id="d-profit">0</div><div class="stat-label">Profit net RON</div></div>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <div class="section-title" style="font-size:16px;margin-bottom:14px"><i class="ti ti-bell-ringing"></i> Alerte & Recomandări</div>
+              <div id="dash-alerte">
+                <div class="alert-box"><i class="ti ti-cloud-rain"></i><div><b style="font-size:13px">Ploaie prognozată</b><div style="font-size:12px;color:var(--gray-600);margin-top:2px">Verifică starea vremii înainte de tratamente.</div></div></div>
+                <div class="alert-box alert-box-blue"><i class="ti ti-calendar" style="color:var(--ai-blue)"></i><div><b style="font-size:13px">Termen APIA</b><div style="font-size:12px;color:var(--gray-600);margin-top:2px">Verificați termenele de depunere subvenții.</div></div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="section-title" style="font-size:16px;margin-bottom:14px"><i class="ti ti-seedling"></i> Culturile tale</div>
+              <div id="d-culturi"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:24px">Nicio parcelă înregistrată.</div></div>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <div class="section-title" style="font-size:16px;margin-bottom:14px"><i class="ti ti-clock-record"></i> Ultimele lucrări</div>
+              <div id="d-ult-lucrari"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Nicio lucrare înregistrată.</div></div>
+            </div>
+            <div class="card">
+              <div class="section-title" style="font-size:16px;margin-bottom:14px"><i class="ti ti-notes"></i> Note urgente</div>
+              <div id="d-note-urgente"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Nicio notă cu prioritate înaltă.</div></div>
+            </div>
+          </div>
+        </div>
+<!-- ====== CALENDAR AGRICOL ====== -->
+<div class="tab" id="tab-calendar">
+  <div class="section-title"><i class="ti ti-calendar-stats"></i> Calendar Ani Agricoli</div>
+
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card">
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px">Adaugă an agricol</div>
+      <div class="form-row">
+        <div>
+          <label>An agricol</label>
+          <select id="cal-an">
+            <option value="2025-2026">2025-2026</option>
+            <option value="2024-2025">2024-2025</option>
+            <option value="2023-2024">2023-2024</option>
+            <option value="2022-2023">2022-2023</option>
+            <option value="2021-2022">2021-2022</option>
+          </select>
+        </div>
+        <div>
+          <label>Parcelă</label>
+          <select id="cal-parcela"><option value="">Selectează...</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div>
+          <label>Cultură</label>
+          <select id="cal-cultura">
+            <option>Porumb</option><option>Grâu</option><option>Floarea-soarelui</option>
+            <option>Rapiță</option><option>Orz</option><option>Soia</option><option>Altele</option>
+          </select>
+        </div>
+        <div>
+          <label>Status</label>
+          <select id="cal-status">
+            <option value="planificat">Planificat</option>
+            <option value="in_desfasurare">În desfășurare</option>
+            <option value="finalizat">Finalizat</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div><label>Data semănatului</label><input type="date" id="cal-semanat"></div>
+        <div><label>Data recoltei</label><input type="date" id="cal-recolta"></div>
+      </div>
+      <div class="form-row">
+        <div><label>Producție (tone)</label><input type="number" id="cal-productie" placeholder="0.00" step="0.01" min="0" oninput="calcCalProductie()"></div>
+        <div><label>Suprafață (ha)</label><input type="number" id="cal-suprafata" placeholder="0.00" step="0.01" min="0" oninput="calcCalProductie()"></div>
+      </div>
+      <div id="cal-tha-preview" style="display:none;background:var(--ai-green-light);padding:10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ai-green-dark);margin-bottom:12px">
+        Randament: <span id="cal-tha-val">—</span> t/ha
+      </div>
+      <div class="form-group"><label>Note</label><textarea id="cal-note" rows="2" placeholder="Observații despre acest an agricol..."></textarea></div>
+      <button class="btn btn-primary" id="cal-btn" onclick="salveazaAnAgricol()"><i class="ti ti-plus"></i> Salvează</button>
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px">Sumar ani agricoli</div>
+      <div id="cal-sumar"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Niciun an agricol înregistrat.</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div style="font-weight:700;font-size:15px">Istoric ani agricoli</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <select id="cal-filter-an" onchange="filtreazaCalendar()" style="width:auto;padding:7px 11px;font-size:12px">
+          <option value="">Toți anii</option>
+          <option value="2025-2026">2025-2026</option>
+          <option value="2024-2025">2024-2025</option>
+          <option value="2023-2024">2023-2024</option>
+          <option value="2022-2023">2022-2023</option>
+        </select>
+        <select id="cal-filter-parcela" onchange="filtreazaCalendar()" style="width:auto;padding:7px 11px;font-size:12px">
+          <option value="">Toate parcelele</option>
+        </select>
+      </div>
+    </div>
+    <div id="cal-timeline"></div>
+  </div>
+</div>
+        <!-- ====== PARCELE ====== -->
+        <div class="tab" id="tab-parcele">
+          <div class="section-title"><i class="ti ti-map-2"></i> Parcele & Cartografiere</div>
+          <div class="grid2">
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px" id="form-parcela-titlu"><i class="ti ti-plus" style="color:var(--ai-green)"></i> Adaugă parcelă nouă</div>
+              <input type="hidden" id="p-id-edit"><input type="hidden" id="p-coordonate">
+              <div style="background:var(--ai-blue-light);padding:11px 14px;border-radius:9px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(26,107,191,0.15)">
+                <span style="font-size:12px;font-weight:600;color:var(--ai-blue-dark)"><i class="ti ti-file-import"></i> Import APIA (GeoJSON/KML)</span>
+                <input type="file" id="apia-file" accept=".geojson,.json,.kml" style="display:none" onchange="importaFisierApia(event)">
+                <button class="btn btn-secondary btn-sm" onclick="document.getElementById('apia-file').click()" style="width:auto">Alege fișier</button>
+              </div>
+              <div class="form-group"><label>Nume parcelă</label><input type="text" id="p-nume" placeholder="ex: Parcela de la pădure"></div>
+              <div class="form-row">
+                <div class="form-group"><label>Suprafață (ha)</label>
+                  <div style="display:flex;gap:8px">
+                    <input type="number" id="p-ha" placeholder="0.00" step="0.01" min="0">
+                    <button class="btn btn-wheat btn-sm" onclick="deschideModalHarta()" style="width:auto;white-space:nowrap;flex-shrink:0"><i class="ti ti-map-search"></i> Hartă</button>
+                  </div>
+                </div>
+                <div><label>Cultură</label>
+                  <select id="p-cultura"><option value="">Selectează...</option><option>Porumb</option><option>Grâu</option><option>Floarea-soarelui</option><option>Rapiță</option><option>Orz</option><option>Soia</option><option>Altele</option></select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div><label>Localitate</label><input type="text" id="p-loc" placeholder="ex: Iași"></div>
+                <div><label>Data semănatului</label><input type="date" id="p-data"></div>
+              </div>
+              <div class="form-group"><label>Note</label><textarea id="p-note" rows="2" placeholder="Sol, tratamente, observații..."></textarea></div>
+              <button class="btn btn-primary" id="p-btn" onclick="adaugaParcela()"><i class="ti ti-plus"></i> Adaugă parcelă</button>
+            </div>
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Distribuție Culturi</div>
+              <div id="cultura-bars"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Nicio distribuție.</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div style="font-weight:700;font-size:15px" id="p-total-num">0 parcele</div>
+              <div style="font-weight:700;font-size:15px;color:var(--ai-green)" id="p-total-ha">0.0 ha</div>
+            </div>
+            <div id="lista-parcele"></div>
+          </div>
+          <!-- MODAL HARTĂ -->
+          <div id="map-modal" class="map-modal-overlay" style="display:none">
+            <div class="map-modal-content">
+              <div class="map-modal-header"><h3><i class="ti ti-map-pin"></i> Conturează Parcela pe Hartă</h3><button class="map-modal-close" onclick="inchideModalHarta()">&times;</button></div>
+              <div class="map-search-container"><input type="text" id="map-search-input" placeholder="Caută localitate, comună, județ..."><button onclick="cautaLocatieHarta()"><i class="ti ti-search"></i> Caută</button></div>
+              <div id="map" style="width:100%;height:460px;"></div>
+              <div class="map-modal-footer">
+                <div style="font-size:12px;color:var(--gray-600)"><b>Instrucțiuni:</b> Click <i class="ti ti-pentagon"></i> din stânga → adaugă puncte → dublu-click pentru a închide. Trage punctele pentru ajustare.</div>
+                <button class="btn btn-primary btn-sm" onclick="inchideModalHarta()" style="width:auto;padding:9px 18px"><i class="ti ti-check"></i> Confirmă</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== LUCRĂRI AGRICOLE ====== -->
+        <div class="tab" id="tab-lucrari">
+          <div class="section-title"><i class="ti ti-tractor"></i> Jurnal Lucrări Agricole</div>
+          <div class="grid2">
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Înregistrează lucrare</div>
+              <input type="hidden" id="luc-id-edit">
+              <div class="form-row">
+                <div><label>Tip lucrare</label>
+                  <select id="luc-tip">
+                    <option>Arat / Scarificat</option><option>Discuit</option><option>Fertilizare de bază</option>
+                    <option>Semănat</option><option>Erbicidat</option><option>Fertilizare foliar</option>
+                    <option>Tratament fitosanitar</option><option>Irigat</option><option>Recoltat</option>
+                    <option>Transport recoltă</option><option>Altele</option>
+                  </select>
+                </div>
+                <div><label>Parcelă</label><select id="luc-parcela"><option value="">Toate parcelele</option></select></div>
+              </div>
+              <div class="form-row">
+                <div><label>Data lucrării</label><input type="date" id="luc-data"></div>
+                <div><label>Status</label>
+                  <select id="luc-status"><option value="finalizat">Finalizat</option><option value="in_progres">În progres</option><option value="planificat">Planificat</option></select>
+                </div>
+              </div>
+              <div class="form-row">
+  <div><label>Utilaj (tractor/combină)</label>
+    <select id="luc-utilaj">
+      <option value="">Selectează utilaj...</option>
+    </select>
+  </div>
+  <div><label>Implement (anexă)</label>
+    <select id="luc-implement">
+      <option value="">Selectează implement...</option>
+    </select>
+  </div>
+</div>
+<div class="form-row">
+  <div><label>Operator</label><input type="text" id="luc-operator" placeholder="ex: Ion Popescu"></div>
+  <div></div>
+</div>
+              <div class="form-row">
+                <div><label>Durată (ore)</label><input type="number" id="luc-durata" placeholder="0" min="0" step="0.5"></div>
+                <div></div>
+              </div>
+              <div class="form-group"><label>Observații</label><textarea id="luc-obs" rows="2" placeholder="Condiții teren, cantități utilizate..."></textarea></div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-primary" id="luc-btn" onclick="salveazaLucrare()" style="flex:1"><i class="ti ti-plus"></i> Salvează lucrare</button>
+                <button class="btn btn-ghost btn-sm" onclick="resetFormLucrare()" style="width:auto"><i class="ti ti-x"></i></button>
+              </div>
+            </div>
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Statistici lucrări</div>
+              <div id="lucrari-stats"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Nicio lucrare înregistrată.</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+              <div style="font-weight:700;font-size:15px">Jurnal complet</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <select id="luc-filter-parcela" onchange="filtreazaLucrari()" style="width:auto;padding:7px 10px;font-size:12px"><option value="">Toate parcelele</option></select>
+                <select id="luc-filter-tip" onchange="filtreazaLucrari()" style="width:auto;padding:7px 10px;font-size:12px"><option value="">Toate tipurile</option><option>Arat / Scarificat</option><option>Discuit</option><option>Fertilizare de bază</option><option>Semănat</option><option>Erbicidat</option><option>Fertilizare foliar</option><option>Tratament fitosanitar</option><option>Irigat</option><option>Recoltat</option></select>
+              </div>
+            </div>
+            <div style="overflow-x:auto">
+              <table>
+                <thead><tr><th>Data</th><th>Tip lucrare</th><th>Parcelă</th><th>Utilaj</th><th>Operator</th><th>Durată</th><th>Status</th><th></th></tr></thead>
+                <tbody id="tabel-lucrari"><tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio lucrare înregistrată.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== RECOLTE ====== -->
+        <div class="tab" id="tab-recolte">
+          <div class="section-title"><i class="ti ti-grain"></i> Recolte & Producție</div>
+          <div class="grid3" style="margin-bottom:20px">
+            <div class="stat-card stat-green"><div class="stat-icon"><i class="ti ti-grain"></i></div><div class="stat-val" id="rec-tone-total">0 t</div><div class="stat-label">Total recoltat</div></div>
+            <div class="stat-card stat-blue"><div class="stat-icon" style="color:var(--ai-blue)"><i class="ti ti-chart-area"></i></div><div class="stat-val" id="rec-randament-med">0 t/ha</div><div class="stat-label">Randament mediu</div></div>
+            <div class="stat-card stat-wheat"><div class="stat-icon" style="color:var(--wheat)"><i class="ti ti-currency-dollar"></i></div><div class="stat-val" id="rec-venit-total">0 RON</div><div class="stat-label">Venit total recolte</div></div>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Înregistrează recoltă</div>
+              <div class="form-row">
+                <div><label>Parcelă</label><select id="rec-parcela" onchange="autocompletezaSuprafataRecolta()"><option value="">Selectează parcela</option></select></div>
+                <div><label>Cultură</label><select id="rec-cultura"><option>Porumb</option><option>Grâu</option><option>Floarea-soarelui</option><option>Rapiță</option><option>Orz</option><option>Soia</option><option>Altele</option></select></div>
+              </div>
+              <div class="form-row">
+                <div><label>Sezon (ex: 2024)</label><input type="text" id="rec-sezon" placeholder="2024"></div>
+                <div><label>Data recoltei</label><input type="date" id="rec-data"></div>
+              </div>
+              <div class="form-row">
+  <div><label>Producție (t/ha)</label><input type="number" id="rec-randament-input" placeholder="0.00" step="0.01" min="0" oninput="calcTotalDinRandament()"></div>
+  <div><label>Suprafață (ha)</label><input type="number" id="rec-suprafata" placeholder="0.00" step="0.01" min="0" oninput="calcTotalDinRandament()"></div>
+</div>
+<div id="rec-total-preview" style="background:var(--ai-green-light);padding:10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ai-green-dark);margin-bottom:12px;display:none">
+  Total calculat: <span id="rec-total-val">—</span> tone
+</div>
+<input type="hidden" id="rec-cantitate">
+              <div id="rec-randament-preview" style="background:var(--ai-green-light);padding:10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ai-green-dark);margin-bottom:12px;display:none">
+                Randament calculat: <span id="rec-rand-val">—</span> t/ha
+              </div>
+              <div class="form-row">
+                <div><label>Preț vânzare (RON/t)</label><input type="number" id="rec-pret" placeholder="0" step="1" min="0" oninput="calcVenitRecolta()"></div>
+                <div><label>Calitate</label><select id="rec-calitate"><option>Standard</option><option>Premium</option><option>Clasa I</option><option>Clasa II</option><option>Clasa III</option></select></div>
+              </div>
+              <div id="rec-venit-preview" style="background:var(--ai-blue-light);padding:10px;border-radius:8px;font-size:13px;font-weight:600;color:var(--ai-blue-dark);margin-bottom:12px;display:none">
+                Venit estimat: <span id="rec-venit-val">—</span> RON
+              </div>
+              <div class="form-row">
+                <div><label>Cumpărător</label><input type="text" id="rec-cumparator" placeholder="ex: Cargill România"></div>
+                <div></div>
+              </div>
+              <div class="form-group"><label>Observații</label><textarea id="rec-obs" rows="2" placeholder="Condiții de recoltare, umiditate..."></textarea></div>
+              <button class="btn btn-primary" id="rec-btn" onclick="salveazaRecolta()"><i class="ti ti-plus"></i> Salvează recoltă</button>
+            </div>
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Producție per cultură</div>
+              <div id="rec-grafic-bars"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Nicio recoltă înregistrată.</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-weight:700;font-size:15px;margin-bottom:14px">Istoricul recoltelor</div>
+            <div style="overflow-x:auto">
+              <table>
+                <thead><tr><th>Sezon</th><th>Parcelă</th><th>Cultură</th><th>Cantitate</th><th>Suprafață</th><th>Randament</th><th>Preț/t</th><th>Venit</th><th>Calitate</th><th></th></tr></thead>
+                <tbody id="tabel-recolte"><tr><td colspan="10" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio recoltă înregistrată.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== ROTAȚIE CULTURI ====== -->
+        <div class="tab" id="tab-rotatie">
+          <div class="section-title"><i class="ti ti-arrows-shuffle"></i> Rotație Culturi</div>
+          <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#e6f4e6,#e8f2fc);border:1px solid rgba(46,139,46,0.2)">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <i class="ti ti-info-circle" style="color:var(--ai-green);font-size:22px;flex-shrink:0;margin-top:2px"></i>
+              <div>
+                <div style="font-weight:700;font-size:14px;color:var(--ai-green-dark);margin-bottom:4px">De ce contează rotația culturilor?</div>
+                <div style="font-size:13px;color:var(--soil);line-height:1.6">Rotația corectă previne acumularea bolilor și dăunătorilor specifici, îmbunătățește structura solului și reduce necesarul de fertilizanți cu până la 30%. Aplicația monitorizează ce ai cultivat pe fiecare parcelă și te avertizează când există risc de monocultură.</div>
+              </div>
+            </div>
+          </div>
+          <div class="grid2" style="margin-bottom:16px">
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Adaugă înregistrare manuală</div>
+              <div class="form-row">
+                <div><label>Parcelă</label><select id="rot-parcela"><option value="">Selectează...</option></select></div>
+                <div><label>Sezon</label><input type="text" id="rot-sezon" placeholder="ex: 2023"></div>
+              </div>
+              <div class="form-group"><label>Cultură</label>
+                <select id="rot-cultura"><option>Porumb</option><option>Grâu</option><option>Floarea-soarelui</option><option>Rapiță</option><option>Orz</option><option>Soia</option><option>Altele</option></select>
+              </div>
+              <button class="btn btn-primary" onclick="salveazaRotatie()"><i class="ti ti-plus"></i> Adaugă</button>
+            </div>
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Avertizări rotație</div>
+              <div id="rot-avertizari"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Adaugă date pentru a vedea avertizări.</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-weight:700;font-size:15px;margin-bottom:16px">Istoric rotație per parcelă</div>
+            <div id="rot-tabel"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:24px">Nicio înregistrare de rotație.</div></div>
+          </div>
+        </div>
+
+        <!-- ====== FITOSANITAR ====== -->
+        <div class="tab" id="tab-fitosanitar">
+          <div class="section-title"><i class="ti ti-flask"></i> Registru Fitosanitar</div>
+          <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#fff8e0,#fff);border:1px solid #f0d070">
+            <div style="display:flex;gap:12px;align-items:flex-start">
+              <i class="ti ti-alert-triangle" style="color:var(--wheat);font-size:22px;flex-shrink:0;margin-top:2px"></i>
+              <div style="font-size:13px;color:var(--soil);line-height:1.6"><b>Obligație legală:</b> Conform legislației române (HG 563/2007), fermierii care aplică produse fitosanitare sunt obligați să țină un registru al tratamentelor. Acest registru digital poate fi folosit în controale APIA și ANSVSA.</div>
+            </div>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Înregistrează tratament</div>
+              <div class="form-row">
+                <div><label>Parcelă</label><select id="fito-parcela"><option value="">Selectează...</option></select></div>
+                <div><label>Cultură</label><select id="fito-cultura"><option>Porumb</option><option>Grâu</option><option>Floarea-soarelui</option><option>Rapiță</option><option>Orz</option><option>Soia</option><option>Altele</option></select></div>
+              </div>
+              <div class="form-row">
+                <div><label>Data aplicării</label><input type="date" id="fito-data"></div>
+                <div><label>Tip tratament</label>
+                  <select id="fito-tip"><option>Erbicid</option><option>Fungicid</option><option>Insecticid</option><option>Regulator creștere</option><option>Fertilizant foliar</option><option>Altele</option></select>
+                </div>
+              </div>
+              <div class="form-group"><label>Produs comercial</label><input type="text" id="fito-produs" placeholder="ex: Roundup 360 SL"></div>
+              <div class="form-group"><label>Substanță activă</label><input type="text" id="fito-substanta" placeholder="ex: Glifosat 360 g/l"></div>
+              <div class="form-row">
+                <div><label>Doză (l/ha sau kg/ha)</label><input type="text" id="fito-doza" placeholder="ex: 3 l/ha"></div>
+                <div><label>Suprafață tratată (ha)</label><input type="number" id="fito-suprafata" placeholder="0.00" step="0.01" min="0"></div>
+              </div>
+              <div class="form-row">
+                <div><label>Operator aplicator</label><input type="text" id="fito-operator" placeholder="Nume operator"></div>
+                <div><label>Condiții meteo</label><input type="text" id="fito-meteo" placeholder="ex: Senin, 18°C, vânt slab"></div>
+              </div>
+              <div class="form-row">
+                <div><label>Perioadă pauză (zile)</label><input type="number" id="fito-pauza" placeholder="0" min="0"></div>
+                <div><label>Dată reintrare în cultură</label><input type="date" id="fito-reintrare"></div>
+              </div>
+              <div class="form-group"><label>Observații</label><textarea id="fito-obs" rows="2" placeholder="Observații suplimentare..."></textarea></div>
+              <button class="btn btn-primary" id="fito-btn" onclick="salveazaFitosanitar()"><i class="ti ti-plus"></i> Salvează tratament</button>
+            </div>
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Perioade de pauză active</div>
+              <div id="fito-pauze-active"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Nicio perioadă de pauză activă.</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-weight:700;font-size:15px;margin-bottom:14px">Registru tratamente</div>
+            <div style="overflow-x:auto">
+              <table>
+                <thead><tr><th>Data</th><th>Parcelă</th><th>Cultură</th><th>Produs</th><th>Tip</th><th>Doză</th><th>Supraf.</th><th>Reintrare</th><th></th></tr></thead>
+                <tbody id="tabel-fitosanitar"><tr><td colspan="9" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio înregistrare.</td></tr></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== UTILAJE ====== -->
+        <div class="tab" id="tab-utilaje">
+          <div class="section-title"><i class="ti ti-engine"></i> Gestiune Utilaje & Echipamente</div>
+          <div class="grid2">
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px" id="utilaj-form-title">Adaugă utilaj</div>
+              <input type="hidden" id="utilaj-id-edit">
+              <div class="form-row">
+                <div><label>Denumire</label><input type="text" id="utilaj-nume" placeholder="ex: Tractor John Deere"></div>
+                <div><label>Tip</label>
+                  <select id="utilaj-tip"><option>Tractor</option><option>Combină</option><option>Semănătoare</option><option>Plug</option><option>Disc</option><option>Pulverizator</option><option>Remorcă</option><option>Generator</option><option>Altele</option></select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div><label>Marcă</label><input type="text" id="utilaj-marca" placeholder="ex: John Deere"></div>
+                <div><label>Model</label><input type="text" id="utilaj-model" placeholder="ex: 6130R"></div>
+              </div>
+              <div class="form-row">
+                <div><label>An fabricație</label><input type="number" id="utilaj-an" placeholder="2018" min="1950" max="2030"></div>
+                <div><label>Nr. înmatriculare</label><input type="text" id="utilaj-nr" placeholder="IS-12-AGR"></div>
+              </div>
+              <div class="form-row">
+  <div><label>Ore motor actuale</label><input type="number" id="utilaj-ore" placeholder="0" min="0"></div>
+  <div><label>Interval revizie (ore)</label><input type="number" id="utilaj-interval" placeholder="250" min="1"></div>
+</div>
+<div class="form-row">
+  <div><label>Ore la ultima revizie</label><input type="number" id="utilaj-ore-revizie" placeholder="0" min="0"></div>
+  <div></div>
+</div>
+              <div class="form-row">
+                <div><label>Ultima revizie</label><input type="date" id="utilaj-revizie"></div>
+                <div><label>Status</label><select id="utilaj-status"><option value="functional">Funcțional</option><option value="revizie">La revizie</option><option value="defect">Defect</option><option value="vandut">Vândut</option></select></div>
+              </div>
+              <div class="form-group"><label>Observații</label><textarea id="utilaj-obs" rows="2" placeholder="Defecte cunoscute, notițe..."></textarea></div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-primary" id="utilaj-btn" onclick="salveazaUtilaj()" style="flex:1"><i class="ti ti-plus"></i> Salvează utilaj</button>
+                <button class="btn btn-ghost btn-sm" onclick="resetFormUtilaj()" style="width:auto"><i class="ti ti-x"></i></button>
+              </div>
+            </div>
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Alertă mentenanță</div>
+              <div id="utilaje-alerte"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Niciun utilaj înregistrat.</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-weight:700;font-size:15px;margin-bottom:14px">Parcul de utilaje</div>
+            <div id="lista-utilaje"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:24px">Niciun utilaj înregistrat.</div></div>
+          </div>
+        </div>
+
+        <!-- ====== METEO ====== -->
+        <!-- ====== METEO ====== -->
+<div class="tab" id="tab-meteo">
+  <div class="section-title"><i class="ti ti-cloud-sun"></i> Meteo & Recomandări Agricole</div>
+
+  <!-- Search -->
+  <div class="card" style="margin-bottom:16px">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div style="flex:1;min-width:200px">
+        <label>Localitate / Județ</label>
+        <input type="text" id="meteo-loc" placeholder="ex: Iasi, Vaslui, Bacau...">
+      </div>
+      <button class="btn btn-primary" onclick="cautaMeteo()" style="width:auto;padding:10px 20px"><i class="ti ti-search"></i> Caută</button>
+    </div>
+  </div>
+
+  <!-- Current weather -->
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card" id="meteo-current-card" style="background:linear-gradient(145deg,#f5fdf5,#eef8f0)">
+      <div id="meteo-city-name" style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--soil);margin-bottom:4px">—</div>
+      <div style="font-size:12px;color:var(--gray-400);margin-bottom:16px" id="meteo-data-azi">—</div>
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:16px">
+        <i id="meteo-icon" class="ti ti-sun" style="font-size:64px;color:var(--wheat)"></i>
+        <div>
+          <div id="meteo-temp" style="font-size:56px;font-weight:700;font-family:'Playfair Display',serif;line-height:1;color:var(--soil)">—°C</div>
+          <div id="meteo-desc" style="font-size:14px;font-weight:600;color:var(--gray-600);margin-top:4px;text-transform:capitalize">—</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        <div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:10px;text-align:center">
+          <i class="ti ti-droplet" style="color:var(--ai-blue);font-size:18px"></i>
+          <div style="font-weight:700;font-size:15px;margin-top:4px" id="meteo-umiditate-val">—</div>
+          <div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;font-weight:600">Umiditate</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:10px;text-align:center">
+          <i class="ti ti-wind" style="color:var(--ai-green);font-size:18px"></i>
+          <div style="font-weight:700;font-size:15px;margin-top:4px" id="meteo-vant-val">—</div>
+          <div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;font-weight:600">Vânt</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:10px;text-align:center">
+          <i class="ti ti-eye" style="color:var(--wheat);font-size:18px"></i>
+          <div style="font-weight:700;font-size:15px;margin-top:4px" id="meteo-presiune-val">—</div>
+          <div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;font-weight:600">Presiune</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="background:linear-gradient(145deg,#f5fdf5,#eef8f0)">
+      <div style="font-weight:700;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--ai-green)">
+        <i class="ti ti-bulb" style="font-size:20px"></i> Recomandare AIgriculture
+      </div>
+      <p id="meteo-recomandare" style="font-size:14px;line-height:1.7;color:var(--soil)">
+        Introduceți o localitate pentru recomandări personalizate.
+      </p>
+      <div id="meteo-detalii-agro" style="margin-top:14px"></div>
+    </div>
+  </div>
+
+  <!-- Prognoza 7 zile -->
+  <div class="card">
+    <div style="font-weight:700;font-size:15px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <i class="ti ti-calendar-week" style="color:var(--ai-blue)"></i> Prognoză 7 zile
+    </div>
+    <div id="meteo-forecast-7" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">
+      <div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px;grid-column:1/-1">Caută o localitate pentru prognoză.</div>
+    </div>
+  </div>
+
+  <!-- Grafic temperaturi -->
+  <div class="card" style="margin-top:4px">
+    <div style="font-weight:700;font-size:15px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <i class="ti ti-chart-line" style="color:var(--wheat)"></i> Evolutie temperaturi 7 zile
+    </div>
+    <canvas id="meteo-chart" style="max-height:200px"></canvas>
+  </div>
+</div>
+
+        <!-- ====== CONTABILITATE ====== -->
+        <div class="tab" id="tab-contabilitate">
+          <div class="section-title"><i class="ti ti-coins"></i> Contabilitate</div>
+          <div class="grid3" style="margin-bottom:20px">
+            <div class="stat-card stat-red"><div class="stat-icon" style="color:var(--danger)"><i class="ti ti-trending-down"></i></div><div class="stat-label">Total Cheltuieli</div><div class="stat-val" id="c-total" style="color:var(--danger)">0 RON</div></div>
+            <div class="stat-card stat-green"><div class="stat-icon"><i class="ti ti-trending-up"></i></div><div class="stat-label">Total Venituri</div><div class="stat-val" id="c-intrari" style="color:var(--ai-green)">0 RON</div></div>
+            <div class="stat-card stat-blue"><div class="stat-icon" style="color:var(--ai-blue)"><i class="ti ti-scale"></i></div><div class="stat-label">Sold Net</div><div class="stat-val" id="c-sold">0 RON</div></div>
+          </div>
+          <div class="card" style="margin-bottom:16px">
+            <div style="font-weight:700;font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:8px"><i class="ti ti-chart-line" style="color:var(--ai-green)"></i> Prețuri referință cereale (RON/t)</div>
+            <table>
+              <thead><tr><th>Sursă</th><th style="text-align:right">Grâu</th><th style="text-align:right">Porumb</th><th style="text-align:right">Floarea-soarelui</th><th style="text-align:right">Rapiță</th></tr></thead>
+              <tbody>
+                <tr><td><strong>Constanța (ref.)</strong></td><td style="text-align:right">1050</td><td style="text-align:right">850</td><td style="text-align:right">1950</td><td style="text-align:right">2200</td></tr>
+                <tr><td><strong>CBOT Live</strong></td><td style="text-align:right" id="pret-weat">--</td><td style="text-align:right" id="pret-corn">--</td><td style="text-align:right">--</td><td style="text-align:right">--</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Înregistrare nouă</div>
+              <div class="form-row">
+                <div><label>Tip</label><select id="c-tip"><option value="cheltuiala">Cheltuială</option><option value="venit">Venit / Subvenție</option></select></div>
+                <div><label>Categorie</label><select id="c-cat"><option>Semințe / Material Sădit</option><option>Îngrășăminte / Tratamente</option><option>Combustibil</option><option>Reparații / Utilaje</option><option>Muncă / Zilieri</option><option>Vânzare Recoltă</option><option>Subvenție APIA</option><option>Altele</option></select></div>
+              </div>
+              <div class="form-group"><label>Parcelă asociată</label><select id="c-parcela"><option value="Toate parcelele">Toate parcelele</option></select></div>
+              <div class="form-row">
+                <div><label>Sumă (RON)</label><input type="number" id="c-suma" placeholder="0.00" step="0.01"></div>
+                <div><label>Dată</label><input type="date" id="c-data"></div>
+              </div>
+              <div class="form-group"><label>Descriere</label><input type="text" id="c-desc" placeholder="ex: Achiziție semințe porumb Pioneer"></div>
+              <button class="btn btn-primary" id="c-btn" onclick="adaugaCheltuiala()"><i class="ti ti-plus"></i> Înregistrează</button>
+            </div>
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Distribuție cheltuieli</div>
+              <div id="cat-bars"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Nicio cheltuială înregistrată.</div></div>
+            </div>
+          </div>
+          <!-- Calculator -->
+          <div class="card" style="border:2px solid rgba(46,139,46,0.2);background:linear-gradient(145deg,#fff,#f8fdf8)">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px"><i class="ti ti-calculator" style="font-size:22px;color:var(--ai-green)"></i><div style="font-weight:700;font-size:16px;color:var(--ai-green)">Calculator Costuri de Producție</div></div>
+            <div style="font-size:12px;color:var(--gray-600);margin-bottom:18px">Calculați costurile estimate și adăugați-le automat în registru.</div>
+            <div class="form-row" style="margin-bottom:16px">
+              <div><label>Parcelă</label><select id="calc-parcela"><option value="">Toate parcelele</option></select></div>
+              <div><label>Suprafață de calcul (ha)</label><input type="number" id="calc-ha" placeholder="0.00" step="0.01" min="0" oninput="calculeazaTotal()"></div>
+            </div>
+            <div class="grid2" style="gap:12px;margin-bottom:16px">
+              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-wheat"></i> Semințe</div>
+                <div class="form-row" style="margin-bottom:8px"><div><label>Cantitate</label><input type="number" id="sam-cantitate" placeholder="0" min="0" oninput="calculeazaTotal()"></div><div><label>Unitate</label><select id="sam-unitate" onchange="calculeazaTotal()"><option value="kg">kg/ha</option><option value="sac">sac/ha</option></select></div></div>
+                <div><label>Preț/unitate (RON)</label><input type="number" id="sam-pret" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
+                <div style="margin-top:8px;font-size:12px;color:var(--ai-green);font-weight:700">Subtotal: <span id="sub-sam">0 RON</span></div>
+              </div>
+              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-leaf"></i> Îngrășăminte</div>
+                <div class="form-row" style="margin-bottom:8px"><div><label>Cantitate</label><input type="number" id="ingr-cantitate" placeholder="0" min="0" oninput="calculeazaTotal()"></div><div><label>Unitate</label><select id="ingr-unitate" onchange="calculeazaTotal()"><option value="kg">kg/ha</option><option value="tona">tone/ha</option></select></div></div>
+                <div><label>Preț/unitate (RON)</label><input type="number" id="ingr-pret" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
+                <div style="margin-top:8px;font-size:12px;color:var(--ai-green);font-weight:700">Subtotal: <span id="sub-ingr">0 RON</span></div>
+              </div>
+              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-gas-station"></i> Motorină</div>
+                <div class="form-row" style="margin-bottom:8px"><div><label>Litri/ha</label><input type="number" id="mot-l" placeholder="0" min="0" oninput="calculeazaTotal()"></div><div><label>Preț/litru (RON)</label><input type="number" id="mot-pret" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div></div>
+                <div style="margin-top:8px;font-size:12px;color:var(--ai-green);font-weight:700">Subtotal: <span id="sub-mot">0 RON</span></div>
+              </div>
+              <div class="calc-section"><div class="calc-section-title"><i class="ti ti-droplet"></i> Pesticide & Altele</div>
+                <div class="form-group"><label>Pesticide (RON total)</label><input type="number" id="pest-val" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
+                <div class="form-group"><label>Altele (RON total)</label><input type="number" id="alt-val" placeholder="0.00" min="0" oninput="calculeazaTotal()"></div>
+                <div style="margin-top:8px;font-size:12px;color:var(--ai-green);font-weight:700">Subtotal: <span id="sub-diverse">0 RON</span></div>
+              </div>
+            </div>
+            <div style="background:var(--grad-earth);color:#fff;border-radius:12px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+              <div><div style="font-size:11px;opacity:0.6;margin-bottom:3px;text-transform:uppercase;letter-spacing:0.8px">Total estimat cheltuieli</div><div style="font-size:30px;font-weight:700;font-family:'Playfair Display',serif" id="total-estimat">0 RON</div></div>
+              <button class="btn btn-wheat" id="calc-adauga-btn" onclick="adaugaDinCalculator()" style="width:auto;padding:12px 24px"><i class="ti ti-database-plus"></i> Adaugă la cheltuieli</button>
+            </div>
+          </div>
+          <div class="card" style="margin-top:4px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+              <div style="font-weight:700;font-size:15px">Istoric Tranzacții</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <select id="filter-cat" onchange="filtreazaCheltuieli()" style="width:auto;padding:7px 11px;font-size:12px"><option value="">Toate categoriile</option><option>Semințe / Material Sădit</option><option>Îngrășăminte / Tratamente</option><option>Combustibil</option><option>Reparații / Utilaje</option><option>Muncă / Zilieri</option><option>Vânzare Recoltă</option><option>Subvenție APIA</option><option>Altele</option></select>
+                <button class="btn btn-primary btn-sm" onclick="exportaPDF()" style="width:auto"><i class="ti ti-file-type-pdf"></i> Export PDF</button>
+              </div>
+            </div>
+            <div style="overflow-x:auto">
+              <table><thead><tr><th>Dată</th><th>Categorie</th><th>Parcelă</th><th>Descriere</th><th>Sumă</th><th>Tip</th><th></th></tr></thead>
+              <tbody id="tabel-cheltuieli"><tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio înregistrare.</td></tr></tbody></table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== PROFITABILITATE ====== -->
+        <div class="tab" id="tab-profitabilitate">
+          <div class="section-title"><i class="ti ti-chart-bar"></i> Analiză Profitabilitate</div>
+          <div class="grid3" style="margin-bottom:20px">
+            <div class="stat-card stat-green"><div class="stat-icon"><i class="ti ti-cash"></i></div><div class="stat-val" id="prof-venit-total">0 RON</div><div class="stat-label">Venituri totale</div></div>
+            <div class="stat-card stat-red"><div class="stat-icon" style="color:var(--danger)"><i class="ti ti-receipt"></i></div><div class="stat-val" id="prof-chelt-total">0 RON</div><div class="stat-label">Cheltuieli totale</div></div>
+            <div class="stat-card stat-blue"><div class="stat-icon" style="color:var(--ai-blue)"><i class="ti ti-percentage"></i></div><div class="stat-val" id="prof-marja">0%</div><div class="stat-label">Marjă profit</div></div>
+          </div>
+          <div class="grid2">
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Profitabilitate per cultură</div>
+              <div id="prof-per-cultura"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:24px">Necesită date de cheltuieli și recolte.</div></div>
+            </div>
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Profitabilitate per parcelă</div>
+              <div id="prof-per-parcela"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:24px">Necesită date de cheltuieli și recolte.</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="font-weight:700;font-size:15px;margin-bottom:14px">Cost de producție per tonă (RON/t)</div>
+            <div id="prof-cost-tona"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:24px">Necesită date de cheltuieli și recolte pentru calcul.</div></div>
+          </div>
+        </div>
+
+        <!-- ====== ȘTIRI ====== -->
+        <div class="tab" id="tab-stiri">
+          <div class="section-title"><i class="ti ti-news"></i> Știri Agribusiness</div>
+          <div style="display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;align-items:center">
+            <span style="font-size:12px;color:var(--gray-600);font-weight:600">Filtrează:</span>
+            <button class="stiri-filter-btn active" onclick="filtreazaStiri('toate',this)">Toate</button>
+            <button class="stiri-filter-btn" onclick="filtreazaStiri('porumb',this)">Porumb</button>
+            <button class="stiri-filter-btn" onclick="filtreazaStiri('grâu',this)">Grâu</button>
+            <button class="stiri-filter-btn" onclick="filtreazaStiri('rapiță',this)">Rapiță</button>
+            <button class="stiri-filter-btn" onclick="filtreazaStiri('floarea',this)">Floarea-soarelui</button>
+            <button class="stiri-filter-btn" onclick="filtreazaStiri('apia',this)">APIA / Subvenții</button>
+            <button class="btn btn-primary btn-sm" onclick="incarcaStiri()" style="margin-left:auto;width:auto"><i class="ti ti-refresh"></i> Actualizează</button>
+          </div>
+          <div id="stiri-container"><div style="text-align:center;padding:48px;color:var(--gray-400)"><i class="ti ti-loader" style="font-size:36px;display:block;margin-bottom:12px"></i>Se încarcă știrile...</div></div>
+        </div>
+
+        <!-- ====== ASISTENT AI ====== -->
+        <div class="tab" id="tab-asistent">
+          <div class="section-title"><i class="ti ti-robot"></i> Asistent Agronomic AI</div>
+          <div class="card" style="margin-bottom:16px;background:linear-gradient(135deg,#e6f4e6,#e8f2fc);border:1px solid rgba(46,139,46,0.2)">
+            <div style="display:flex;gap:12px;align-items:center">
+              <i class="ti ti-robot" style="font-size:28px;color:var(--ai-green)"></i>
+              <div><div style="font-weight:700;font-size:14px;color:var(--ai-green-dark)">Asistent agronomic personalizat</div><div style="font-size:13px;color:var(--soil);line-height:1.6">Bazat pe datele din ferma ta — parcele, culturi, meteo — primești sfaturi agronomice precise. Poți întreba orice: tratamente, fertilizare, boli, prețuri, legislație APIA.</div></div>
+            </div>
+          </div>
+          <div class="card" style="height:480px;display:flex;flex-direction:column;padding:0;overflow:hidden">
+            <div id="chat-messages" style="flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:14px">
+              <div class="chat-msg chat-ai">
+                <div class="chat-avatar"><i class="ti ti-robot"></i></div>
+                <div class="chat-bubble">Bună ziua! Sunt asistentul agronomic AIgriculture. Vă pot ajuta cu sfaturi despre culturi, tratamente fitosanitare, fertilizare, condiții meteo sau orice altă întrebare legată de agricultura dumneavoastră. Cu ce vă pot ajuta astăzi?</div>
+              </div>
+            </div>
+            <div style="padding:14px;border-top:1px solid var(--gray-100);background:var(--white)">
+              <div style="display:flex;gap:10px">
+                <input type="text" id="chat-input" placeholder="Scrieți întrebarea dumneavoastră..." style="flex:1" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();trimiteChat();}">
+                <button class="btn btn-primary" onclick="trimiteChat()" style="width:auto;padding:10px 18px"><i class="ti ti-send"></i></button>
+              </div>
+              <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+                <button class="chat-suggest-btn" onclick="sugestieChat('Ce tratamente sunt recomandate pentru porumb în luna mai?')">Tratamente porumb mai</button>
+                <button class="chat-suggest-btn" onclick="sugestieChat('Cum calculez doza de azot pentru grâu de toamnă?')">Doze azot grâu</button>
+                <button class="chat-suggest-btn" onclick="sugestieChat('Care sunt bolile principale la floarea-soarelui?')">Boli floarea-soarelui</button>
+                <button class="chat-suggest-btn" onclick="sugestieChat('Cum mă înregistrez pentru subvenții APIA?')">Subvenții APIA</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ====== NOTE & MEMENTO-URI ====== -->
+        <div class="tab" id="tab-note">
+          <div class="section-title"><i class="ti ti-notes"></i> Note & Memento-uri</div>
+          <div class="grid2">
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Adaugă notă</div>
+              <input type="hidden" id="nota-id-edit">
+              <div class="form-group"><label>Titlu</label><input type="text" id="nota-titlu" placeholder="ex: Verificat rezervorul de motorină"></div>
+              <div class="form-group"><label>Conținut</label><textarea id="nota-continut" rows="3" placeholder="Detalii notă..."></textarea></div>
+              <div class="form-row">
+                <div><label>Prioritate</label>
+                  <select id="nota-prioritate">
+                    <option value="normal">Normal</option>
+                    <option value="urgent">Urgent</option>
+                    <option value="scazut">Scăzut</option>
+                  </select>
+                </div>
+                <div><label>Dată scadentă</label><input type="date" id="nota-scadenta"></div>
+              </div>
+              <button class="btn btn-primary" id="nota-btn" onclick="salveazaNota()"><i class="ti ti-plus"></i> Salvează notă</button>
+            </div>
+            <div class="card">
+              <div style="font-weight:700;font-size:15px;margin-bottom:14px">Memento-uri urgente</div>
+              <div id="note-urgente-list"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Nicio notă urgentă.</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+              <div style="font-weight:700;font-size:15px">Toate notele</div>
+              <select id="nota-filter" onchange="filtreazaNote()" style="width:auto;padding:7px 10px;font-size:12px">
+                <option value="">Toate prioritățile</option>
+                <option value="urgent">Urgente</option>
+                <option value="normal">Normale</option>
+                <option value="scazut">Prioritate scăzută</option>
+              </select>
+            </div>
+            <div id="lista-note"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:24px">Nicio notă adăugată.</div></div>
+          </div>
+        </div>
+
+      </div><!-- /content -->
+    </div><!-- /content-area -->
+  </div><!-- /app-shell -->
+</div><!-- /screen-app -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+</body>
+</html>
