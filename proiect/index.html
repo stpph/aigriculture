@@ -829,6 +829,15 @@
     <option>Subventie APIA</option>
     <option>Altele</option>
   </select>
+  </select>
+  <select id="filter-perioada" onchange="filtreazaCheltuieli()" style="width:auto;padding:7px 11px;font-size:12px">
+    <option value="">Toata perioada</option>
+    <option value="30">Ultimele 30 zile</option>
+    <option value="90">Ultimele 3 luni</option>
+    <option value="180">Ultimele 6 luni</option>
+    <option value="365">Ultimul an</option>
+  </select>
+  <button class="btn btn-primary btn-sm" onclick="exportaPDF()" style="width:auto"><i class="ti ti-file-type-pdf"></i> Export PDF</button>
   <button class="btn btn-primary btn-sm" onclick="exportaPDF()" style="width:auto"><i class="ti ti-file-type-pdf"></i> Export PDF</button>
 </div>
 </div>
