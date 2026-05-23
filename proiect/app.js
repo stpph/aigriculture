@@ -8,7 +8,6 @@
 const SUPA_URL = 'https://fgbmyveuixrunftivciu.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnYm15dmV1aXhydW5mdGl2Y2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0Mzg5MTMsImV4cCI6MjA5NTAxNDkxM30.2oKCF6kHiVMSadJIpFRlzOhZ0pqwPBcwfuHaLVpj3Ak';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
-const GROQ_KEY = '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';
 const STRIPE_PK = 'pk_test_51TaAiK3EoI10wDe85CSQhwTSTlEhweNExcrZRkF2t1cVuQRBEwQYrZzHp9ZbmPvQbINWAwic7SpNC9V1m2fgXQ4y00xLeE2tCe';
 const STRIPE_STANDARD = 'price_1TaAk63EoI10wDe8SzYSbIhl';
 const STRIPE_PRO = 'price_1TaAkN3EoI10wDe8wdW36exw';
@@ -1575,9 +1574,7 @@ async function trimiteChat() {
     chatHistory.forEach(m=>{
       if (m.role==='user'||m.role==='assistant') messages.push({role:m.role,content:String(m.content||'')});
     });
-    const response=await fetch('https://api.groq.com/openai/v1/chat/completions',{
-      method:'POST',
-      headers:{'Content-Type':'application/json','Authorization':'Bearer '+GROQ_KEY},
+  const response=await fetch
 body:JSON.stringify({model:'llama-3.3-70b-versatile',max_tokens:1000,messages:messages})    });
     const data=await response.json();
     console.log('Groq response:', data);
