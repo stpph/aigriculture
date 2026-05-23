@@ -2038,4 +2038,12 @@ function renderCalSumar() {
       +'</div></div>';
   }).join('');
 }
+// Inregistrare Service Worker PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js')
+      .then(reg => console.log('[PWA] Service Worker inregistrat:', reg.scope))
+      .catch(err => console.warn('[PWA] Service Worker eroare:', err));
+  });
+}
 initApp();
