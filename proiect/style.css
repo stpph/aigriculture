@@ -323,7 +323,7 @@ input:focus, select:focus, textarea:focus {
   background: var(--white);
 }
 input::placeholder { color: var(--gray-400); font-weight: 400; }
-.form-row { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 14px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
 
 /* ============================================================
    BUTOANE
@@ -559,8 +559,8 @@ input::placeholder { color: var(--gray-400); font-weight: 400; }
 /* ============================================================
    GRID
    ============================================================ */
-.grid2 { display: grid; grid-template-columns: 1fr; gap: 16px; }
-.grid3 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
 .grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
 
 /* ============================================================
@@ -850,4 +850,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   .card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
   .stat-card { border: 1px solid #ddd !important; box-shadow: none !important; background: #fff !important; }
   .stat-card::before, .stat-card::after { display: none; }
+.card[style*="background:linear-gradient"] {
+  background: unset !important;
+}
 }

@@ -74,8 +74,7 @@ function switchTab(id, btn) {
 if (id === 'contabilitate') { if(typeof renderTabelCheltuieli === 'function') renderTabelCheltuieli(null); updateSumeContabilitate(); renderCatBars(); }  if (id === 'profitabilitate') calculeazaProfitabilitate();
   if (id === 'rotatie') renderRotatieTabel();
   if (id === 'stiri' && toateStirile.length === 0) incarcaStiri();
-if (id === 'calendar') { renderCalTimeline(); renderCalSumar(); renderRotatieAlerte(); }
-}
+if (id === 'calendar') { window.calendarExtins=false; renderCalTimeline(); renderCalSumar(); renderRotatieAlerte(); }}
 
 // ============================================================
 //  AUTENTIFICARE
@@ -204,8 +203,9 @@ function renderListaParcele() {
   const cont=document.getElementById('lista-parcele'); if (!cont) return;
   if (!parceleData.length) { cont.innerHTML='<div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Nicio parcela adaugata.</div>'; return; }
   const cols=['var(--ai-green)','var(--wheat)','var(--ai-blue)','var(--bark)','#8e44ad'];
-  cont.innerHTML=parceleData.map((p,i)=>{
-    const areCoord=p.coordonate?'<span style="color:var(--ai-green);font-size:11px;margin-left:6px"><i class="ti ti-map-pin"></i></span>':'';
+const maxVizibile = window.parcelExtins ? parceleData.length : 5;
+const parceleFiltrate = parceleData.slice(0, maxVizibile);
+cont.innerHTML=parceleFiltrate.map((p,i)=>{    const areCoord=p.coordonate?'<span style="color:var(--ai-green);font-size:11px;margin-left:6px"><i class="ti ti-map-pin"></i></span>':'';
     return '<div class="field-item" style="border-left-color:'+cols[i%cols.length]+';cursor:pointer" onclick="arataNoteparcela(\''+p.id+'\')">'
       +'<div style="flex-grow:1">'
       +'<div class="field-name">'+escapeHTML(p.nume)+areCoord+'</div>'
@@ -218,6 +218,14 @@ function renderListaParcele() {
       +'<button class="btn btn-danger btn-sm" onclick="stergeParcela(\''+p.id+'\',\''+escapeHTML(p.nume).replace(/'/g,"\\'")+'\')" style="width:auto;padding:5px 10px" title="Sterge"><i class="ti ti-trash"></i></button>'
       +'</div></div>';
   }).join('');
+  if (parceleData.length > 5) {
+  cont.innerHTML += '<div style="text-align:center;margin-top:12px">'
+    +'<button class="btn btn-ghost" onclick="window.parcelExtins='+(!window.parcelExtins)+';renderListaParcele()" style="width:auto;padding:8px 20px">'
+    +(window.parcelExtins
+      ? '<i class="ti ti-chevron-up"></i> Restrânge'
+      : '<i class="ti ti-chevron-down"></i> Vezi toate parcelele ('+parceleData.length+')')
+    +'</button></div>';
+}
   const total=parceleData.reduce((s,p)=>s+p.suprafata_ha,0);
   document.getElementById('p-total-num').textContent=parceleData.length+' parcele';
   document.getElementById('p-total-ha').textContent=total.toFixed(1)+' ha';
@@ -362,13 +370,12 @@ if (calSel) {
   });
 }
 // Populăm selectele de utilaje din lucrări
-const utilajeTractoare = utilajeData.filter(u =>
+const utilajeTractoare = utilajeData.filter(u => 
   ['Tractor','Combina','Generator'].includes(u.tip) && u.status === 'functional'
 );
-const utilajeImplemente = utilajeData.filter(u =>
-  ['Semănătoare','Plug','Disc','Pulverizator','Remorcă','Altele'].includes(u.tip) && u.status === 'functional'
+const utilajeImplemente = utilajeData.filter(u => 
+  !['Tractor','Combina','Generator'].includes(u.tip) && u.status === 'functional'
 );
-
 const lucUtilajSel = document.getElementById('luc-utilaj');
 if (lucUtilajSel) {
   const valCurenta = lucUtilajSel.value;
@@ -654,7 +661,24 @@ const payload={user_id:currentUser.id,tip_lucrare:document.getElementById('luc-t
   const { error } = editId ? await sb.from('lucrari').update(payload).eq('id',editId) : await sb.from('lucrari').insert([payload]);
   setLoading('luc-btn',false,'ti-plus','Salvează lucrare');
   if (error) { showToast('Eroare: '+error.message,'error'); return; }
-  showToast('Lucrare salvată!','success'); resetFormLucrare(); await loadLucrari(); updateDashboard();
+  showToast('Lucrare salvata!','success');
+// Actualizam orele utilajului
+const utilajNume = document.getElementById('luc-utilaj').value;
+const implementNume = document.getElementById('luc-implement').value;
+const durata = parseFloat(document.getElementById('luc-durata').value) || 0;
+if (durata > 0 && !editId) {
+  const utilaje_de_actualizat = [utilajNume, implementNume].filter(Boolean);
+  for (const nume of utilaje_de_actualizat) {
+    const utilaj = utilajeData.find(u => u.nume === nume);
+    if (utilaj) {
+      const oreNoi = (parseFloat(utilaj.ore_motor) || 0) + durata;
+      await sb.from('utilaje').update({ore_motor: oreNoi}).eq('id', utilaj.id).eq('user_id', currentUser.id);
+    }
+  }
+  if (utilaje_de_actualizat.length > 0) await loadUtilaje();
+}
+resetFormLucrare(); await loadLucrari(); updateDashboard();
+
 }
 function resetFormLucrare() { document.getElementById('luc-id-edit').value=''; ['luc-utilaj','luc-operator','luc-obs','luc-durata'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});document.getElementById('luc-btn').innerHTML='<i class="ti ti-plus"></i> Salvează lucrare'; }
 function editeazaLucrare(id) {
@@ -1112,10 +1136,23 @@ async function salveazaUtilaj() {
     interval_revizie_ore:parseFloat(document.getElementById('utilaj-interval').value)||250,
     data_ultima_revizie:document.getElementById('utilaj-revizie').value||null,
     status:document.getElementById('utilaj-status').value,
-    observatii:document.getElementById('utilaj-obs').value.trim()||null
+    observatii:document.getElementById('utilaj-obs').value.trim()||null,
+  poza_url: null,
   };
   if (!payload.nume) { showToast('Introduceti denumirea utilajului.','error'); return; }
-  setLoading('utilaj-btn',true,'','Se salveaza...');
+  const fileInput = document.getElementById('utilaj-poza-file');
+    const file = fileInput?.files[0];
+  if (file) {
+    const fileName = 'utilaj-'+Date.now()+'.'+file.name.split('.').pop();
+    const { data: uploadData, error: uploadError } = await sb.storage
+      .from('utilaje')
+      .upload(fileName, file, { upsert: true });
+if (!uploadError) {
+  const { data: urlData } = sb.storage.from('utilaje').getPublicUrl(fileName);
+  console.log('URL poza:', urlData.publicUrl);
+  payload.poza_url = urlData.publicUrl;
+}
+  }
   const { error } = editId ? await sb.from('utilaje').update(payload).eq('id',editId) : await sb.from('utilaje').insert([payload]);
   setLoading('utilaj-btn',false,'ti-plus','Salveaza utilaj');
   if (error) { showToast('Eroare: '+error.message,'error'); return; }
@@ -1124,51 +1161,115 @@ async function salveazaUtilaj() {
   await loadUtilaje();
   updateDashboard();
 }
-function resetFormUtilaj() { document.getElementById('utilaj-id-edit').value=''; document.getElementById('utilaj-form-title').textContent='Adaugă utilaj'; ['utilaj-nume','utilaj-marca','utilaj-model','utilaj-an','utilaj-nr','utilaj-ore','utilaj-interval','utilaj-revizie','utilaj-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); document.getElementById('utilaj-btn').innerHTML='<i class="ti ti-plus"></i> Salvează utilaj'; }
+function resetFormUtilaj() {
+  document.getElementById('utilaj-id-edit').value='';
+  document.getElementById('utilaj-form-title').textContent='Adauga utilaj';
+  ['utilaj-nume','utilaj-marca','utilaj-model','utilaj-an','utilaj-nr','utilaj-ore','utilaj-interval','utilaj-revizie','utilaj-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('utilaj-btn').innerHTML='<i class="ti ti-plus"></i> Salveaza utilaj';
+
+}
+function previewPozaUtilaj(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const preview = document.getElementById('utilaj-poza-preview');
+    const img = document.getElementById('utilaj-poza-img');
+    if (preview && img) {
+      img.src = e.target.result;
+      preview.style.display = 'block';
+    }
+  };
+  reader.readAsDataURL(file);
+}
 function editeazaUtilaj(id) {
   const u=utilajeData.find(x=>x.id===id); if (!u) return;
-  document.getElementById('utilaj-id-edit').value=u.id; document.getElementById('utilaj-form-title').textContent='Editare: '+u.nume;
-  document.getElementById('utilaj-btn').innerHTML='<i class="ti ti-device-floppy"></i> Salvează Modificările';
-  document.getElementById('utilaj-nume').value=u.nume; document.getElementById('utilaj-tip').value=u.tip;
-  document.getElementById('utilaj-marca').value=u.marca||''; document.getElementById('utilaj-model').value=u.model||'';
-  document.getElementById('utilaj-an').value=u.an_fabricatie||''; document.getElementById('utilaj-nr').value=u.numar_inmatriculare||'';
-  document.getElementById('utilaj-ore').value=u.ore_motor||''; document.getElementById('utilaj-interval').value=u.interval_revizie_ore||250;
-  document.getElementById('utilaj-revizie').value=u.data_ultima_revizie||''; document.getElementById('utilaj-status').value=u.status||'functional';
+  document.getElementById('utilaj-id-edit').value=u.id;
+  document.getElementById('utilaj-form-title').textContent='Editare: '+u.nume;
+  document.getElementById('utilaj-btn').innerHTML='<i class="ti ti-device-floppy"></i> Salveaza Modificarile';
+  document.getElementById('utilaj-nume').value=u.nume;
+  document.getElementById('utilaj-tip').value=u.tip;
+  document.getElementById('utilaj-marca').value=u.marca||'';
+  document.getElementById('utilaj-model').value=u.model||'';
+  document.getElementById('utilaj-an').value=u.an_fabricatie||'';
+  document.getElementById('utilaj-nr').value=u.numar_inmatriculare||'';
+  document.getElementById('utilaj-ore').value=u.ore_motor||'';
+  document.getElementById('utilaj-interval').value=u.interval_revizie_ore||250;
+  document.getElementById('utilaj-revizie').value=u.data_ultima_revizie||'';
+  document.getElementById('utilaj-status').value=u.status||'functional';
   document.getElementById('utilaj-obs').value=u.observatii||'';
-  document.getElementById('utilaj-nume').focus();
-document.getElementById('utilaj-ore-revizie').value=u.ore_la_ultima_revizie||'';
+  document.getElementById('utilaj-ore-revizie').value=u.ore_la_ultima_revizie||'';
+const pozaEl = document.getElementById('utilaj-poza');
+if (pozaEl) pozaEl.value=u.poza_url||'';
+  deschideModalUtilaj();
 }
 async function stergeUtilaj(id) { if(!confirm('Sigur ștergeți acest utilaj?'))return; showLoading(true); await sb.from('utilaje').delete().eq('id',id).eq('user_id',currentUser.id); showLoading(false); showToast('Utilaj șters.','info'); await loadUtilaje(); updateDashboard(); }
 function renderListaUtilaje() {
   const cont=document.getElementById('lista-utilaje'); if (!cont) return;
-  if (!utilajeData.length) { cont.innerHTML='<div style="color:var(--gray-400);font-size:13px;text-align:center;padding:24px">Niciun utilaj înregistrat.</div>'; return; }
   const statusColors={functional:'badge-green',revizie:'badge-wheat',defect:'badge-red',vandut:'badge-blue'};
-  const statusLabels={functional:'Funcțional',revizie:'La revizie',defect:'Defect',vandut:'Vândut'};
-  cont.innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px">` + utilajeData.map(u=>{
-    const needsService=u.ore_motor&&u.interval_revizie_ore&&u.data_ultima_revizie&&(u.ore_motor%u.interval_revizie_ore)<50;
-    return `<div class="card" style="padding:16px;margin-bottom:0${needsService?';border:2px solid var(--wheat)':''}">
-      ${needsService?'<div style="background:#fff8e0;border-radius:6px;padding:5px 8px;font-size:11px;font-weight:600;color:#8a5a10;margin-bottom:8px"><i class="ti ti-alert-triangle"></i> Revizie apropiată!</div>':''}
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-        <div><div style="font-weight:700;font-size:14px">${escapeHTML(u.nume)}</div><div style="font-size:12px;color:var(--gray-600)">${escapeHTML(u.marca||'')} ${escapeHTML(u.model||'')} · ${u.an_fabricatie||'—'}</div></div>
-        <span class="badge ${statusColors[u.status]||'badge-wheat'}">${statusLabels[u.status]||u.status}</span>
-      </div>
-      <div style="font-size:12px;color:var(--gray-600);margin-bottom:8px"><i class="ti ti-activity"></i> ${u.ore_motor||0} h motor · Revizie la ${u.interval_revizie_ore||250} h</div>
-${u.data_ultima_revizie?'<div style="font-size:12px;color:var(--gray-600)"><i class="ti ti-calendar-check"></i> Ultima revizie: '+fmtData(u.data_ultima_revizie)+(u.ore_la_ultima_revizie?' la '+u.ore_la_ultima_revizie+' h':'')+'</div>':''}      <div style="display:flex;gap:6px;margin-top:10px">
-        <button class="btn btn-ghost btn-sm" onclick="editeazaUtilaj('${u.id}')" style="flex:1"><i class="ti ti-edit"></i> Editează</button>
-        <button class="btn btn-danger btn-sm" onclick="stergeUtilaj('${u.id}')" style="width:auto;padding:6px 10px"><i class="ti ti-trash"></i></button>
-      </div>
-    </div>`;
-  }).join('') + '</div>';
+  const statusLabels={functional:'Functional',revizie:'La revizie',defect:'Defect',vandut:'Vandut'};
+
+  const areAlerte = utilajeData.some(u => {
+    if (u.status === 'defect') return true;
+    if (u.ore_motor && u.interval_revizie_ore) {
+      const oreDeAtunci = u.ore_motor - (u.ore_la_ultima_revizie||0);
+      return oreDeAtunci/u.interval_revizie_ore*100 >= 90;
+    }
+    return false;
+  });
+
+  let html = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">'
+    + '<div style="font-weight:700;font-size:15px">Parcul de utilaje</div>'
+    + '<div style="display:flex;gap:8px">'
+    + (areAlerte ? '<button class="btn btn-wheat btn-sm" onclick="deschideModalAlerteUtilaj()" style="width:auto"><i class="ti ti-alert-triangle"></i> Alerte mentenanta</button>' : '')
+    + '<button class="btn btn-primary btn-sm" onclick="resetFormUtilaj();deschideModalUtilaj()" style="width:auto"><i class="ti ti-plus"></i> Adauga utilaj</button>'
+    + '</div></div>';
+
+  if (!utilajeData.length) {
+    html += '<div style="color:var(--gray-400);font-size:13px;text-align:center;padding:24px">Niciun utilaj inregistrat.</div>';
+    cont.innerHTML = html;
+    return;
+  }
+
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px">';
+  html += utilajeData.map(u => {
+    const needsService = u.ore_motor&&u.interval_revizie_ore&&(u.ore_motor-(u.ore_la_ultima_revizie||0))/u.interval_revizie_ore*100>=90;
+    const bgStyle = u.poza_url
+      ? 'background:linear-gradient(rgba(0,0,0,0.55),rgba(0,0,0,0.75)),url('+u.poza_url+') center/cover no-repeat;'
+      : '';
+    const textColor = u.poza_url ? 'color:#fff' : 'color:var(--soil)';
+    const textMuted = u.poza_url ? 'color:rgba(255,255,255,0.7)' : 'color:var(--gray-600)';
+    const btnStyle = u.poza_url ? 'background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.3)' : '';
+
+    return '<div class="card" style="padding:0;margin-bottom:0;overflow:hidden;border-radius:14px;'+bgStyle+'">'
+      + (needsService ? '<div style="background:rgba(217,119,6,0.9);padding:5px 12px;font-size:11px;font-weight:700;color:#fff"><i class="ti ti-alert-triangle"></i> Revizie apropiata!</div>' : '')
+      + '<div style="padding:16px">'
+      + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
+      + '<div><div style="font-weight:700;font-size:15px;'+textColor+'">'+escapeHTML(u.nume)+'</div>'
+      + '<div style="font-size:12px;margin-top:2px;'+textMuted+'">'+escapeHTML(u.marca||'')+' '+escapeHTML(u.model||'')+' · '+(u.an_fabricatie||'—')+'</div></div>'
+      + '<span class="badge '+(statusColors[u.status]||'badge-wheat')+'">'+(statusLabels[u.status]||u.status)+'</span>'
+      + '</div>'
+      + '<div style="font-size:12px;margin-bottom:6px;'+textMuted+'"><i class="ti ti-activity"></i> '+(u.ore_motor||0)+' h '+(['Tractor','Combina','Generator'].includes(u.tip)?'motor · Revizie la '+(u.interval_revizie_ore||250)+' h':'')+'</div>'
+      + (u.data_ultima_revizie ? '<div style="font-size:12px;margin-bottom:10px;'+textMuted+'"><i class="ti ti-calendar-check"></i> Ultima revizie: '+fmtData(u.data_ultima_revizie)+(u.ore_la_ultima_revizie?' la '+u.ore_la_ultima_revizie+' h':'')+'</div>' : '<div style="margin-bottom:10px"></div>')
+      + '<div style="display:flex;gap:6px">'
+      + '<button class="btn btn-ghost btn-sm" onclick="editeazaUtilaj(\''+u.id+'\')" style="flex:1;'+btnStyle+'"><i class="ti ti-edit"></i> Editeaza</button>'
+      + '<button class="btn btn-danger btn-sm" onclick="stergeUtilaj(\''+u.id+'\')" style="width:auto;padding:6px 10px"><i class="ti ti-trash"></i></button>'
+      + '</div></div></div>';
+  }).join('');
+
+  html += '</div>';
+  cont.innerHTML = html;
 }
 function renderUtilajAlerte() {
   const cont=document.getElementById('utilaje-alerte'); if (!cont) return;
   const alerte=utilajeData.filter(u=>{
     if (u.status==='defect') return true;
-    if (u.ore_motor&&u.interval_revizie_ore) {
-      const oreDeAtunci=u.ore_motor-(u.ore_la_ultima_revizie||0);
-      const procent=oreDeAtunci/u.interval_revizie_ore*100;
-      return procent>=90;
-    }
+   if (u.ore_motor&&u.interval_revizie_ore) {
+  const oreDeAtunci=u.ore_motor-(u.ore_la_ultima_revizie||0);
+  const procent=oreDeAtunci/u.interval_revizie_ore*100;
+  return procent>=90;
+}
+return false;
     return false;
   });
   if (!alerte.length) {
@@ -1179,10 +1280,9 @@ function renderUtilajAlerte() {
     const isDefect=u.status==='defect';
     const oreDeAtunci=u.ore_motor-(u.ore_la_ultima_revizie||0);
     const oreRamase=u.interval_revizie_ore-oreDeAtunci;
-    const mesaj=isDefect
-      ?'Utilaj marcat ca defect - necesita interventie'
-      :'Revizie necesara in '+oreRamase.toFixed(0)+' h (efectuata la '+(u.ore_la_ultima_revizie||0)+' h, interval '+u.interval_revizie_ore+' h)';
-    const culoare=isDefect?'var(--danger)':'var(--wheat)';
+const mesaj=isDefect
+  ?'Utilaj marcat ca defect - necesita interventie'
+  :'Revizie necesara in '+oreRamase.toFixed(0)+' h ('+oreDeAtunci.toFixed(0)+' h de la ultima revizie, interval '+u.interval_revizie_ore+' h)';    const culoare=isDefect?'var(--danger)':'var(--wheat)';
     const icon=isDefect?'ti-tool':'ti-alert-triangle';
     const bgStyle=isDefect?'border-color:#f0b0b0;background:#fce8e8':'border-color:#f0d58a;background:#fffbf0';
     const btnRevizie=!isDefect
@@ -1973,8 +2073,9 @@ function renderCalTimeline() {
   const anCurent = lunaAcum >= 9 ? (anAcum+'-'+(anAcum+1)) : ((anAcum-1)+'-'+anAcum);
   aniDetectati.add(anCurent);
 
-  let ani = [...aniDetectati].sort((a,b) => b.localeCompare(a));
-  if (fa) ani = ani.filter(a => a === fa);
+let ani = [...aniDetectati].sort((a,b) => b.localeCompare(a));
+const toateAnii = [...ani];
+if (!window.calendarExtins) ani = ani.slice(0, 1);  if (fa) ani = ani.filter(a => a === fa);
 
   if (!ani.length) {
     cont.innerHTML = '<div style="color:var(--gray-400);font-size:13px;text-align:center;padding:24px">Nicio activitate inregistrata.</div>';
@@ -2088,6 +2189,18 @@ function renderCalTimeline() {
   }).filter(x => x).join('');
 
   cont.innerHTML = rezultat || '<div style="color:var(--gray-400);font-size:13px;text-align:center;padding:24px">Nicio activitate inregistrata.</div>';
+// Buton extinde daca sunt mai multi ani
+if (toateAnii.length > 1 && !window.calendarExtins) {
+  cont.innerHTML += '<div style="text-align:center;margin-top:16px">'
+    +'<button class="btn btn-ghost" onclick="window.calendarExtins=true;renderCalTimeline()" style="width:auto;padding:10px 24px">'
+    +'<i class="ti ti-chevron-down"></i> Vezi toti anii ('+toateAnii.length+')'
+    +'</button></div>';
+} else if (toateAnii.length > 1 && window.calendarExtins) {
+  cont.innerHTML += '<div style="text-align:center;margin-top:16px">'
+    +'<button class="btn btn-ghost" onclick="window.calendarExtins=false;renderCalTimeline()" style="width:auto;padding:10px 24px">'
+    +'<i class="ti ti-chevron-up"></i> Restrânge'
+    +'</button></div>';
+}
 }
 function arataTimelineParcela(nume, an) {
   const [anStart, anEnd] = an.split('-').map(Number);
@@ -2476,6 +2589,22 @@ async function confirmaPlata() {
   userPlan = planNume;
   updateUIForPlan();
   showToast('Abonament activat cu succes! Bun venit în planul '+planNume.toUpperCase()+'! 🎉','success',6000);
+}
+function deschideModalUtilaj() {
+  const modal = document.getElementById('modal-utilaj');
+  if (modal) modal.style.display = 'flex';
+}
+
+function inchideModalUtilaj() {
+  const modal = document.getElementById('modal-utilaj');
+  if (modal) modal.style.display = 'none';
+  resetFormUtilaj();
+}
+
+function deschideModalAlerteUtilaj() {
+  const modal = document.getElementById('modal-alerte-utilaj');
+  if (modal) modal.style.display = 'flex';
+  renderUtilajAlerte();
 }
 }
 initApp();
