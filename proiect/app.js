@@ -1203,7 +1203,7 @@ function calculeazaTotal() {
 
  const ingrCant = parseFloat(document.getElementById('ingr-cantitate').value) || 0;
   const ingrPret = parseFloat(document.getElementById('ingr-pret').value) || 0;
-  const ingrUnitate = document.getElementById('ingr-unitate').value;
+  const ingrUnitate = document.getElementById('ingr-unitate')?.value || 'kg';
   let costIngr = 0;
   if (ingrUnitate === 'tona') {
     // tone/ha x pret/tona x suprafata
