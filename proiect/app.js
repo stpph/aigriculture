@@ -9,7 +9,14 @@ const SUPA_URL = 'https://fgbmyveuixrunftivciu.supabase.co';
 const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZnYm15dmV1aXhydW5mdGl2Y2l1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk0Mzg5MTMsImV4cCI6MjA5NTAxNDkxM30.2oKCF6kHiVMSadJIpFRlzOhZ0pqwPBcwfuHaLVpj3Ak';
 const sb = supabase.createClient(SUPA_URL, SUPA_KEY);
 const GROQ_KEY = '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';
-
+const STRIPE_PK = 'pk_test_51TaAiK3EoI10wDe85CSQhwTSTlEhweNExcrZRkF2t1cVuQRBEwQYrZzHp9ZbmPvQbINWAwic7SpNC9V1m2fgXQ4y00xLeE2tCe';
+const STRIPE_STANDARD = 'price_1TaAk63EoI10wDe8SzYSbIhl';
+const STRIPE_PRO = 'price_1TaAkN3EoI10wDe8wdW36exw';
+let stripeInstance = null;
+let stripeElements = null;
+let currentPriceId = null;
+let currentSubscriptionId = null;
+let userPlan = 'gratuit';
 let currentUser = null;
 let parceleData = [], cheltuieliData = [], lucrariData = [];
 let recolteData = [], utilajeData = [], fitosanitarData = [];
@@ -162,7 +169,7 @@ async function adaugaParcela() {
   if (!editId && c && d) { const sezon = new Date(d).getFullYear().toString(); await sb.from('rotatie_culturi').insert([{user_id:currentUser.id,parcela_nume:n,sezon,cultura:c}]); }
   showToast(editId?'Parcelă actualizată!':'Parcelă adăugată cu succes!','success');
   resetFormParcela();
-  await loadParcele(); await loadRotatie(); updateDashboard();
+  await loadParcele(); await loadRotatie(); updateDashboard();await loadUserPlan();
 }
 function resetFormParcela() {
   document.getElementById('p-id-edit').value=''; document.getElementById('p-coordonate').value='';
@@ -2045,5 +2052,144 @@ if ('serviceWorker' in navigator) {
       .then(reg => console.log('[PWA] Service Worker inregistrat:', reg.scope))
       .catch(err => console.warn('[PWA] Service Worker eroare:', err));
   });
+// ============================================================
+//  SISTEM ABONAMENTE STRIPE
+// ============================================================
+
+async function loadUserPlan() {
+  if (!currentUser) return;
+  const { data } = await sb.from('abonamente')
+    .select('*')
+    .eq('user_id', currentUser.id)
+    .eq('status', 'active')
+    .order('created_at', {ascending: false})
+    .limit(1);
+  if (data && data.length > 0) {
+    userPlan = data[0].plan;
+  } else {
+    userPlan = 'gratuit';
+  }
+  updateUIForPlan();
+}
+
+function updateUIForPlan() {
+  const badge = document.getElementById('top-user');
+  if (badge) {
+    const m = currentUser?.user_metadata || {};
+    const planLabel = userPlan === 'pro' ? ' 👑 Pro' : userPlan === 'standard' ? ' ⭐ Standard' : '';
+    badge.textContent = (m.prenume||'Fermier')+' '+(m.nume||'')+planLabel;
+  }
+}
+
+function deschideModalAbonament(plan) {
+  const modal = document.getElementById('modal-abonament');
+  if (modal) modal.style.display = 'flex';
+
+  const planuri = {
+    standard: {
+      titlu: 'Plan Standard',
+      pret: '49 RON / lună',
+      priceId: STRIPE_STANDARD,
+      features: ['✅ Parcele nelimitate','✅ Toate modulele active','✅ Funcționare offline','✅ Calendar agricol complet','✅ Export PDF rapoarte','✅ Asistent AI agronomic']
+    },
+    pro: {
+      titlu: 'Plan Pro',
+      pret: '99 RON / lună',
+      priceId: STRIPE_PRO,
+      features: ['✅ Tot ce include Standard','✅ Notificări push meteo','✅ Analiză profitabilitate avansată','✅ Multi-fermă','✅ Suport prioritar','✅ Acces beta funcții noi']
+    }
+  };
+
+  const p = planuri[plan] || planuri.standard;
+  currentPriceId = p.priceId;
+
+  document.getElementById('modal-plan-titlu').textContent = p.titlu;
+  document.getElementById('modal-plan-pret').textContent = p.pret;
+  document.getElementById('modal-plan-features').innerHTML = p.features
+    .map(f => '<div style="font-size:13px;padding:4px 0;color:var(--soil)">'+f+'</div>').join('');
+
+  initStripeElements();
+}
+
+function inchideModalAbonament() {
+  const modal = document.getElementById('modal-abonament');
+  if (modal) modal.style.display = 'none';
+  stripeElements = null;
+  document.getElementById('payment-element').innerHTML = '';
+}
+
+async function initStripeElements() {
+  if (!stripeInstance) stripeInstance = Stripe(STRIPE_PK);
+
+  try {
+    const response = await fetch('/api/stripe', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({
+        action: 'create_subscription',
+        priceId: currentPriceId,
+        userId: currentUser.id,
+        userEmail: currentUser.email
+      })
+    });
+    const data = await response.json();
+    currentSubscriptionId = data.subscriptionId;
+
+    stripeElements = stripeInstance.elements({
+      clientSecret: data.clientSecret,
+      appearance: {
+        theme: document.body.classList.contains('dark-mode') ? 'night' : 'stripe',
+        variables: {
+          colorPrimary: '#16a34a',
+          fontFamily: 'Plus Jakarta Sans, sans-serif',
+          borderRadius: '8px'
+        }
+      }
+    });
+
+    const paymentEl = stripeElements.create('payment');
+    paymentEl.mount('#payment-element');
+  } catch(e) {
+    showToast('Eroare la inițializarea plății.','error');
+  }
+}
+
+async function confirmaPlata() {
+  if (!stripeElements || !stripeInstance) return;
+
+  const btn = document.getElementById('btn-confirma-plata');
+  const errEl = document.getElementById('payment-error');
+  btn.disabled = true;
+  btn.innerHTML = '<div class="spinner"></div> Se procesează...';
+  errEl.style.display = 'none';
+
+  const { error } = await stripeInstance.confirmPayment({
+    elements: stripeElements,
+    confirmParams: { return_url: window.location.href },
+    redirect: 'if_required'
+  });
+
+  if (error) {
+    errEl.textContent = error.message;
+    errEl.style.display = 'block';
+    btn.disabled = false;
+    btn.innerHTML = '<i class="ti ti-lock"></i> Confirmă abonamentul';
+    return;
+  }
+
+  // Salvam abonamentul in Supabase
+  const planNume = currentPriceId === STRIPE_STANDARD ? 'standard' : 'pro';
+  await sb.from('abonamente').insert([{
+    user_id: currentUser.id,
+    plan: planNume,
+    stripe_subscription_id: currentSubscriptionId,
+    status: 'active'
+  }]);
+
+  inchideModalAbonament();
+  userPlan = planNume;
+  updateUIForPlan();
+  showToast('Abonament activat cu succes! Bun venit în planul '+planNume.toUpperCase()+'! 🎉','success',6000);
+}
 }
 initApp();

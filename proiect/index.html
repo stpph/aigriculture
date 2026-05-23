@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ro">
+  
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,6 +40,7 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://js.stripe.com/v3/"></script>
 </head>
 <body>
 
@@ -141,7 +143,12 @@
       <button class="nav-btn" onclick="switchTab('contabilitate',this)"><i class="ti ti-coins"></i><span>Contabilitate</span></button>
       <button class="nav-btn" onclick="switchTab('profitabilitate',this)"><i class="ti ti-chart-bar"></i><span>Profitabilitate</span></button>
       <button class="nav-btn" onclick="switchTab('stiri',this)"><i class="ti ti-news"></i><span>Știri Agribusiness</span></button>
-
+<div class="sidebar-divider"></div>
+<div style="padding:10px">
+  <button onclick="deschideModalAbonament()" style="width:100%;background:linear-gradient(135deg,#16a34a,#2563eb);color:#fff;border:none;border-radius:10px;padding:12px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px">
+    <i class="ti ti-crown"></i> Upgrade Plan
+  </button>
+</div>
       <div class="sidebar-divider"></div>
       <div class="sidebar-section-label">Utilitar</div>
       <button class="nav-btn" onclick="switchTab('asistent',this)"><i class="ti ti-robot"></i><span>Asistent AI</span></button>
@@ -895,5 +902,28 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="app.js"></script>
+<!-- MODAL ABONAMENT -->
+<div id="modal-abonament" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--white);border-radius:20px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,0.3)">
+    <div style="padding:24px;border-bottom:1px solid var(--gray-200)">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-family:'Lora',serif;font-size:20px;font-weight:600" id="modal-plan-titlu">Activează Plan</div>
+        <button onclick="inchideModalAbonament()" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray-400)">×</button>
+      </div>
+      <div style="font-size:13px;color:var(--gray-500);margin-top:4px" id="modal-plan-pret"></div>
+    </div>
+    <div style="padding:24px">
+      <div id="modal-plan-features" style="margin-bottom:20px"></div>
+      <div id="payment-element" style="margin-bottom:16px"></div>
+      <div id="payment-error" style="color:var(--danger);font-size:13px;margin-bottom:12px;display:none"></div>
+      <button class="btn btn-primary" id="btn-confirma-plata" onclick="confirmaPlata()">
+        <i class="ti ti-lock"></i> Confirmă abonamentul
+      </button>
+      <div style="text-align:center;font-size:11px;color:var(--gray-400);margin-top:10px">
+        <i class="ti ti-shield-check"></i> Plată securizată prin Stripe · Anulezi oricând
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
