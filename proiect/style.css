@@ -323,7 +323,7 @@ input:focus, select:focus, textarea:focus {
   background: var(--white);
 }
 input::placeholder { color: var(--gray-400); font-weight: 400; }
-.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.form-row { display: grid; grid-template-columns: 1fr; gap: 14px; margin-bottom: 14px; }
 
 /* ============================================================
    BUTOANE
@@ -559,8 +559,8 @@ input::placeholder { color: var(--gray-400); font-weight: 400; }
 /* ============================================================
    GRID
    ============================================================ */
-.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+.grid2 { display: grid; grid-template-columns: 1fr; gap: 16px; }
+.grid3 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .grid4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; }
 
 /* ============================================================
@@ -778,7 +778,7 @@ tr:hover td { background: var(--gray-50); }
   .sidebar.open { left: 0; }
   .hamburger-btn { display: flex !important; }
   .content { padding: 14px; }
-  .grid2, .grid3, .grid4 { grid-template-columns: 1fr 1fr !important; }
+  .grid2, .grid3, .grid4 { grid-template-columns: 1fr !important; }
   .user-badge { display: none !important; }
   #top-judet { display: none !important; }
   .top-weather-badge { display: none !important; }
@@ -798,8 +798,8 @@ tr:hover td { background: var(--gray-50); }
   .toast { top: 12px; right: 12px; left: 12px; max-width: none; }
 }
 @media (max-width: 900px) {
-  .grid3 { grid-template-columns: 1fr 1fr; }
-  .grid4 { grid-template-columns: 1fr 1fr; }
+  .grid3 { grid-template-columns: 1fr; }
+  .grid4 { grid-template-columns: 1fr; }
 }
 
 /* ============================================================
