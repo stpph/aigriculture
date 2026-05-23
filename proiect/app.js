@@ -2117,7 +2117,6 @@ function inchideModalAbonament() {
 
 async function initStripeElements() {
   if (!stripeInstance) stripeInstance = Stripe(STRIPE_PK);
-
   try {
     const response = await fetch('/api/stripe', {
       method: 'POST',
@@ -2131,7 +2130,6 @@ async function initStripeElements() {
     });
     const data = await response.json();
     currentSubscriptionId = data.subscriptionId;
-
     stripeElements = stripeInstance.elements({
       clientSecret: data.clientSecret,
       appearance: {
@@ -2143,11 +2141,11 @@ async function initStripeElements() {
         }
       }
     });
-
     const paymentEl = stripeElements.create('payment');
     paymentEl.mount('#payment-element');
   } catch(e) {
-    showToast('Eroare la inițializarea plății.','error');
+    console.error('Stripe error:', e);
+    showToast('Eroare la initializarea platii.','error');
   }
 }
 
