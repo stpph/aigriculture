@@ -2818,5 +2818,14 @@ function deschideModalSumarCal() {
   renderCalSumar();
   document.getElementById('modal-cal-sumar').style.display = 'flex';
 }
+async function resetParola() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) { showToast('Introduceți email-ul mai întâi.','error'); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://aigriculture.ro'
+  });
+  if (error) { showToast('Eroare: '+error.message,'error'); return; }
+  showToast('Email de resetare trimis! Verificați căsuța poștală.','success', 6000);
+}
 }
 initApp();
