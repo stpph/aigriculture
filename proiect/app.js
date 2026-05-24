@@ -130,13 +130,26 @@ function switchAuthTab(t) {
   clearAuthMsg();
 }
 async function initApp() {
+  // Verificam mai intai daca e un token de reset parola in URL
+  const hash = window.location.hash;
+  if (hash && hash.includes('type=recovery')) {
+    showLoading(false);
+    showScreen('auth');
+    const params = new URLSearchParams(hash.substring(1));
+    const accessToken = params.get('access_token');
+    if (accessToken) {
+      await sb.auth.setSession({ access_token: accessToken, refresh_token: params.get('refresh_token')||'' });
+      deschideModalResetParola();
+    }
+    return;
+  }
+
   showLoading(true);
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (session) await loadUser(session.user); else showScreen('auth');
   } catch(e) { showScreen('auth'); }
   showLoading(false);
-  verificaResetToken();
 }
 async function loadUser(user) {
   currentUser = user;
