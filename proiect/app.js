@@ -822,13 +822,11 @@ if (anFiltru) {
         color: culoare, fillColor: culoare, fillOpacity: 0.35, weight: 2.5
       }).addTo(leafletMapFull);
 
-      polygon.bindPopup('<div style="min-width:160px">'
-        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
-        +'<div style="width:12px;height:12px;border-radius:3px;background:'+culoare+'"></div>'
-        +'<b style="font-size:14px">'+escapeHTML(p.nume)+'</b></div>'
-        +'<div style="font-size:12px;color:#6b7280">'+escapeHTML(culturaAfisata||'Necultivat')+' · '+(p.suprafata_ha||0)+' ha</div>'
-        +labelExtra+'</div>');
+polygon.on('click', function() {
+        arataDetaliiParcelaHarta(p.id);
+      });
 
+      polygon.bindTooltip('<b>'+escapeHTML(p.nume)+'</b><br>'+escapeHTML(culturaAfisata||'Necultivat')+' · '+p.suprafata_ha+' ha', {sticky:true, className:'parcela-tooltip'});
       leafletMapFull._customLayers.push(polygon);
       bounds.push(...latlngs);
     } catch(e) { console.error('Eroare parcela', p.nume, e); }
