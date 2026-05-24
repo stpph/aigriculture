@@ -40,6 +40,9 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
   <script>
+    if (!localStorage.getItem('hasVisited') && !window.location.href.includes('landing.html')) {
+  window.location.href = 'landing.html';
+}
 // Touch fix pentru Leaflet.Draw pe mobil
 if (L.Draw) {
   L.Draw.Polyline.prototype._onTouch = function(e) {
@@ -70,7 +73,7 @@ if (L.Draw) {
         <div class="auth-side-feature"><i class="ti ti-map-2"></i> Gestionare parcele cu hartă interactivă</div>
         <div class="auth-side-feature"><i class="ti ti-chart-bar"></i> Analiză profitabilitate și costuri</div>
         <div class="auth-side-feature"><i class="ti ti-robot"></i> Asistent AI agronomic personalizat</div>
-        <div class="auth-side-feature"><i class="ti ti-cloud-sun"></i> Meteo și recomandări în timp real</div>
+        <div class="auth-side-feature"><i class="ti ti-sun"></i> Meteo și recomandări în timp real</div>
         <div class="auth-side-feature"><i class="ti ti-device-mobile"></i> Funcționează pe orice dispozitiv</div>
       </div>
     </div>
@@ -156,8 +159,7 @@ if (L.Draw) {
       <button class="nav-btn" onclick="switchTab('recolte',this)"><i class="ti ti-grain"></i><span>Recolte & Producție</span></button>
       <button class="nav-btn" onclick="switchTab('fitosanitar',this)"><i class="ti ti-flask"></i><span>Registru Fitosanitar</span></button>
       <button class="nav-btn" onclick="switchTab('utilaje',this)"><i class="ti ti-engine"></i><span>Utilaje</span></button>
-      <button class="nav-btn" onclick="switchTab('meteo',this)"><i class="ti ti-cloud-sun"></i><span>Meteo</span></button>
-
+<button class="nav-btn" onclick="switchTab('meteo',this)"><i class="ti ti-sun"></i><span>Meteo</span></button>
       <div class="sidebar-divider"></div>
       <div class="sidebar-section-label">Business</div>
       <button class="nav-btn" onclick="switchTab('contabilitate',this)"><i class="ti ti-coins"></i><span>Contabilitate</span></button>
@@ -698,7 +700,7 @@ if (L.Draw) {
         <!-- ====== METEO ====== -->
         <!-- ====== METEO ====== -->
 <div class="tab" id="tab-meteo">
-  <div class="section-title"><i class="ti ti-cloud-sun"></i> Meteo & Recomandări Agricole</div>
+  <div class="section-title"><i class="ti ti-sun"></i> Meteo & Recomandări Agricole</div>
 
   <!-- Search -->
   <div class="card" style="margin-bottom:16px">
