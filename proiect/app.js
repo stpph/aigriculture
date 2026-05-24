@@ -123,6 +123,28 @@ async function doLogin() {
   showToast('Bun venit, '+(data.user.user_metadata?.prenume||'Fermier')+'! 🌾','success');
   await loadUser(data.user);
 }
+function deschideModalSumarCal() {
+  renderCalSumar();
+  document.getElementById('modal-cal-sumar').style.display = 'flex';
+}
+async function resetParola() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) { showToast('Introduceți email-ul mai întâi.','error'); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://aigriculture.ro'
+  });
+  if (error) { showToast('Eroare: '+error.message,'error'); return; }
+  showToast('Email de resetare trimis! Verificați căsuța poștală.','success', 6000);
+}
+async function resetParola() {
+  const email = document.getElementById('login-email').value.trim();
+  if (!email) { showToast('Introduceți email-ul mai întâi.','error'); return; }
+  const { error } = await sb.auth.resetPasswordForEmail(email, {
+    redirectTo: 'https://aigriculture.ro'
+  });
+  if (error) { showToast('Eroare: '+error.message,'error'); return; }
+  showToast('Email de resetare trimis! Verificați căsuța poștală.','success', 6000);
+}
 async function doRegister() {
   const prenume=document.getElementById('reg-prenume').value.trim(), nume=document.getElementById('reg-nume').value.trim();
   const email=document.getElementById('reg-email').value.trim(), judet=document.getElementById('reg-judet').value;
@@ -2818,14 +2840,6 @@ function deschideModalSumarCal() {
   renderCalSumar();
   document.getElementById('modal-cal-sumar').style.display = 'flex';
 }
-async function resetParola() {
-  const email = document.getElementById('login-email').value.trim();
-  if (!email) { showToast('Introduceți email-ul mai întâi.','error'); return; }
-  const { error } = await sb.auth.resetPasswordForEmail(email, {
-    redirectTo: 'https://aigriculture.ro'
-  });
-  if (error) { showToast('Eroare: '+error.message,'error'); return; }
-  showToast('Email de resetare trimis! Verificați căsuța poștală.','success', 6000);
-}
+
 }
 initApp();
