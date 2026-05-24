@@ -144,11 +144,22 @@ async function initApp() {
     return;
   }
 
+  // Curatam token-uri invalide
+  sb.auth.onAuthStateChange((event, session) => {
+    if (event === 'TOKEN_REFRESHED' && !session) {
+      sb.auth.signOut();
+      showScreen('auth');
+    }
+  });
+
   showLoading(true);
   try {
     const { data: { session } } = await sb.auth.getSession();
     if (session) await loadUser(session.user); else showScreen('auth');
-  } catch(e) { showScreen('auth'); }
+  } catch(e) {
+    await sb.auth.signOut();
+    showScreen('auth');
+  }
   showLoading(false);
 }
 async function loadUser(user) {
