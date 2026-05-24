@@ -730,8 +730,8 @@ function deschideModalHarta() {
 function inchideModalHarta() { document.getElementById('map-modal').style.display='none'; }
 async function cautaLocatieHarta() {
   const query=document.getElementById('map-search-input').value.trim(); if (!query) return;
-  const btn=document.querySelector('.map-search-container button'); const orig=btn.innerHTML; btn.innerHTML='<i class="ti ti-loader"></i>...';
-  try { const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ro&limit=1`,{headers:{'Accept-Language':'ro'}}); const d=await r.json(); if(d&&d.length>0){leafletMap.setView([parseFloat(d[0].lat),parseFloat(d[0].lon)],14);showToast(`Mutat la: ${d[0].display_name.split(',')[0]}`,'info');}else showToast('Locație negăsită.','error'); } catch(e){ showToast('Eroare căutare.','error'); } finally { btn.innerHTML=orig; }
+  const btn=document.querySelector('.map-search-container button'); const orig=btn?.innerHTML; if(btn) btn.innerHTML='<i class="ti ti-loader"></i>...';
+  try { const r=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ro&limit=1`,{headers:{'Accept-Language':'ro'}}); const d=await r.json(); if(d&&d.length>0){leafletMap.setView([parseFloat(d[0].lat),parseFloat(d[0].lon)],14);showToast(`Mutat la: ${d[0].display_name.split(',')[0]}`,'info');}else showToast('Locație negăsită.','error'); } catch(e){ showToast('Eroare căutare.','error'); } finally { if(btn) btn.innerHTML=orig; }
 }
 function vizualizeazaParcela(id) {
   const p = parceleData.find(x => x.id === id);
