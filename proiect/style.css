@@ -856,6 +856,9 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     margin-top: -8px !important;
   }
 }
+.leaflet-container {
+  touch-action: none !important;
+}
 /* ============================================================
    PRINT
    ============================================================ */
@@ -870,4 +873,14 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .card[style*="background:linear-gradient"] {
   background: unset !important;
 }
+.parcela-tooltip {
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 10px;
+  box-shadow: var(--shadow-md);
+  padding: 10px 14px;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px;
+}
+.parcela-tooltip::before { display: none; }
 }

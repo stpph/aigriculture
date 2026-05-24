@@ -39,6 +39,14 @@
 </style>
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+  <script>
+// Touch fix pentru Leaflet.Draw pe mobil
+if (L.Draw) {
+  L.Draw.Polyline.prototype._onTouch = function(e) {
+    this._onMouseMove(e);
+  };
+}
+</script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
 </head>
@@ -142,8 +150,8 @@
 
       <div class="sidebar-divider"></div>
       <div class="sidebar-section-label">Fermă</div>
-      <button class="nav-btn" onclick="switchTab('parcele',this)"><i class="ti ti-map-2"></i><span>Parcele & Hartă</span></button>
-      <button class="nav-btn" onclick="switchTab('calendar',this)"><i class="ti ti-calendar-stats"></i><span>Calendar Agricol</span></button>
+<button class="nav-btn" onclick="switchTab('parcele',this)"><i class="ti ti-layout-list"></i><span>Parcele</span></button>
+<button class="nav-btn" onclick="switchTab('harta',this)"><i class="ti ti-map-2"></i><span>Hartă</span></button>      <button class="nav-btn" onclick="switchTab('calendar',this)"><i class="ti ti-calendar-stats"></i><span>Calendar Agricol</span></button>
       <button class="nav-btn" onclick="switchTab('lucrari',this)"><i class="ti ti-tractor"></i><span>Lucrări Agricole</span></button>
       <button class="nav-btn" onclick="switchTab('recolte',this)"><i class="ti ti-grain"></i><span>Recolte & Producție</span></button>
       <button class="nav-btn" onclick="switchTab('fitosanitar',this)"><i class="ti ti-flask"></i><span>Registru Fitosanitar</span></button>
@@ -334,7 +342,7 @@
 </div>
 <!-- ====== PARCELE ====== -->
 <div class="tab" id="tab-parcele">
-  <div class="section-title"><i class="ti ti-map-2"></i> Parcele & Cartografiere</div>
+  <div class="section-title"><i class="ti ti-map-2"></i> Parcele </div>
   <div class="grid2">
     <div class="card">
       <div style="font-weight:700;font-size:15px;margin-bottom:14px" id="form-parcela-titlu"><i class="ti ti-plus" style="color:var(--ai-green)"></i> Adaugă parcelă nouă</div>
@@ -375,21 +383,27 @@
     </div>
     <div id="lista-parcele"></div>
   </div>
-  <!-- MODAL HARTĂ -->
-  <div id="map-modal" class="map-modal-overlay" style="display:none">
-    <div class="map-modal-content">
-      <div class="map-modal-header"><h3><i class="ti ti-map-pin"></i> Conturează Parcela pe Hartă</h3><button class="map-modal-close" onclick="inchideModalHarta()">&times;</button></div>
-      <div class="map-search-container"><input type="text" id="map-search-input" placeholder="Caută localitate, comună, județ..."><button onclick="cautaLocatieHarta()"><i class="ti ti-search"></i> Caută</button></div>
-      <div id="map" style="width:100%;height:460px;"></div>
-      <div class="map-modal-footer">
-        <div style="font-size:12px;color:var(--gray-600)"><b>Instrucțiuni:</b> Click <i class="ti ti-pentagon"></i> din stânga → adaugă puncte → dublu-click pentru a închide. Trage punctele pentru ajustare.</div>
-        <button class="btn btn-primary btn-sm" onclick="inchideModalHarta()" style="width:auto;padding:9px 18px"><i class="ti ti-check"></i> Confirmă</button>
-      </div>
-    </div>
+</div>
+
+<!-- ====== HARTA ====== -->
+<div class="tab" id="tab-harta">
+  <div class="section-title"><i class="ti ti-map-2"></i> Harta Fermei</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px">
+    <select id="harta-filter-an" onchange="filtreazaHartaAn()" style="width:auto;padding:7px 11px;font-size:12px;border:1.5px solid var(--gray-200);border-radius:8px">
+
+      <option value="2025-2026">2025-2026</option>
+      <option value="2024-2025">2024-2025</option>
+      <option value="2023-2024">2023-2024</option>
+      <option value="2022-2023">2022-2023</option>
+    </select>
+  </div>
+<div style="border-radius:16px;overflow:hidden;box-shadow:var(--shadow-md)">
+    <div id="map-full" style="width:100%;height:calc(100vh - 200px);min-height:500px;"></div>
   </div>
 </div>
+
         <!-- ====== LUCRĂRI AGRICOLE ====== -->
-        <div class="tab" id="tab-lucrari">
+                 <div class="tab" id="tab-lucrari">
           <div class="section-title"><i class="ti ti-tractor"></i> Jurnal Lucrări Agricole</div>
           <div class="grid2">
             <div class="card">
@@ -1031,6 +1045,21 @@
       </button>
       <div style="text-align:center;font-size:11px;color:var(--gray-400);margin-top:10px">
         <i class="ti ti-shield-check"></i> Plată securizată prin Stripe · Anulezi oricând
+      </div>
+    </div>
+  </div>
+</div>
+  <!-- MODAL HARTĂ EDITARE -->
+  <div id="map-modal" class="map-modal-overlay" style="display:none">
+    <div class="map-modal-content">
+      <div class="map-modal-header">
+        <h3><i class="ti ti-map-pin"></i> Conturează Parcela pe Hartă</h3>
+        <button class="map-modal-close" onclick="inchideModalHarta()">&times;</button>
+      </div>
+      <div id="map" style="width:100%;height:460px;"></div>
+      <div class="map-modal-footer">
+        <div style="font-size:12px;color:var(--gray-600)"><b>Instructiuni:</b> Click <i class="ti ti-pentagon"></i> din stânga → adaugă puncte → dublu-click pentru a închide.</div>
+        <button class="btn btn-primary btn-sm" onclick="inchideModalHarta()" style="width:auto;padding:9px 18px"><i class="ti ti-check"></i> Confirmă</button>
       </div>
     </div>
   </div>

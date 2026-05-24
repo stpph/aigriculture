@@ -74,8 +74,9 @@ function switchTab(id, btn) {
 if (id === 'contabilitate') { if(typeof renderTabelCheltuieli === 'function') renderTabelCheltuieli(null); updateSumeContabilitate(); renderCatBars(); }  if (id === 'profitabilitate') calculeazaProfitabilitate();
   if (id === 'rotatie') renderRotatieTabel();
   if (id === 'stiri' && toateStirile.length === 0) incarcaStiri();
-if (id === 'calendar') { window.calendarExtins=false; renderCalTimeline(); renderCalSumar(); renderRotatieAlerte(); }}
-
+if (id === 'calendar') { window.calendarExtins=false; renderCalTimeline(); renderCalSumar(); renderRotatieAlerte(); }
+if (id === 'harta') { setTimeout(() => initMapFull(), 100); }
+}
 // ============================================================
 //  AUTENTIFICARE
 // ============================================================
@@ -152,6 +153,7 @@ async function loadParcele() {
   if (!currentUser) return;
   const { data, error } = await sb.from('parcele').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
   if (!error && data) { parceleData=data; renderListaParcele(); renderCulturaBars(); updateAllParcelaSelects(); reincarcaParcelePeHarta(); }
+reincarcaParcelePeHartaFull();
 }
 async function adaugaParcela() {
   const n=document.getElementById('p-nume').value.trim(), ha=parseFloat(document.getElementById('p-ha').value)||0;
@@ -168,7 +170,7 @@ async function adaugaParcela() {
   if (!editId && c && d) { const sezon = new Date(d).getFullYear().toString(); await sb.from('rotatie_culturi').insert([{user_id:currentUser.id,parcela_nume:n,sezon,cultura:c}]); }
   showToast(editId?'Parcelă actualizată!':'Parcelă adăugată cu succes!','success');
   resetFormParcela();
-  await loadParcele(); await loadRotatie(); updateDashboard();await loadUserPlan();
+await loadParcele(); await loadRotatie(); updateDashboard();
 }
 function resetFormParcela() {
   document.getElementById('p-id-edit').value=''; document.getElementById('p-coordonate').value='';
@@ -474,7 +476,26 @@ function initMap() {
   });
 
   leafletMap.addControl(drawControl);
-
+// Buton custom de cautare
+const SearchControl = L.Control.extend({
+  options: { position: 'topleft' },
+  onAdd: function() {
+    const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+    div.innerHTML = '<a href="#" title="Cauta localitate" style="font-size:16px;display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:#fff;text-decoration:none;color:#333" id="map-search-toggle"><i class="ti ti-search"></i></a>'
+      + '<div id="map-search-popup" style="display:none;position:absolute;left:36px;top:0;background:#fff;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);padding:8px;display:none;gap:6px;min-width:260px;z-index:1000">'
+      + '<input type="text" id="map-search-input" placeholder="Cauta localitate..." style="flex:1;padding:7px 10px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:13px;outline:none;width:200px">'
+      + '<button onclick="cautaLocatieHarta()" style="background:#16a34a;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:13px"><i class="ti ti-search"></i></button>'
+      + '</div>';
+    L.DomEvent.disableClickPropagation(div);
+    L.DomEvent.on(div.querySelector('#map-search-toggle'), 'click', function(e) {
+      L.DomEvent.preventDefault(e);
+      const popup = div.querySelector('#map-search-popup');
+      popup.style.display = popup.style.display === 'none' ? 'flex' : 'none';
+    });
+    return div;
+  }
+});
+leafletMap.addControl(new SearchControl());
   leafletMap.on(L.Draw.Event.CREATED, function(e) {
     drawnItems.clearLayers();
     const layer = e.layer;
@@ -483,9 +504,14 @@ function initMap() {
     showToast('Parcela conturata! Suprafata calculata automat.', 'success');
   });
 
-  leafletMap.on(L.Draw.Event.EDITED, function(e) {
+leafletMap.on(L.Draw.Event.EDITED, function(e) {
     e.layers.eachLayer(function(layer) {
-      salveazaPoligon(layer.getLatLngs()[0]);
+      if (layer.getLatLngs && typeof layer.getLatLngs === 'function') {
+        const latlngs = layer.getLatLngs();
+        if (latlngs && latlngs.length) {
+          salveazaPoligon(Array.isArray(latlngs[0]) ? latlngs[0] : latlngs);
+        }
+      }
     });
     showToast('Contur actualizat!', 'info');
   });
@@ -498,21 +524,19 @@ function initMap() {
 
   leafletMap.on('draw:drawvertex', function(e) {
     const layers = e.layers;
-    if (layers) {
+if (layers) {
       layers.eachLayer(function(layer) {
+        if (!layer.getLatLngs || typeof layer.getLatLngs !== 'function') return;
         const latlngs = layer.getLatLngs();
-        if (latlngs && latlngs.length > 2) {
-          const area = L.GeometryUtil.geodesicArea(latlngs);
+        const flatLatlngs = Array.isArray(latlngs[0]) ? latlngs[0] : latlngs;
+        if (flatLatlngs && flatLatlngs.length > 2) {
+          const area = L.GeometryUtil.geodesicArea(flatLatlngs);
           const ha = (area / 10000).toFixed(2);
-          const haEl = document.getElementById('p-ha');
+                    const haEl = document.getElementById('p-ha');
           if (haEl) haEl.value = ha;
         }
       });
     }
-  });
-
-  document.getElementById('map-search-input')?.addEventListener('keypress', e => {
-    if (e.key === 'Enter') cautaLocatieHarta();
   });
 
   // Auto-zoom la parcelele existente
@@ -536,6 +560,90 @@ function initMap() {
   reincarcaParcelePeHarta();
   showToast('Apasa iconita polygon din stanga pentru a contura parcela.', 'info', 5000);
 }
+let leafletMapFull = null;
+
+function initMapFull() {
+  if (leafletMapFull) { leafletMapFull.invalidateSize(); return; }
+  
+  leafletMapFull = L.map('map-full', {
+    zoomControl: true,
+    attributionControl: false,
+    tap: true,
+    tapTolerance: 15
+  }).setView([45.9432, 24.9668], 7);
+
+  L.tileLayer('https://mt1.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
+    maxZoom: 21
+  }).addTo(leafletMapFull);
+
+  reincarcaParcelePeHartaFull();
+}
+function reincarcaParcelePeHarta() {
+  if (!leafletMap) return;
+  leafletMap.eachLayer(l=>{if(l._isParcelaFundal)leafletMap.removeLayer(l);});
+  const cols=['#4a7c2f','#c8902a','#2e6fa3','#6b3d1e','#8e44ad'];
+  parceleData.forEach((p,i)=>{
+    if (!p.coordonate) return;
+    try {
+      const ll=JSON.parse(p.coordonate);
+      const poly=L.polygon(ll,{color:cols[i%cols.length],fillColor:cols[i%cols.length],fillOpacity:0.2,weight:2});
+      poly._isParcelaFundal=true;
+      poly.bindTooltip(p.nume+' ('+p.suprafata_ha+' ha)',{permanent:false});
+      poly.addTo(leafletMap);
+    } catch(e){}
+  });
+}
+function reincarcaParcelePeHartaFull(anFiltru) {
+  if (!leafletMapFull) return;
+  leafletMapFull.eachLayer(l => { if (l instanceof L.Polygon) leafletMapFull.removeLayer(l); });
+
+  const culoriCulturi = {
+    'Grâu': '#22c55e', 'Orz': '#86efac', 'Orzoaică': '#bbf7d0',
+    'Triticale': '#4ade80', 'Secară': '#16a34a', 'Porumb': '#facc15',
+    'Floarea-soarelui': '#ef4444', 'Rapiță': '#f97316', 'Soia': '#a3e635',
+    'Mazăre': '#bef264', 'Fasole': '#84cc16', 'Sfeclă de zahăr': '#e879f9',
+    'Cartofi': '#d97706', 'Lucernă': '#2dd4bf', 'In pentru ulei': '#818cf8',
+    'Coriandru': '#fb923c', 'Muștar': '#fbbf24', 'Altele': '#94a3b8'
+  };
+  const culoriParcele = ['#16a34a','#2563eb','#d97706','#dc2626','#7c3aed','#0891b2'];
+
+  const bounds = [];
+  parceleData.forEach((p, index) => {
+    if (!p.coordonate) return;
+    try {
+      const coords = JSON.parse(p.coordonate);
+      if (!coords.length) return;
+      const latlngs = coords.map(c => [c.lat||c[0], c.lng||c[1]]);
+      const culoare = culoriCulturi[p.cultura] || culoriParcele[index % culoriParcele.length];
+      
+      let labelExtra = '';
+      if (anFiltru && aniAgricoliData.length) {
+        const anInfo = aniAgricoliData.find(a => a.parcela_id === p.id && a.an_agricol === anFiltru);
+        if (anInfo) labelExtra = '<br><b>'+anInfo.cultura+'</b> · '+anInfo.status+(anInfo.productie_tone?' · '+anInfo.productie_tone+'t':'');
+      }
+
+      const polygon = L.polygon(latlngs, {
+        color: culoare, fillColor: culoare, fillOpacity: 0.35, weight: 2.5
+      }).addTo(leafletMapFull);
+
+      polygon.bindPopup('<div style="min-width:160px">'
+        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+        +'<div style="width:12px;height:12px;border-radius:3px;background:'+culoare+'"></div>'
+        +'<b style="font-size:14px">'+escapeHTML(p.nume)+'</b></div>'
+        +'<div style="font-size:12px;color:#6b7280">'+escapeHTML(p.cultura||'—')+' · '+(p.suprafata_ha||0)+' ha</div>'
+        +labelExtra+'</div>');
+
+      bounds.push(...latlngs);
+    } catch(e) {}
+  });
+
+  if (bounds.length) leafletMapFull.fitBounds(bounds, { padding: [30, 30] });
+}
+
+function filtreazaHartaAn() {
+  const an = document.getElementById('harta-filter-an')?.value || '';
+  reincarcaParcelePeHartaFull(an || null);
+}
 
 async function cautaLocatieSilent(localitate) {
   try {
@@ -552,14 +660,66 @@ function salveazaPoligon(latlngs) {
   document.getElementById('p-coordonate').value=JSON.stringify(latlngs.map(p=>({lat:p.lat,lng:p.lng})));
   showToast(`Suprafață calculată: ${ha} ha`,'info');
 }
-function reincarcaParcelePeHarta() {
-  if (!leafletMap) return;
-  leafletMap.eachLayer(l=>{if(l._isParcelaFundal)leafletMap.removeLayer(l);});
-  const cols=['#4a7c2f','#c8902a','#2e6fa3','#6b3d1e','#8e44ad'];
-  parceleData.forEach((p,i)=>{
+function reincarcaParcelePeHartaFull(anFiltru) {
+  if (!leafletMapFull) return;
+  
+  // Stergem toate layerele custom
+  if (!leafletMapFull._customLayers) leafletMapFull._customLayers = [];
+  leafletMapFull._customLayers.forEach(l => leafletMapFull.removeLayer(l));
+  leafletMapFull._customLayers = [];
+
+  const culoriCulturi = {
+    'Grâu': '#22c55e', 'Orz': '#86efac', 'Orzoaică': '#bbf7d0',
+    'Triticale': '#4ade80', 'Secară': '#16a34a', 'Porumb': '#facc15',
+    'Floarea-soarelui': '#ef4444', 'Rapiță': '#f97316', 'Soia': '#a3e635',
+    'Mazăre': '#bef264', 'Fasole': '#84cc16', 'Sfeclă de zahăr': '#e879f9',
+    'Cartofi': '#d97706', 'Lucernă': '#2dd4bf', 'In pentru ulei': '#818cf8',
+    'Coriandru': '#fb923c', 'Muștar': '#fbbf24', 'Altele': '#94a3b8'
+  };
+  const culoriParcele = ['#16a34a','#2563eb','#d97706','#dc2626','#7c3aed','#0891b2'];
+
+  const bounds = [];
+  parceleData.forEach((p, index) => {
     if (!p.coordonate) return;
-    try { const ll=JSON.parse(p.coordonate); const poly=L.polygon(ll,{color:cols[i%cols.length],fillColor:cols[i%cols.length],fillOpacity:0.2,weight:2}); poly._isParcelaFundal=true; poly.bindTooltip(p.nume+' ('+p.suprafata_ha+' ha)',{permanent:false}); poly.addTo(leafletMap); } catch(e){}
+    try {
+      const coords = JSON.parse(p.coordonate);
+      if (!coords.length) return;
+      const latlngs = coords.map(c => [c.lat||c[0], c.lng||c[1]]);
+
+      let culturaAfisata = p.cultura;
+      let labelExtra = '';
+
+      if (anFiltru) {
+        const anInfo = aniAgricoliData.find(a => a.parcela_id === p.id && a.an_agricol === anFiltru);
+        if (anInfo) {
+          culturaAfisata = anInfo.cultura;
+          labelExtra = '<br><b>'+escapeHTML(anInfo.cultura)+'</b> · '+anInfo.status+(anInfo.productie_tone?' · '+anInfo.productie_tone+'t':'');
+        } else {
+          culturaAfisata = null;
+        }
+      }
+
+      const culoare = culturaAfisata
+        ? (culoriCulturi[culturaAfisata] || culoriParcele[index % culoriParcele.length])
+        : '#94a3b8';
+
+      const polygon = L.polygon(latlngs, {
+        color: culoare, fillColor: culoare, fillOpacity: 0.35, weight: 2.5
+      }).addTo(leafletMapFull);
+
+      polygon.bindPopup('<div style="min-width:160px">'
+        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+        +'<div style="width:12px;height:12px;border-radius:3px;background:'+culoare+'"></div>'
+        +'<b style="font-size:14px">'+escapeHTML(p.nume)+'</b></div>'
+        +'<div style="font-size:12px;color:#6b7280">'+escapeHTML(culturaAfisata||'Necultivat')+' · '+(p.suprafata_ha||0)+' ha</div>'
+        +labelExtra+'</div>');
+
+      leafletMapFull._customLayers.push(polygon);
+      bounds.push(...latlngs);
+    } catch(e) { console.error('Eroare parcela', p.nume, e); }
   });
+
+  if (bounds.length) leafletMapFull.fitBounds(bounds, { padding: [30, 30] });
 }
 function deschideModalHarta() {
   document.getElementById('map-modal').style.display='flex';
@@ -591,15 +751,21 @@ function vizualizeazaParcela(id) {
         fillOpacity: 0.4
       }).addTo(drawnItems);
       leafletMap.fitBounds(polygon.getBounds());
-      polygon.bindPopup(
-        '<b>' + p.nume + '</b><br>' +
-        p.cultura + ' · ' + p.suprafata_ha + ' ha<br>' +
-        (p.localitate || '')
-      ).openPopup();
-    } catch(e) {
-      showToast('Eroare la afișarea parcelei.', 'error');
-    }
-  }, 300);
+polygon.bindTooltip('<div style="min-width:160px">'
+        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
+        +'<div style="width:12px;height:12px;border-radius:3px;background:'+culoare+'"></div>'
+        +'<b style="font-size:14px">'+escapeHTML(p.nume)+'</b></div>'
+        +'<div style="font-size:12px;color:#6b7280">'+escapeHTML(culturaAfisata||'Necultivat')+' · '+(p.suprafata_ha||0)+' ha</div>'
+        +labelExtra+'</div>', 
+        {sticky: true, direction: 'top', className: 'parcela-tooltip'}
+      );
+
+      leafletMapFull._customLayers.push(polygon);
+      bounds.push(...latlngs);
+    } catch(e) { console.error('Eroare parcela', p.nume, e); }
+  });
+
+  if (bounds.length) leafletMapFull.fitBounds(bounds, { padding: [30, 30] });
 }
 function importaFisierApia(event) {
   const file=event.target.files[0]; if (!file) return;
@@ -2020,6 +2186,7 @@ async function loadAniAgricoli() {
     renderCalTimeline();
     renderCalSumar();
   }
+  reincarcaParcelePeHartaFull();
 }
 
 function calcCalProductie() {
