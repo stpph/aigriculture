@@ -829,11 +829,11 @@ function vizualizeazaParcela(id) {
   deschideModalHarta();
   setTimeout(() => {
     if (!p.coordonate) {
-      showToast('Parcela nu are coordonate salvate. Desenați conturul pe hartă.', 'info');
+      showToast('Parcela nu are coordonate salvate. Desenati conturul pe harta.', 'info');
       return;
     }
     try {
-      drawnItems.clearLayers();
+      if (drawnItems) drawnItems.clearLayers();
       const latlngs = JSON.parse(p.coordonate);
       const polygon = L.polygon(latlngs, {
         color: '#4a7c2f',
@@ -841,21 +841,9 @@ function vizualizeazaParcela(id) {
         fillOpacity: 0.4
       }).addTo(drawnItems);
       leafletMap.fitBounds(polygon.getBounds());
-polygon.bindTooltip('<div style="min-width:160px">'
-        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
-        +'<div style="width:12px;height:12px;border-radius:3px;background:'+culoare+'"></div>'
-        +'<b style="font-size:14px">'+escapeHTML(p.nume)+'</b></div>'
-        +'<div style="font-size:12px;color:#6b7280">'+escapeHTML(culturaAfisata||'Necultivat')+' · '+(p.suprafata_ha||0)+' ha</div>'
-        +labelExtra+'</div>', 
-        {sticky: true, direction: 'top', className: 'parcela-tooltip'}
-      );
-
-      leafletMapFull._customLayers.push(polygon);
-      bounds.push(...latlngs);
+      polygon.bindTooltip('<b>'+escapeHTML(p.nume)+'</b><br>'+escapeHTML(p.cultura||'—')+' · '+p.suprafata_ha+' ha', {sticky:true});
     } catch(e) { console.error('Eroare parcela', p.nume, e); }
-  });
-
-  if (bounds.length) leafletMapFull.fitBounds(bounds, { padding: [30, 30] });
+  }, 300);
 }
 function importaFisierApia(event) {
   const file=event.target.files[0]; if (!file) return;
