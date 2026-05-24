@@ -731,10 +731,9 @@ function reincarcaParcelePeHartaFull(anFiltru) {
 }
 
 function filtreazaHartaAn() {
-  const an = document.getElementById('harta-filter-an')?.value || '';
-  reincarcaParcelePeHartaFull(an || null);
+  const an = document.getElementById('harta-filter-an')?.value;
+  reincarcaParcelePeHartaFull(an && an !== '' ? an : null);
 }
-
 async function cautaLocatieSilent(localitate) {
   try {
     const res = await fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(localitate)+'&count=1&language=ro&format=json');
@@ -2284,7 +2283,8 @@ async function loadAniAgricoli() {
     renderCalTimeline();
     renderCalSumar();
   }
-  reincarcaParcelePeHartaFull();
+const anInitial = document.getElementById('harta-filter-an')?.value;
+reincarcaParcelePeHartaFull(anInitial && anInitial !== '' ? anInitial : null);
 }
 
 function calcCalProductie() {
