@@ -427,10 +427,11 @@ function initMap() {
 
   leafletMap = L.map('map', {
     zoomControl: true,
-    attributionControl: false
+    attributionControl: false,
+    tap: true,
+    tapTolerance: 15
   }).setView([45.9432, 24.9668], 7);
 
-  // Strat satelit Google
   L.tileLayer('https://mt1.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
     maxZoom: 21
   }).addTo(leafletMap);
@@ -444,15 +445,17 @@ function initMap() {
       polygon: {
         allowIntersection: false,
         showArea: true,
-        guidelineDistance: 10,
         shapeOptions: {
           color: '#4a7c2f',
           fillColor: '#4a7c2f',
           fillOpacity: 0.35,
           weight: 2
         },
-        // Activează snap și editare vârfuri în timp real
-        repeatMode: false
+        repeatMode: false,
+        touchIcon: new L.DivIcon({
+          iconSize: new L.Point(20, 20),
+          className: 'leaflet-div-icon leaflet-editing-icon'
+        })
       },
       polyline: false, circle: false,
       rectangle: false, marker: false, circlemarker: false
@@ -472,31 +475,27 @@ function initMap() {
 
   leafletMap.addControl(drawControl);
 
-  // Poligon nou desenat
   leafletMap.on(L.Draw.Event.CREATED, function(e) {
     drawnItems.clearLayers();
     const layer = e.layer;
     drawnItems.addLayer(layer);
     salveazaPoligon(layer.getLatLngs()[0]);
-    showToast('Parcelă conturată! Suprafața a fost calculată automat.', 'success');
+    showToast('Parcela conturata! Suprafata calculata automat.', 'success');
   });
 
-  // Poligon editat — drag pe vârfuri
   leafletMap.on(L.Draw.Event.EDITED, function(e) {
     e.layers.eachLayer(function(layer) {
       salveazaPoligon(layer.getLatLngs()[0]);
     });
-    showToast('Contur actualizat! Suprafața a fost recalculată.', 'info');
+    showToast('Contur actualizat!', 'info');
   });
 
-  // Poligon sters
   leafletMap.on(L.Draw.Event.DELETED, function() {
     document.getElementById('p-ha').value = '';
     document.getElementById('p-coordonate').value = '';
-    showToast('Contur șters.', 'info');
+    showToast('Contur sters.', 'info');
   });
 
-  // Eveniment în timp real în timp ce desenezi — afișează suprafața live
   leafletMap.on('draw:drawvertex', function(e) {
     const layers = e.layers;
     if (layers) {
@@ -512,15 +511,40 @@ function initMap() {
     }
   });
 
-  // Search input Enter
   document.getElementById('map-search-input')?.addEventListener('keypress', e => {
     if (e.key === 'Enter') cautaLocatieHarta();
   });
 
-  reincarcaParcelePeHarta();
+  // Auto-zoom la parcelele existente
+  if (parceleData.length > 0) {
+    const parcelaLoc = parceleData.find(p => p.localitate);
+    if (parcelaLoc) {
+      cautaLocatieSilent(parcelaLoc.localitate);
+    } else {
+      const coordParcela = parceleData.find(p => p.coordonate);
+      if (coordParcela) {
+        try {
+          const coords = JSON.parse(coordParcela.coordonate);
+          if (coords.length > 0) {
+            leafletMap.setView([coords[0].lat||coords[0][0], coords[0].lng||coords[0][1]], 14);
+          }
+        } catch(e) {}
+      }
+    }
+  }
 
-  // Instrucțiuni vizuale
-  showToast('Apasă iconița polygon din stânga → Click pe hartă pentru puncte → Dublu-click pentru finalizare. Folosește Edit pentru a muta vârfurile.', 'info', 7000);
+  reincarcaParcelePeHarta();
+  showToast('Apasa iconita polygon din stanga pentru a contura parcela.', 'info', 5000);
+}
+
+async function cautaLocatieSilent(localitate) {
+  try {
+    const res = await fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(localitate)+'&count=1&language=ro&format=json');
+    const data = await res.json();
+    if (data.results && data.results.length) {
+      leafletMap.setView([data.results[0].latitude, data.results[0].longitude], 13);
+    }
+  } catch(e) {}
 }
 function salveazaPoligon(latlngs) {
   const ha=(L.GeometryUtil.geodesicArea(latlngs)/10000).toFixed(2);
@@ -2609,6 +2633,14 @@ function deschideModalAlerteUtilaj() {
   const modal = document.getElementById('modal-alerte-utilaj');
   if (modal) modal.style.display = 'flex';
   renderUtilajAlerte();
+}
+function deschideModalAdaugaCal() {
+  document.getElementById('modal-cal-adauga').style.display = 'flex';
+}
+
+function deschideModalSumarCal() {
+  renderCalSumar();
+  document.getElementById('modal-cal-sumar').style.display = 'flex';
 }
 }
 initApp();

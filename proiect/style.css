@@ -843,7 +843,19 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .text-bold   { font-weight: 700; }
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
 .flex-center  { display: flex; align-items: center; gap: 8px; }
-
+@media (max-width: 768px) {
+  .leaflet-draw-toolbar a {
+    width: 36px !important;
+    height: 36px !important;
+    line-height: 36px !important;
+  }
+  .leaflet-editing-icon {
+    width: 16px !important;
+    height: 16px !important;
+    margin-left: -8px !important;
+    margin-top: -8px !important;
+  }
+}
 /* ============================================================
    PRINT
    ============================================================ */
