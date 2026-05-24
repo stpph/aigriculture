@@ -2921,4 +2921,29 @@ function deschideModalSumarCal() {
 }
 
 }
+function deschideModalFeedback() {
+  document.getElementById('modal-feedback').style.display = 'flex';
+  document.getElementById('feedback-mesaj').value = '';
+  selectTipFeedback('bug');
+}
+
+function selectTipFeedback(tip) {
+  document.getElementById('feedback-tip').value = tip;
+  document.getElementById('feedback-bug-btn').className = tip === 'bug' ? 'btn btn-danger' : 'btn btn-ghost';
+  document.getElementById('feedback-sug-btn').className = tip === 'sugestie' ? 'btn btn-primary' : 'btn btn-ghost';
+}
+
+async function trimiteFeeback() {
+  const tip = document.getElementById('feedback-tip').value;
+  const mesaj = document.getElementById('feedback-mesaj').value.trim();
+  if (!mesaj) { showToast('Scrie un mesaj înainte să trimiți.','error'); return; }
+  const { error } = await sb.from('feedback').insert([{
+    user_id: currentUser.id,
+    tip: tip,
+    mesaj: mesaj
+  }]);
+  if (error) { showToast('Eroare: '+error.message,'error'); return; }
+  document.getElementById('modal-feedback').style.display = 'none';
+  showToast('Mulțumim pentru feedback! Îl vom analiza cu atenție.','success', 5000);
+}
 initApp();

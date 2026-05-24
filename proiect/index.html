@@ -175,6 +175,7 @@ if (L.Draw) {
       <div class="sidebar-section-label">Utilitar</div>
       <button class="nav-btn" onclick="switchTab('asistent',this)"><i class="ti ti-robot"></i><span>Asistent AI</span></button>
       <button class="nav-btn" onclick="switchTab('note',this)"><i class="ti ti-notes"></i><span>Note & Memento-uri</span></button>
+      <button class="nav-btn" onclick="deschideModalFeedback()" style="color:rgba(255,255,255,0.48)"><i class="ti ti-message-report"></i><span>Feedback</span></button>
 
       <div class="sidebar-footer">
         <div class="sidebar-footer-info">
@@ -1066,6 +1067,26 @@ if (L.Draw) {
         <div style="font-size:12px;color:var(--gray-600)"><b>Instructiuni:</b> Click <i class="ti ti-pentagon"></i> din stânga → adaugă puncte → dublu-click pentru a închide.</div>
         <button class="btn btn-primary btn-sm" onclick="inchideModalHarta()" style="width:auto;padding:9px 18px"><i class="ti ti-check"></i> Confirmă</button>
       </div>
+    </div>
+  </div>
+</div>
+<div id="modal-feedback" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--white);border-radius:20px;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,0.3)">
+    <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">
+      <div style="font-family:'Lora',serif;font-size:18px;font-weight:600;color:var(--soil)">Feedback & Raportare</div>
+      <button onclick="document.getElementById('modal-feedback').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:var(--gray-400)">×</button>
+    </div>
+    <div style="padding:24px">
+      <div class="form-row" style="margin-bottom:16px">
+        <button id="feedback-bug-btn" class="btn btn-danger" onclick="selectTipFeedback('bug')" style="flex:1"><i class="ti ti-bug"></i> Raportez un bug</button>
+        <button id="feedback-sug-btn" class="btn btn-ghost" onclick="selectTipFeedback('sugestie')" style="flex:1"><i class="ti ti-bulb"></i> Am o sugestie</button>
+      </div>
+      <input type="hidden" id="feedback-tip" value="bug">
+      <div class="form-group">
+        <label>Descrie problema sau sugestia</label>
+        <textarea id="feedback-mesaj" rows="4" placeholder="Descrie cât mai detaliat..."></textarea>
+      </div>
+      <button class="btn btn-primary" onclick="trimiteFeeback()"><i class="ti ti-send"></i> Trimite</button>
     </div>
   </div>
 </div>
