@@ -757,14 +757,26 @@ function reincarcaParcelePeHartaFull(anFiltru) {
   leafletMapFull._customLayers.forEach(l => leafletMapFull.removeLayer(l));
   leafletMapFull._customLayers = [];
 
-  const culoriCulturi = {
-    'Grâu': '#22c55e', 'Orz': '#86efac', 'Orzoaică': '#bbf7d0',
-    'Triticale': '#4ade80', 'Secară': '#16a34a', 'Porumb': '#facc15',
-    'Floarea-soarelui': '#ef4444', 'Rapiță': '#f97316', 'Soia': '#a3e635',
-    'Mazăre': '#bef264', 'Fasole': '#84cc16', 'Sfeclă de zahăr': '#e879f9',
-    'Cartofi': '#d97706', 'Lucernă': '#2dd4bf', 'In pentru ulei': '#818cf8',
-    'Coriandru': '#fb923c', 'Muștar': '#fbbf24', 'Altele': '#94a3b8'
-  };
+const culoriCulturi = {
+  'Grâu': '#16a34a',        // verde puternic
+  'Orz': '#4ade80',         // verde deschis
+  'Orzoaică': '#86efac',    // verde pal
+  'Triticale': '#059669',   // verde inchis
+  'Secară': '#065f46',      // verde foarte inchis
+  'Porumb': '#eab308',      // galben puternic
+  'Floarea-soarelui': '#ef4444', // rosu puternic
+  'Rapiță': '#2563eb',      // albastru puternic
+  'Soia': '#7c3aed',        // violet
+  'Mazăre': '#06b6d4',      // cyan
+  'Fasole': '#0891b2',      // cyan inchis
+  'Sfeclă de zahăr': '#db2777', // roz puternic
+  'Cartofi': '#d97706',     // portocaliu
+  'Lucernă': '#0d9488',     // teal
+  'In pentru ulei': '#6366f1', // indigo
+  'Coriandru': '#f97316',   // portocaliu deschis
+  'Muștar': '#ca8a04',      // galben inchis
+  'Altele': '#94a3b8'       // gri
+};
   const culoriParcele = ['#16a34a','#2563eb','#d97706','#dc2626','#7c3aed','#0891b2'];
 
   const bounds = [];
@@ -778,16 +790,30 @@ function reincarcaParcelePeHartaFull(anFiltru) {
       let culturaAfisata = p.cultura;
       let labelExtra = '';
 
-      if (anFiltru) {
-        const anInfo = aniAgricoliData.find(a => a.parcela_id === p.id && a.an_agricol === anFiltru);
-        if (anInfo) {
-          culturaAfisata = anInfo.cultura;
-          labelExtra = '<br><b>'+escapeHTML(anInfo.cultura)+'</b> · '+anInfo.status+(anInfo.productie_tone?' · '+anInfo.productie_tone+'t':'');
-        } else {
-          culturaAfisata = null;
-        }
-      }
+if (anFiltru) {
+  const parti = anFiltru.split('-');
+  const anStart = new Date(parseInt(parti[0]), 9, 1);
+  const anEnd = new Date(parseInt(parti[1]), 8, 30);
 
+  // Cauta mai intai in ani_agricoli
+  const anInfo = aniAgricoliData.find(a => a.parcela_id === p.id && a.an_agricol === anFiltru);
+  if (anInfo) {
+    culturaAfisata = anInfo.cultura;
+    labelExtra = '<br><b>'+escapeHTML(anInfo.cultura)+'</b> · '+anInfo.status+(anInfo.productie_tone?' · '+anInfo.productie_tone+'t':'');
+  } else {
+    // Cauta in recolte pentru acest an
+    const recolta = recolteData.find(r => r.parcela_id === p.id && new Date(r.data_recolta) >= anStart && new Date(r.data_recolta) <= anEnd);
+    if (recolta) {
+      culturaAfisata = recolta.cultura;
+      labelExtra = '<br><b>'+escapeHTML(recolta.cultura)+'</b> · '+(recolta.cantitate_tone||0)+' t';
+    } else if (p.data_semanat && new Date(p.data_semanat) >= anStart && new Date(p.data_semanat) <= anEnd) {
+      // Cauta in parcele dupa data semanat
+      culturaAfisata = p.cultura;
+    } else {
+      culturaAfisata = null;
+    }
+  }
+}
       const culoare = culturaAfisata
         ? (culoriCulturi[culturaAfisata] || culoriParcele[index % culoriParcele.length])
         : '#94a3b8';
@@ -840,8 +866,14 @@ function vizualizeazaParcela(id) {
         fillOpacity: 0.4
       }).addTo(drawnItems);
       leafletMap.fitBounds(polygon.getBounds());
-      polygon.bindTooltip('<b>'+escapeHTML(p.nume)+'</b><br>'+escapeHTML(p.cultura||'—')+' · '+p.suprafata_ha+' ha', {sticky:true});
-    } catch(e) { console.error('Eroare parcela', p.nume, e); }
+polygon.bindTooltip('<b>'+escapeHTML(p.nume)+'</b><br>'+escapeHTML(culturaAfisata||'Necultivat')+' · '+p.suprafata_ha+' ha', {sticky:true, className:'parcela-tooltip'});
+
+polygon.on('click', function(e) {
+  L.DomEvent.stopPropagation(e);
+  arataDetaliiParcelaHarta(p.id);
+});
+    } 
+    catch(e) { console.error('Eroare parcela', p.nume, e); }
   }, 300);
 }
 function importaFisierApia(event) {
@@ -2933,5 +2965,64 @@ async function trimiteFeeback() {
   if (error) { showToast('Eroare: '+error.message,'error'); return; }
   document.getElementById('modal-feedback').style.display = 'none';
   showToast('Mulțumim pentru feedback! Îl vom analiza cu atenție.','success', 5000);
+}
+function arataDetaliiParcelaHarta(parcelaId) {
+  const p = parceleData.find(x => x.id === parcelaId);
+  if (!p) return;
+
+  // Stergem panoul vechi daca exista
+  document.getElementById('harta-detalii-panel')?.remove();
+
+  const panel = document.createElement('div');
+  panel.id = 'harta-detalii-panel';
+  panel.style.cssText = 'position:fixed;top:80px;right:20px;width:320px;max-height:calc(100vh - 100px);overflow-y:auto;background:var(--white);border-radius:16px;box-shadow:0 8px 32px rgba(0,0,0,0.2);z-index:1000;animation:fadeInUp 0.3s ease';
+
+  // Recolte per an
+  const recolteParc = recolteData.filter(r => r.parcela_id === parcelaId);
+  const lucrariParc = lucrariData.filter(l => l.parcela_id === parcelaId);
+  const aniSet = new Set();
+  recolteParc.forEach(r => { if(r.data_recolta) { const d=new Date(r.data_recolta); const luna=d.getMonth(); const an=d.getFullYear(); aniSet.add(luna>=9?(an+'-'+(an+1)):((an-1)+'-'+an)); }});
+  lucrariParc.forEach(l => { if(l.data_lucrare) { const d=new Date(l.data_lucrare); const luna=d.getMonth(); const an=d.getFullYear(); aniSet.add(luna>=9?(an+'-'+(an+1)):((an-1)+'-'+an)); }});
+  aniAgricoliData.filter(a => a.parcela_id === parcelaId).forEach(a => aniSet.add(a.an_agricol));
+  if (p.data_semanat) { const d=new Date(p.data_semanat); const luna=d.getMonth(); const an=d.getFullYear(); aniSet.add(luna>=9?(an+'-'+(an+1)):((an-1)+'-'+an)); }
+
+  const ani = [...aniSet].sort((a,b) => b.localeCompare(a));
+
+  let aniHTML = ani.map(an => {
+    const parti = an.split('-');
+    const dataStart = new Date(parseInt(parti[0]), 9, 1);
+    const dataEnd = new Date(parseInt(parti[1]), 8, 30);
+
+    const rec = recolteParc.filter(r => r.data_recolta && new Date(r.data_recolta) >= dataStart && new Date(r.data_recolta) <= dataEnd);
+    const luc = lucrariParc.filter(l => l.data_lucrare && new Date(l.data_lucrare) >= dataStart && new Date(l.data_lucrare) <= dataEnd);
+    const anInfo = aniAgricoliData.find(a => a.parcela_id === parcelaId && a.an_agricol === an);
+
+    const cultura = anInfo?.cultura || rec[0]?.cultura || p.cultura || '—';
+    const totalTone = rec.reduce((s,r) => s+parseFloat(r.cantitate_tone||0), 0);
+    const totalHa = rec.reduce((s,r) => s+parseFloat(r.suprafata_ha||0), 0);
+    const randament = totalHa > 0 ? (totalTone/totalHa).toFixed(2) : '—';
+
+    return '<div style="background:var(--gray-50);border-radius:10px;padding:12px;margin-bottom:10px;border-left:3px solid var(--ai-green)">'
+      +'<div style="font-weight:700;font-size:13px;color:var(--soil);margin-bottom:8px">'+an+' — <span style="color:var(--ai-green)">'+escapeHTML(cultura)+'</span></div>'
+      +(p.data_semanat && new Date(p.data_semanat) >= dataStart && new Date(p.data_semanat) <= dataEnd ? '<div style="font-size:12px;color:var(--gray-500);margin-bottom:4px"><i class="ti ti-plant"></i> Semanat: '+fmtData(p.data_semanat)+'</div>' : '')
+      +(luc.length > 0 ? '<div style="font-size:12px;color:var(--gray-500);margin-bottom:4px"><i class="ti ti-tractor"></i> '+luc.length+' lucrari agricole</div>' : '')
+      +(rec.length > 0 ? '<div style="font-size:12px;color:var(--gray-500);margin-bottom:4px"><i class="ti ti-grain"></i> Recoltat: '+totalTone.toFixed(1)+' t · '+randament+' t/ha</div>' : '')
+      +(luc.length === 0 && rec.length === 0 ? '<div style="font-size:12px;color:var(--gray-400)">Nicio activitate inregistrata</div>' : '')
+      +'</div>';
+  }).join('');
+
+  if (!aniHTML) aniHTML = '<div style="font-size:13px;color:var(--gray-400);text-align:center;padding:16px">Nicio activitate inregistrata.</div>';
+
+  panel.innerHTML = '<div style="padding:16px 20px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">'
+    +'<div><div style="font-weight:700;font-size:15px;color:var(--soil)">'+escapeHTML(p.nume)+'</div>'
+    +'<div style="font-size:12px;color:var(--gray-500)">'+escapeHTML(p.cultura||'—')+' · '+(p.suprafata_ha||0)+' ha · '+escapeHTML(p.localitate||'')+'</div></div>'
+    +'<button onclick="document.getElementById(\'harta-detalii-panel\').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray-400)">×</button>'
+    +'</div>'
+    +'<div style="padding:16px 20px">'
+    +'<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.7px;color:var(--gray-400);margin-bottom:12px">Istoric pe ani agricoli</div>'
+    +aniHTML
+    +'</div>';
+
+  document.body.appendChild(panel);
 }
 initApp();
