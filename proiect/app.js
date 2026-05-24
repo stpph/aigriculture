@@ -2118,7 +2118,27 @@ function sugestieChat(text) { document.getElementById('chat-input').value=text; 
 async function trimiteChat() {
   const input=document.getElementById('chat-input'); if (!input) return;
   const msg=input.value.trim(); if (!msg) return;
+
+  // Verificam limita de mesaje
+  const chatCount = parseInt(localStorage.getItem('chat_count_'+currentUser.id)||'0');
+  const chatData = localStorage.getItem('chat_reset_'+currentUser.id);
+  const azi = new Date().toDateString();
+  
+  // Reset contor zilnic
+  if (chatData !== azi) {
+    localStorage.setItem('chat_count_'+currentUser.id, '0');
+    localStorage.setItem('chat_reset_'+currentUser.id, azi);
+  }
+  
+  const countCurent = parseInt(localStorage.getItem('chat_count_'+currentUser.id)||'0');
+  if (countCurent >= 3) {
+    addChatMsg('Ai atins limita de 3 mesaje pe zi pentru planul gratuit. Revino mâine sau upgradează la Pro pentru mesaje nelimitate.','ai');
+    return;
+  }
+
   input.value=''; addChatMsg(msg,'user');
+  localStorage.setItem('chat_count_'+currentUser.id, (countCurent+1).toString());
+
   const farmContext='Fermierul are '+parceleData.length+' parcele ('+parceleData.reduce((s,p)=>s+p.suprafata_ha,0).toFixed(1)+' ha total). Culturi: '+([...new Set(parceleData.map(p=>p.cultura))].join(', ')||'nedefinite')+'. Judetul: '+(currentUser?.user_metadata?.judet||'Romania')+'.';
   chatHistory.push({role:'user',content:msg});
   if (chatHistory.length>20) chatHistory=chatHistory.slice(-20);
