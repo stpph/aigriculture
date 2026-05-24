@@ -1166,7 +1166,12 @@ function resetFormUtilaj() {
   document.getElementById('utilaj-form-title').textContent='Adauga utilaj';
   ['utilaj-nume','utilaj-marca','utilaj-model','utilaj-an','utilaj-nr','utilaj-ore','utilaj-interval','utilaj-revizie','utilaj-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('utilaj-btn').innerHTML='<i class="ti ti-plus"></i> Salveaza utilaj';
-
+const fileInput = document.getElementById('utilaj-poza-file');
+if (fileInput) fileInput.value='';
+const preview = document.getElementById('utilaj-poza-preview');
+if (preview) preview.style.display='none';
+const pozaEl = document.getElementById('utilaj-poza');
+if (pozaEl) pozaEl.value='';
 }
 function previewPozaUtilaj(input) {
   const file = input.files[0];

@@ -511,6 +511,10 @@ input::placeholder { color: var(--gray-400); font-weight: 400; }
   border-radius: var(--radius-lg); padding: 22px; margin-bottom: 16px;
   box-shadow: var(--shadow-xs); transition: box-shadow 0.25s, transform 0.25s;
 }
+.card[style*="background:linear"] {
+  background: unset !important;
+  border: none !important;
+}
 .card:hover { box-shadow: var(--shadow-sm); }
 
 /* STAT CARDS — gradient background */

@@ -634,6 +634,14 @@
         <div class="form-group"><label>Observatii</label><textarea id="utilaj-obs" rows="2" placeholder="Defecte cunoscute, notite..."></textarea></div>
         <div style="display:flex;gap:8px;margin-top:8px">
 <div style="margin-top:8px">
+  <div class="form-group">
+  <label>Poza utilaj</label>
+  <input type="file" id="utilaj-poza-file" accept="image/*" onchange="previewPozaUtilaj(this)">
+  <div id="utilaj-poza-preview" style="margin-top:8px;display:none">
+    <img id="utilaj-poza-img" style="width:100%;height:140px;object-fit:cover;border-radius:8px">
+  </div>
+  <input type="hidden" id="utilaj-poza">
+</div>
   <button class="btn btn-primary" id="utilaj-btn" onclick="salveazaUtilaj()"><i class="ti ti-plus"></i> Salveaza utilaj</button>
 </div>        </div>
       </div>
