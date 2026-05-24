@@ -883,4 +883,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
   font-size: 13px;
 }
 .parcela-tooltip::before { display: none; }
+.sidebar {
+  z-index: 500 !important;
+}
+.sidebar-overlay {
+  z-index: 499 !important;
+}
 }
