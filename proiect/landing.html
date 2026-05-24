@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AIgriculture — Platforma inteligentă pentru fermieri români</title>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Lora:ital,wght@0,500;0,600;0,700;1,500&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --green: #16a34a;
+      --green-dark: #15803d;
+      --green-light: #22c55e;
+      --green-glow: rgba(22,163,74,0.25);
+      --blue: #2563eb;
+      --blue-light: #3b82f6;
+      --wheat: #d97706;
+      --dark: #0a0f1e;
+      --dark-2: #0d1829;
+      --dark-3: #111e35;
+      --text: #e6edf3;
+      --text-muted: rgba(230,237,243,0.6);
+      --border: rgba(255,255,255,0.08);
+      --card-bg: rgba(255,255,255,0.04);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--dark);
+      color: var(--text);
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ========== NAVBAR ========== */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      padding: 18px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      background: rgba(10,15,30,0.8);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: 2px;
+      font-weight: 800; font-size: 22px; text-decoration: none;
+    }
+    .nav-logo .ai { color: #93c5fd; letter-spacing: -0.5px; }
+    .nav-logo .leaf { color: var(--green-light); font-size: 14px; margin: 0 1px 10px -2px; }
+    .nav-logo .griculture { color: var(--green-light); letter-spacing: -0.5px; }
+
+    .nav-links { display: flex; gap: 32px; align-items: center; }
+    .nav-links a {
+      color: var(--text-muted); text-decoration: none;
+      font-size: 14px; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      background: linear-gradient(135deg, var(--green-dark), var(--green));
+      color: #fff; padding: 10px 22px; border-radius: 10px;
+      font-size: 14px; font-weight: 700; text-decoration: none;
+      box-shadow: 0 4px 16px var(--green-glow);
+      transition: all 0.2s;
+    }
+    .nav-cta:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--green-glow); color: #fff; }
+
+    /* ========== HERO ========== */
+    .hero {
+      min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      padding: 120px 40px 80px;
+      position: relative; overflow: hidden;
+      text-align: center;
+    }
+
+    .hero-bg {
+      position: absolute; inset: 0; z-index: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(22,163,74,0.15) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 40% at 20% 80%, rgba(37,99,235,0.10) 0%, transparent 50%),
+        radial-gradient(ellipse 40% 40% at 80% 60%, rgba(22,163,74,0.08) 0%, transparent 50%);
+      animation: heroBgPulse 10s ease-in-out infinite alternate;
+    }
+    @keyframes heroBgPulse {
+      0% { opacity: 0.7; transform: scale(1); }
+      100% { opacity: 1; transform: scale(1.05); }
+    }
+
+    /* Particule */
+    .hero-particles {
+      position: absolute; inset: 0; z-index: 0;
+      background-image:
+        radial-gradient(circle 2px at 10% 20%, rgba(34,197,94,0.6) 0%, transparent 100%),
+        radial-gradient(circle 1.5px at 30% 70%, rgba(96,165,250,0.5) 0%, transparent 100%),
+        radial-gradient(circle 2px at 60% 15%, rgba(34,197,94,0.4) 0%, transparent 100%),
+        radial-gradient(circle 1px at 80% 50%, rgba(250,204,21,0.4) 0%, transparent 100%),
+        radial-gradient(circle 1.5px at 90% 80%, rgba(34,197,94,0.5) 0%, transparent 100%),
+        radial-gradient(circle 1px at 45% 90%, rgba(96,165,250,0.4) 0%, transparent 100%),
+        radial-gradient(circle 2px at 70% 35%, rgba(34,197,94,0.3) 0%, transparent 100%),
+        radial-gradient(circle 1px at 15% 55%, rgba(96,165,250,0.35) 0%, transparent 100%),
+        radial-gradient(circle 1.5px at 55% 60%, rgba(250,204,21,0.3) 0%, transparent 100%);
+      animation: particleFloat 15s ease-in-out infinite alternate;
+    }
+    @keyframes particleFloat {
+      0% { transform: translateY(0) translateX(0); }
+      33% { transform: translateY(-30px) translateX(15px); }
+      66% { transform: translateY(15px) translateX(-20px); }
+      100% { transform: translateY(-15px) translateX(8px); }
+    }
+
+    /* Grile decorative */
+    .hero-grid {
+      position: absolute; inset: 0; z-index: 0;
+      background-image: linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 70%);
+    }
+
+    .hero-content { position: relative; z-index: 1; max-width: 820px; margin: 0 auto; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(22,163,74,0.12);
+      border: 1px solid rgba(22,163,74,0.3);
+      color: var(--green-light);
+      padding: 7px 16px; border-radius: 30px;
+      font-size: 13px; font-weight: 600;
+      margin-bottom: 28px;
+      animation: fadeInDown 0.6s ease;
+    }
+    .hero-badge i { font-size: 15px; }
+
+    .hero-title {
+      font-family: 'Lora', serif;
+      font-size: clamp(40px, 6vw, 72px);
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -1px;
+      margin-bottom: 24px;
+      animation: fadeInUp 0.7s ease 0.1s both;
+    }
+    .hero-title .accent { color: var(--green-light); }
+    .hero-title .accent-blue { color: #93c5fd; }
+
+    .hero-sub {
+      font-size: clamp(16px, 2vw, 20px);
+      color: var(--text-muted);
+      line-height: 1.7;
+      max-width: 600px; margin: 0 auto 40px;
+      font-weight: 400;
+      animation: fadeInUp 0.7s ease 0.2s both;
+    }
+
+    .hero-actions {
+      display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+      animation: fadeInUp 0.7s ease 0.3s both;
+    }
+    .btn-hero-primary {
+      background: linear-gradient(135deg, var(--green-dark), var(--green), var(--green-light));
+      background-size: 200% 200%;
+      color: #fff; padding: 16px 36px;
+      border-radius: 12px; font-size: 16px; font-weight: 700;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      box-shadow: 0 8px 32px var(--green-glow);
+      transition: all 0.3s;
+      animation: gradientShift 4s ease infinite;
+    }
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+    }
+    .btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 16px 40px var(--green-glow); color: #fff; }
+
+    .btn-hero-secondary {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text); padding: 16px 36px;
+      border-radius: 12px; font-size: 16px; font-weight: 600;
+      text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+      backdrop-filter: blur(10px);
+      transition: all 0.3s;
+    }
+    .btn-hero-secondary:hover { background: rgba(255,255,255,0.08); transform: translateY(-2px); color: var(--text); }
+
+    .hero-stats {
+      display: flex; gap: 40px; justify-content: center; flex-wrap: wrap;
+      margin-top: 60px; padding-top: 40px;
+      border-top: 1px solid var(--border);
+      animation: fadeInUp 0.7s ease 0.4s both;
+    }
+    .hero-stat { text-align: center; }
+    .hero-stat-num {
+      font-family: 'Lora', serif;
+      font-size: 32px; font-weight: 700;
+      color: var(--green-light);
+      display: block; line-height: 1;
+    }
+    .hero-stat-label {
+      font-size: 13px; color: var(--text-muted);
+      margin-top: 6px; font-weight: 500;
+    }
+
+    /* ========== SECTION SHARED ========== */
+    section { padding: 100px 40px; }
+    .section-label {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--green-light); font-size: 12px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 2px;
+      margin-bottom: 16px;
+    }
+    .section-title {
+      font-family: 'Lora', serif;
+      font-size: clamp(28px, 4vw, 44px);
+      font-weight: 700; line-height: 1.2;
+      margin-bottom: 16px; letter-spacing: -0.5px;
+    }
+    .section-sub {
+      font-size: 17px; color: var(--text-muted);
+      max-width: 560px; line-height: 1.7;
+    }
+    .container { max-width: 1160px; margin: 0 auto; }
+
+    /* ========== FEATURES ========== */
+    .features { background: var(--dark-2); }
+    .features-header { text-align: center; margin-bottom: 64px; }
+    .features-header .section-sub { margin: 0 auto; }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+    }
+
+    .feature-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px;
+      transition: all 0.3s;
+      position: relative; overflow: hidden;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+      opacity: 0; transition: opacity 0.3s;
+    }
+    .feature-card:hover { background: rgba(255,255,255,0.07); transform: translateY(-4px); border-color: rgba(34,197,94,0.2); }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; margin-bottom: 18px;
+      background: rgba(22,163,74,0.12);
+      border: 1px solid rgba(22,163,74,0.2);
+      color: var(--green-light);
+    }
+    .feature-icon.blue { background: rgba(37,99,235,0.12); border-color: rgba(37,99,235,0.2); color: #93c5fd; }
+    .feature-icon.wheat { background: rgba(217,119,6,0.12); border-color: rgba(217,119,6,0.2); color: #fbbf24; }
+    .feature-icon.purple { background: rgba(124,58,237,0.12); border-color: rgba(124,58,237,0.2); color: #a78bfa; }
+    .feature-icon.red { background: rgba(239,68,68,0.12); border-color: rgba(239,68,68,0.2); color: #f87171; }
+    .feature-icon.teal { background: rgba(20,184,166,0.12); border-color: rgba(20,184,166,0.2); color: #2dd4bf; }
+
+    .feature-title { font-size: 17px; font-weight: 700; margin-bottom: 10px; }
+    .feature-desc { font-size: 14px; color: var(--text-muted); line-height: 1.7; }
+
+    /* ========== BENEFICII ========== */
+    .benefits { background: var(--dark); }
+    .benefits-inner {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 80px;
+      align-items: center;
+    }
+    .benefit-list { display: flex; flex-direction: column; gap: 24px; margin-top: 32px; }
+    .benefit-item {
+      display: flex; gap: 16px; align-items: flex-start;
+      padding: 20px; border-radius: 16px;
+      background: var(--card-bg); border: 1px solid var(--border);
+      transition: all 0.3s;
+    }
+    .benefit-item:hover { background: rgba(255,255,255,0.06); border-color: rgba(34,197,94,0.2); }
+    .benefit-icon {
+      width: 44px; height: 44px; flex-shrink: 0;
+      border-radius: 12px; display: flex; align-items: center; justify-content: center;
+      font-size: 20px; background: rgba(22,163,74,0.12);
+      color: var(--green-light); border: 1px solid rgba(22,163,74,0.2);
+    }
+    .benefit-title { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
+    .benefit-desc { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+
+    .benefits-visual {
+      background: linear-gradient(135deg, var(--dark-2), var(--dark-3));
+      border: 1px solid var(--border);
+      border-radius: 24px; padding: 32px;
+      position: relative; overflow: hidden;
+    }
+    .benefits-visual::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 200px; height: 200px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(22,163,74,0.15) 0%, transparent 70%);
+    }
+    .mock-card {
+      background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px; margin-bottom: 12px;
+      position: relative; z-index: 1;
+    }
+    .mock-stat { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .mock-stat-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.6px; }
+    .mock-stat-val { font-size: 20px; font-weight: 800; font-family: 'Lora', serif; }
+    .mock-bar { height: 6px; background: rgba(255,255,255,0.06); border-radius: 3px; overflow: hidden; margin-top: 8px; }
+    .mock-bar-fill { height: 100%; border-radius: 3px; animation: barGrow 2s ease-out forwards; }
+    @keyframes barGrow { from { width: 0; } }
+    .mock-green { background: linear-gradient(90deg, var(--green-dark), var(--green-light)); }
+    .mock-blue { background: linear-gradient(90deg, #1d4ed8, #60a5fa); }
+    .mock-wheat { background: linear-gradient(90deg, #92400e, #fbbf24); }
+
+    .mock-alert {
+      background: rgba(217,119,6,0.1); border: 1px solid rgba(217,119,6,0.25);
+      border-radius: 10px; padding: 12px 14px;
+      display: flex; gap: 10px; align-items: center;
+      font-size: 13px; color: #fbbf24; margin-top: 12px;
+      position: relative; z-index: 1;
+    }
+
+    /* ========== MODULES ========== */
+    .modules { background: var(--dark-2); }
+    .modules-header { text-align: center; margin-bottom: 56px; }
+    .modules-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+    .module-item {
+      background: var(--card-bg); border: 1px solid var(--border);
+      border-radius: 16px; padding: 20px 16px;
+      text-align: center; transition: all 0.25s;
+      cursor: default;
+    }
+    .module-item:hover { background: rgba(255,255,255,0.07); transform: translateY(-3px); border-color: rgba(34,197,94,0.25); }
+    .module-item i { font-size: 28px; color: var(--green-light); display: block; margin-bottom: 10px; }
+    .module-item.blue i { color: #93c5fd; }
+    .module-item.wheat i { color: #fbbf24; }
+    .module-item.purple i { color: #a78bfa; }
+    .module-name { font-size: 13px; font-weight: 600; color: var(--text); }
+
+    /* ========== CTA ========== */
+    .cta-section {
+      background: var(--dark);
+      text-align: center; padding: 100px 40px;
+    }
+    .cta-inner {
+      max-width: 680px; margin: 0 auto;
+      background: linear-gradient(135deg, rgba(22,163,74,0.08), rgba(37,99,235,0.08));
+      border: 1px solid rgba(22,163,74,0.2);
+      border-radius: 28px; padding: 60px 40px;
+      position: relative; overflow: hidden;
+    }
+    .cta-inner::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse at 50% 0%, rgba(22,163,74,0.12) 0%, transparent 60%);
+    }
+    .cta-inner * { position: relative; z-index: 1; }
+    .cta-title {
+      font-family: 'Lora', serif;
+      font-size: clamp(28px, 4vw, 40px);
+      font-weight: 700; margin-bottom: 16px;
+    }
+    .cta-sub { font-size: 17px; color: var(--text-muted); margin-bottom: 36px; line-height: 1.6; }
+    .cta-note { font-size: 13px; color: var(--text-muted); margin-top: 16px; }
+
+    /* ========== FOOTER ========== */
+    footer {
+      background: var(--dark-2);
+      border-top: 1px solid var(--border);
+      padding: 40px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px;
+    }
+    footer .copy { font-size: 13px; color: var(--text-muted); }
+    footer .footer-links { display: flex; gap: 24px; }
+    footer .footer-links a { font-size: 13px; color: var(--text-muted); text-decoration: none; transition: color 0.2s; }
+    footer .footer-links a:hover { color: var(--text); }
+
+    /* ========== ANIMATII ========== */
+    @keyframes fadeInDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 768px) {
+      nav { padding: 14px 20px; }
+      .nav-links { display: none; }
+      section { padding: 70px 20px; }
+      .hero { padding: 100px 20px 60px; }
+      .benefits-inner { grid-template-columns: 1fr; gap: 40px; }
+      .benefits-visual { display: none; }
+      .modules-grid { grid-template-columns: repeat(2, 1fr); }
+      .hero-stats { gap: 24px; }
+      footer { flex-direction: column; text-align: center; }
+    }
+    @media (max-width: 500px) {
+      .modules-grid { grid-template-columns: repeat(2, 1fr); }
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <a href="#" class="nav-logo">
+    <span class="ai">ai</span>
+    <i class="ti ti-leaf logo-leaf leaf"></i>
+    <span class="griculture">griculture</span>
+  </a>
+  <div class="nav-links">
+    <a href="#features">Funcționalități</a>
+    <a href="#beneficii">Beneficii</a>
+    <a href="#module">Module</a>
+  </div>
+  <a href="index.html" class="nav-cta"><i class="ti ti-login"></i> Intră în platformă</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-particles"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-content">
+    <div class="hero-badge">
+      <i class="ti ti-sparkles"></i>
+      Platforma #1 pentru fermierii români
+    </div>
+    <h1 class="hero-title">
+      Gestionează-ți ferma<br>
+      cu <span class="accent">inteligență artificială</span>
+    </h1>
+    <p class="hero-sub">
+      De la parcele și lucrări agricole, până la contabilitate și prognoze meteo — tot ce ai nevoie pentru o fermă modernă, într-o singură aplicație.
+    </p>
+    <div class="hero-actions">
+      <a href="index.html" class="btn-hero-primary">
+        <i class="ti ti-rocket"></i> Începe gratuit
+      </a>
+      <a href="#features" class="btn-hero-secondary">
+        <i class="ti ti-eye"></i> Vezi cum funcționează
+      </a>
+    </div>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="hero-stat-num">13+</span>
+        <span class="hero-stat-label">Module integrate</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">100%</span>
+        <span class="hero-stat-label">Gratuit la început</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">PWA</span>
+        <span class="hero-stat-label">Funcționează offline</span>
+      </div>
+      <div class="hero-stat">
+        <span class="hero-stat-num">🇷🇴</span>
+        <span class="hero-stat-label">Făcut pentru România</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="features-header reveal">
+      <div class="section-label"><i class="ti ti-stars"></i> Ce oferim</div>
+      <h2 class="section-title">Tot ce are nevoie un fermier modern</h2>
+      <p class="section-sub">Am construit AIgriculture împreună cu fermieri din România, pentru a rezolva problemele reale cu care se confruntă zi de zi.</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card reveal">
+        <div class="feature-icon"><i class="ti ti-map-2"></i></div>
+        <div class="feature-title">Parcele & Hartă Interactivă</div>
+        <div class="feature-desc">Conturează parcelele direct pe hartă satelitară, importă din APIA și vizualizează toate culturile pe o hartă colorată.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon blue"><i class="ti ti-calendar-stats"></i></div>
+        <div class="feature-title">Calendar Ani Agricoli</div>
+        <div class="feature-desc">Ține evidența fiecărui an agricol per parcelă, cu date despre semănat, recoltă, producție și rotația culturilor.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon wheat"><i class="ti ti-tractor"></i></div>
+        <div class="feature-title">Jurnal Lucrări Agricole</div>
+        <div class="feature-desc">Înregistrează fiecare lucrare cu utilajul folosit, operatorul și durata. Orele se adaugă automat la utilaj.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><i class="ti ti-grain"></i></div>
+        <div class="feature-title">Recolte & Producție</div>
+        <div class="feature-desc">Înregistrează cantitățile recoltate, calculează randamentul t/ha și urmărește veniturile din vânzări.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon blue"><i class="ti ti-coins"></i></div>
+        <div class="feature-title">Contabilitate Simplificată</div>
+        <div class="feature-desc">Urmărește cheltuielile și veniturile, cu calculator de costuri de producție și distribuție pe categorii.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon purple"><i class="ti ti-robot"></i></div>
+        <div class="feature-title">Asistent AI Agronomic</div>
+        <div class="feature-desc">Pune întrebări despre culturi, tratamente, boli sau legislație și primești răspunsuri personalizate pentru ferma ta.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon wheat"><i class="ti ti-cloud-sun"></i></div>
+        <div class="feature-title">Meteo & Recomandări</div>
+        <div class="feature-desc">Prognoză 7 zile cu recomandări agronomice specifice — când să aplici tratamente, când să irighi, când să recolezi.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon red"><i class="ti ti-engine"></i></div>
+        <div class="feature-title">Gestiune Utilaje</div>
+        <div class="feature-desc">Urmărește orele de motor, intervalele de revizie și primești alerte automate când se apropie mentenanța.</div>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon teal"><i class="ti ti-flask"></i></div>
+        <div class="feature-title">Registru Fitosanitar</div>
+        <div class="feature-desc">Obligație legală respectată automat. Înregistrează toate tratamentele cu perioade de pauză și countdown activ.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- BENEFICII -->
+<section class="benefits" id="beneficii">
+  <div class="container">
+    <div class="benefits-inner">
+      <div>
+        <div class="section-label reveal"><i class="ti ti-heart"></i> De ce AIgriculture</div>
+        <h2 class="section-title reveal">Construită pentru fermierul român</h2>
+        <p class="section-sub reveal">Nu o soluție generică adaptată — ci o platformă gândită de la zero pentru specificul agriculturii din România.</p>
+        <div class="benefit-list">
+          <div class="benefit-item reveal">
+            <div class="benefit-icon"><i class="ti ti-device-mobile"></i></div>
+            <div>
+              <div class="benefit-title">Funcționează pe orice dispozitiv</div>
+              <div class="benefit-desc">Pe telefon, tabletă sau calculator — inclusiv offline pe câmp, fără internet.</div>
+            </div>
+          </div>
+          <div class="benefit-item reveal">
+            <div class="benefit-icon"><i class="ti ti-shield-check"></i></div>
+            <div>
+              <div class="benefit-title">Datele tale sunt ale tale</div>
+              <div class="benefit-desc">Stocare securizată, fără acces terți, fără publicitate. Datele fermei tale rămân private.</div>
+            </div>
+          </div>
+          <div class="benefit-item reveal">
+            <div class="benefit-icon"><i class="ti ti-refresh"></i></div>
+            <div>
+              <div class="benefit-title">Totul sincronizat automat</div>
+              <div class="benefit-desc">Adaugi o recoltă și apare automat în contabilitate. Adaugi o lucrare și orele se duc la utilaj.</div>
+            </div>
+          </div>
+          <div class="benefit-item reveal">
+            <div class="benefit-icon"><i class="ti ti-file-type-pdf"></i></div>
+            <div>
+              <div class="benefit-title">Export rapoarte PDF</div>
+              <div class="benefit-desc">Generează rapoarte pentru contabil, bancă sau APIA cu un singur click.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="benefits-visual reveal">
+        <div class="mock-card">
+          <div class="mock-stat">
+            <span class="mock-stat-label">Hectare totale</span>
+            <span class="mock-stat-val" style="color:#4ade80">872.9 ha</span>
+          </div>
+          <div class="mock-bar"><div class="mock-bar-fill mock-green" style="width:78%"></div></div>
+        </div>
+        <div class="mock-card">
+          <div class="mock-stat">
+            <span class="mock-stat-label">Tone recoltate</span>
+            <span class="mock-stat-val" style="color:#60a5fa">2,455 t</span>
+          </div>
+          <div class="mock-bar"><div class="mock-bar-fill mock-blue" style="width:65%"></div></div>
+        </div>
+        <div class="mock-card">
+          <div class="mock-stat">
+            <span class="mock-stat-label">Profit net</span>
+            <span class="mock-stat-val" style="color:#fbbf24">+1.39M RON</span>
+          </div>
+          <div class="mock-bar"><div class="mock-bar-fill mock-wheat" style="width:88%"></div></div>
+        </div>
+        <div class="mock-alert">
+          <i class="ti ti-alert-triangle"></i>
+          Revizie apropiată — Tractor John Deere (10h)
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MODULE -->
+<section class="modules" id="module">
+  <div class="container">
+    <div class="modules-header reveal">
+      <div class="section-label"><i class="ti ti-layout-grid"></i> Module</div>
+      <h2 class="section-title">13 module integrate</h2>
+      <p class="section-sub" style="margin: 0 auto;">Totul într-un singur loc, fără să sari între aplicații diferite.</p>
+    </div>
+    <div class="modules-grid reveal">
+      <div class="module-item"><i class="ti ti-layout-dashboard"></i><div class="module-name">Tablou de bord</div></div>
+      <div class="module-item"><i class="ti ti-map-2"></i><div class="module-name">Parcele</div></div>
+      <div class="module-item blue"><i class="ti ti-map-pin"></i><div class="module-name">Hartă</div></div>
+      <div class="module-item"><i class="ti ti-calendar-stats"></i><div class="module-name">Calendar Agricol</div></div>
+      <div class="module-item wheat"><i class="ti ti-tractor"></i><div class="module-name">Lucrări Agricole</div></div>
+      <div class="module-item"><i class="ti ti-grain"></i><div class="module-name">Recolte</div></div>
+      <div class="module-item blue"><i class="ti ti-flask"></i><div class="module-name">Fitosanitar</div></div>
+      <div class="module-item wheat"><i class="ti ti-engine"></i><div class="module-name">Utilaje</div></div>
+      <div class="module-item"><i class="ti ti-cloud-sun"></i><div class="module-name">Meteo</div></div>
+      <div class="module-item blue"><i class="ti ti-coins"></i><div class="module-name">Contabilitate</div></div>
+      <div class="module-item purple"><i class="ti ti-chart-bar"></i><div class="module-name">Profitabilitate</div></div>
+      <div class="module-item purple"><i class="ti ti-robot"></i><div class="module-name">Asistent AI</div></div>
+      <div class="module-item wheat"><i class="ti ti-news"></i><div class="module-name">Știri Agribusiness</div></div>
+      <div class="module-item"><i class="ti ti-notes"></i><div class="module-name">Note & Memento-uri</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-inner reveal">
+      <div class="section-label" style="justify-content:center"><i class="ti ti-rocket"></i> Începe azi</div>
+      <h2 class="cta-title">Gata să modernizezi ferma ta?</h2>
+      <p class="cta-sub">Creează-ți un cont gratuit în mai puțin de 2 minute și descoperă cum AIgriculture îți simplifică munca de zi cu zi.</p>
+      <a href="index.html" class="btn-hero-primary" style="font-size:17px;padding:18px 44px;display:inline-flex">
+        <i class="ti ti-user-plus"></i> Creează cont gratuit
+      </a>
+      <p class="cta-note">Fără card de credit · Fără obligații · Funcționează pe orice dispozitiv</p>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <a href="#" class="nav-logo" style="font-size:18px">
+    <span class="ai">ai</span>
+    <i class="ti ti-leaf leaf" style="font-size:12px;margin-bottom:8px"></i>
+    <span class="griculture">griculture</span>
+  </a>
+  <p class="copy">© 2026 AIgriculture · Făcut cu ❤️ pentru fermierii români</p>
+  <div class="footer-links">
+    <a href="index.html">Platformă</a>
+    <a href="mailto:contact@aigriculture.ro">Contact</a>
+  </div>
+</footer>
+
+<script>
+  // Scroll reveal
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  // Navbar scroll effect
+  window.addEventListener('scroll', () => {
+    const nav = document.querySelector('nav');
+    if (window.scrollY > 50) {
+      nav.style.background = 'rgba(10,15,30,0.95)';
+    } else {
+      nav.style.background = 'rgba(10,15,30,0.8)';
+    }
+  });
+
+  // Counter animation pentru hero stats
+  function animateCounter(el, target, suffix='') {
+    let start = 0;
+    const duration = 2000;
+    const step = (timestamp) => {
+      if (!start) start = timestamp;
+      const progress = Math.min((timestamp - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      el.textContent = Math.floor(eased * target) + suffix;
+      if (progress < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+</script>
+</body>
+</html>
