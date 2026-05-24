@@ -143,9 +143,18 @@ async function doRegister() {
   if (data.session) currentUser = data.user;
 }
 function goToApp() { if (currentUser) { loadUser(currentUser); showToast('Bun venit în AIgriculture! 🌾','success',5000); } else { document.getElementById('auth-content').style.display='block'; document.getElementById('auth-success').style.display='none'; switchAuthTab('login'); } }
-async function doLogout() { await sb.auth.signOut(); currentUser=null; parceleData=[]; cheltuieliData=[]; lucrariData=[]; recolteData=[]; utilajeData=[]; fitosanitarData=[]; rotatieData=[]; noteData=[]; document.getElementById('auth-content').style.display='block'; document.getElementById('auth-success').style.display='none'; switchAuthTab('login'); showScreen('auth'); }
+async function doLogout() {
+  await sb.auth.signOut();
+  currentUser = null;
+  parceleData = []; cheltuieliData = []; lucrariData = []; recolteData = [];
+  utilajeData = []; fitosanitarData = []; rotatieData = []; noteData = [];
+  aniAgricoliData = [];
+  cheltuieliTipFilter = ''; cheltuieliSortCol = null;
+  if (leafletMap) { leafletMap.remove(); leafletMap = null; drawnItems = null; }
+  if (leafletMapFull) { leafletMapFull.remove(); leafletMapFull = null; }
+  window.location.reload();
+}
 sb.auth.onAuthStateChange((event) => { if (event==='SIGNED_OUT') showScreen('auth'); });
-
 // ============================================================
 //  PARCELE
 // ============================================================
@@ -434,8 +443,8 @@ function initMap() {
     tapTolerance: 15
   }).setView([45.9432, 24.9668], 7);
 
-  L.tileLayer('https://mt1.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
-    maxZoom: 21
+L.tileLayer('https://mt1.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}&hl=ro&gl=RO', {
+      maxZoom: 21
   }).addTo(leafletMap);
 
   drawnItems = new L.FeatureGroup();
