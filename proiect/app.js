@@ -27,6 +27,48 @@ let aniAgricoliData = [];
 // ============================================================
 //  UTILITARE GENERALE
 // ============================================================
+// Detectare reset password token din URL
+async function verificaResetToken() {
+  const hash = window.location.hash;
+  if (hash && hash.includes('type=recovery')) {
+    const params = new URLSearchParams(hash.substring(1));
+    const accessToken = params.get('access_token');
+    if (accessToken) {
+      await sb.auth.setSession({ access_token: accessToken, refresh_token: params.get('refresh_token') });
+      deschideModalResetParola();
+    }
+  }
+}
+function deschideModalResetParola() {
+  const modal = document.createElement('div');
+  modal.id = 'modal-reset-parola';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = '<div style="background:var(--white);border-radius:20px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,0.3);padding:36px">'
+    +'<div style="text-align:center;margin-bottom:24px">'
+    +'<div style="font-family:\'Lora\',serif;font-size:22px;font-weight:700;color:var(--soil);margin-bottom:8px">Parolă nouă</div>'
+    +'<div style="font-size:14px;color:var(--gray-500)">Introduceți noua parolă pentru contul tău AIgriculture.</div>'
+    +'</div>'
+    +'<div class="form-group"><label>Parolă nouă</label><input type="password" id="reset-pass-nou" placeholder="Minim 6 caractere"></div>'
+    +'<div class="form-group"><label>Confirmă parola</label><input type="password" id="reset-pass-confirm" placeholder="Repetă parola"></div>'
+    +'<div id="reset-msg"></div>'
+    +'<button class="btn btn-primary" onclick="salveazaParolaNoua()"><i class="ti ti-lock"></i> Salvează parola</button>'
+    +'</div>';
+  document.body.appendChild(modal);
+}
+
+async function salveazaParolaNoua() {
+  const pass = document.getElementById('reset-pass-nou').value;
+  const confirm = document.getElementById('reset-pass-confirm').value;
+  const msg = document.getElementById('reset-msg');
+  if (pass.length < 6) { msg.innerHTML='<div class="msg-box msg-error">Parola trebuie să aibă minim 6 caractere.</div>'; return; }
+  if (pass !== confirm) { msg.innerHTML='<div class="msg-box msg-error">Parolele nu coincid.</div>'; return; }
+  const { error } = await sb.auth.updateUser({ password: pass });
+  if (error) { msg.innerHTML='<div class="msg-box msg-error">Eroare: '+error.message+'</div>'; return; }
+  document.getElementById('modal-reset-parola').remove();
+  showToast('Parolă schimbată cu succes!','success', 5000);
+  await sb.auth.signOut();
+  showScreen('auth');
+}
 function escapeHTML(str) {
   if (!str) return '';
   return String(str).replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t]||t));
@@ -94,6 +136,7 @@ async function initApp() {
     if (session) await loadUser(session.user); else showScreen('auth');
   } catch(e) { showScreen('auth'); }
   showLoading(false);
+  verificaResetToken();
 }
 async function loadUser(user) {
   currentUser = user;
