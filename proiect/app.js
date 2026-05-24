@@ -1246,8 +1246,7 @@ function renderListaUtilaje() {
     const textMuted = u.poza_url ? 'color:rgba(255,255,255,0.7)' : 'color:var(--gray-600)';
     const btnStyle = u.poza_url ? 'background:rgba(255,255,255,0.15);color:#fff;border-color:rgba(255,255,255,0.3)' : '';
 
-    return '<div class="card" style="padding:0;margin-bottom:0;overflow:hidden;border-radius:14px;'+bgStyle+'">'
-      + (needsService ? '<div style="background:rgba(217,119,6,0.9);padding:5px 12px;font-size:11px;font-weight:700;color:#fff"><i class="ti ti-alert-triangle"></i> Revizie apropiata!</div>' : '')
+return '<div style="padding:0;margin-bottom:0;overflow:hidden;border-radius:14px;background:var(--white);border:1px solid var(--gray-200);box-shadow:var(--shadow-xs);'+bgStyle+'">'    + (needsService ? '<div style="background:rgba(217,119,6,0.9);padding:5px 12px;font-size:11px;font-weight:700;color:#fff"><i class="ti ti-alert-triangle"></i> Revizie apropiata!</div>' : '')
       + '<div style="padding:16px">'
       + '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'
       + '<div><div style="font-weight:700;font-size:15px;'+textColor+'">'+escapeHTML(u.nume)+'</div>'
