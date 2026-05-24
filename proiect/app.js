@@ -1102,6 +1102,7 @@ function calcVenitRecolta() {
   if (cant>0&&pret>0&&pv) { pv.style.display='block'; document.getElementById('rec-venit-val').textContent=(cant*pret).toLocaleString('ro-RO')+' RON'; }
 }
 async function salveazaRecolta() {
+  const editId = document.getElementById('rec-id-edit')?.value;
   const parcelaId=document.getElementById('rec-parcela').value;
   const parcelaOpt=document.getElementById('rec-parcela');
   const parcelaNume=parcelaOpt.options[parcelaOpt.selectedIndex]?.text||'';
@@ -1109,31 +1110,72 @@ async function salveazaRecolta() {
   const sup=parseFloat(document.getElementById('rec-suprafata').value)||0;
   if (!cant||!sup) { showToast('Completați cantitatea și suprafața.','error'); return; }
   setLoading('rec-btn',true,'','Se salvează...');
-  const { error } = await sb.from('recolte').insert([{user_id:currentUser.id,parcela_id:parcelaId||null,parcela_nume:parcelaNume,cultura:document.getElementById('rec-cultura').value,sezon:document.getElementById('rec-sezon').value,cantitate_tone:cant,suprafata_ha:sup,pret_vanzare_ron_tona:parseFloat(document.getElementById('rec-pret').value)||null,calitate:document.getElementById('rec-calitate').value,cumparator:document.getElementById('rec-cumparator').value.trim()||null,data_recolta:document.getElementById('rec-data').value||null,observatii:document.getElementById('rec-obs').value.trim()||null}]);
-  setLoading('rec-btn',false,'ti-plus','Salvează recoltă');
-  if (error) { showToast('Eroare: '+error.message,'error'); return; }
-  // Daca are pret de vanzare, adaugam automat in contabilitate
-const pretVanzare = parseFloat(document.getElementById('rec-pret').value) || 0;
-const cantitate = parseFloat(document.getElementById('rec-cantitate').value) || 0;
-if (pretVanzare > 0 && cantitate > 0) {
-  const venitTotal = pretVanzare * cantitate;
-  const parcelaOpt = document.getElementById('rec-parcela');
-  const parcelaNume = parcelaOpt.options[parcelaOpt.selectedIndex]?.text || '';
+
+  const pretVanzare = parseFloat(document.getElementById('rec-pret').value)||0;
+  const venitTotal = pretVanzare > 0 ? pretVanzare * cant : 0;
   const cultura = document.getElementById('rec-cultura').value;
   const sezon = document.getElementById('rec-sezon').value;
-  await sb.from('cheltuieli').insert([{
-    user_id: currentUser.id,
-    tip: 'venit',
-    categorie: 'Vanzare Recolta',
-    parcela: parcelaNume,
-    suma: venitTotal,
-    data: document.getElementById('rec-data').value || new Date().toISOString().split('T')[0],
-    descriere: 'Vanzare ' + cultura + ' sezon ' + sezon + ' · ' + cantitate + ' t x ' + pretVanzare + ' RON/t'
-  }]);
-  await loadCheltuieli();
-}
-  showToast('Recoltă salvată!','success');
+  const dataRecolta = document.getElementById('rec-data').value||null;
+
+  const payload = {
+    user_id:currentUser.id, parcela_id:parcelaId||null, parcela_nume:parcelaNume,
+    cultura, sezon, cantitate_tone:cant, suprafata_ha:sup,
+    pret_vanzare_ron_tona:pretVanzare||null,
+    calitate:document.getElementById('rec-calitate').value,
+    cumparator:document.getElementById('rec-cumparator').value.trim()||null,
+    data_recolta:dataRecolta,
+    observatii:document.getElementById('rec-obs').value.trim()||null,
+venit_total:venitTotal > 0 ? venitTotal : null
+  };
+
+  const { error } = editId
+    ? await sb.from('recolte').update(payload).eq('id',editId)
+    : await sb.from('recolte').insert([payload]);
+
+  setLoading('rec-btn',false,'ti-plus','Salvează recoltă');
+  if (error) { showToast('Eroare: '+error.message,'error'); return; }
+
+  // Actualizam venitul in contabilitate
+  if (pretVanzare > 0 && cant > 0) {
+    const descriere = 'Vanzare '+cultura+' sezon '+sezon+' · '+cant+' t x '+pretVanzare+' RON/t';
+    const dataChelt = dataRecolta || new Date().toISOString().split('T')[0];
+
+    if (editId) {
+      // Actualizam inregistrarea existenta din contabilitate
+      const { data: cheltuieliExistente } = await sb.from('cheltuieli')
+        .select('id')
+        .eq('user_id', currentUser.id)
+        .eq('tip', 'venit')
+        .eq('categorie', 'Vanzare Recolta')
+        .ilike('descriere', '%'+sezon+'%')
+        .ilike('descriere', '%'+cultura+'%');
+
+      if (cheltuieliExistente && cheltuieliExistente.length > 0) {
+        await sb.from('cheltuieli').update({
+          suma: venitTotal,
+          descriere,
+          data: dataChelt,
+          parcela: parcelaNume
+        }).eq('id', cheltuieliExistente[0].id);
+      } else {
+        await sb.from('cheltuieli').insert([{
+          user_id:currentUser.id, tip:'venit', categorie:'Vanzare Recolta',
+          parcela:parcelaNume, suma:venitTotal, data:dataChelt, descriere
+        }]);
+      }
+    } else {
+      await sb.from('cheltuieli').insert([{
+        user_id:currentUser.id, tip:'venit', categorie:'Vanzare Recolta',
+        parcela:parcelaNume, suma:venitTotal, data:dataChelt, descriere
+      }]);
+    }
+    await loadCheltuieli();
+  }
+
+  showToast(editId?'Recoltă actualizată!':'Recoltă salvată!','success');
   ['rec-cantitate','rec-suprafata','rec-pret','rec-cumparator','rec-obs'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  const recIdEl = document.getElementById('rec-id-edit');
+  if (recIdEl) recIdEl.value = '';
   document.getElementById('rec-randament-preview').style.display='none';
   document.getElementById('rec-venit-preview').style.display='none';
   await loadRecolte(); updateDashboard();
@@ -1167,7 +1209,9 @@ function editeazaRecolta(id) {
   const r = recolteData.find(x => x.id === id);
   if (!r) return;
 
-  // Populăm formularul
+  const recIdEl = document.getElementById('rec-id-edit');
+  if (recIdEl) recIdEl.value = id;
+
   const recSel = document.getElementById('rec-parcela');
   if (recSel) recSel.value = r.parcela_id || '';
   document.getElementById('rec-cultura').value = r.cultura || '';
@@ -1176,7 +1220,6 @@ function editeazaRecolta(id) {
   document.getElementById('rec-suprafata').value = r.suprafata_ha || '';
   document.getElementById('rec-cantitate').value = r.cantitate_tone || '';
 
-  // Completăm câmpul randament input dacă există
   const randInput = document.getElementById('rec-randament-input');
   if (randInput && r.suprafata_ha > 0) {
     randInput.value = (r.cantitate_tone / r.suprafata_ha).toFixed(2);
@@ -1187,36 +1230,10 @@ function editeazaRecolta(id) {
   document.getElementById('rec-cumparator').value = r.cumparator || '';
   document.getElementById('rec-obs').value = r.observatii || '';
 
-  // Schimbăm butonul în "Actualizează"
   const btn = document.getElementById('rec-btn');
   btn.innerHTML = '<i class="ti ti-device-floppy"></i> Actualizează recolta';
-  btn.onclick = async function() {
-    const cantitate = parseFloat(document.getElementById('rec-cantitate').value) || 0;
-    const suprafata = parseFloat(document.getElementById('rec-suprafata').value) || 0;
-    if (!cantitate || !suprafata) { showToast('Completați cantitatea și suprafața.', 'error'); return; }
-    showLoading(true);
-    const { error } = await sb.from('recolte').update({
-      cultura: document.getElementById('rec-cultura').value,
-      sezon: document.getElementById('rec-sezon').value,
-      data_recolta: document.getElementById('rec-data').value || null,
-      cantitate_tone: cantitate,
-      suprafata_ha: suprafata,
-      pret_vanzare_ron_tona: parseFloat(document.getElementById('rec-pret').value) || null,
-      calitate: document.getElementById('rec-calitate').value,
-      cumparator: document.getElementById('rec-cumparator').value.trim() || null,
-      observatii: document.getElementById('rec-obs').value.trim() || null
-    }).eq('id', id);
-    showLoading(false);
-    if (error) { showToast('Eroare: ' + error.message, 'error'); return; }
-    showToast('Recoltă actualizată!', 'success');
-    // Resetăm butonul
-    btn.innerHTML = '<i class="ti ti-plus"></i> Salvează recoltă';
-    btn.onclick = salveazaRecolta;
-    await loadRecolte();
-    updateDashboard();
-  };
+  btn.onclick = salveazaRecolta;
 
-  // Scroll la formular
   document.getElementById('rec-btn').scrollIntoView({ behavior: 'smooth', block: 'center' });
   showToast('Recoltă încărcată în formular pentru editare.', 'info');
 }
@@ -1669,12 +1686,37 @@ async function adaugaCheltuiala() {
   document.getElementById('c-suma').value=''; document.getElementById('c-desc').value='';
   await loadCheltuieli(); updateDashboard();
 }
+  function modalConfirmare(titlu, mesaj) {
+  return new Promise(resolve => {
+    const modal = document.createElement('div');
+    modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px';
+    modal.innerHTML = '<div style="background:var(--white);border-radius:20px;width:100%;max-width:420px;box-shadow:0 24px 64px rgba(0,0,0,0.3);padding:32px">'
+      +'<div style="font-family:\'Lora\',serif;font-size:18px;font-weight:700;color:var(--soil);margin-bottom:12px">'+titlu+'</div>'
+      +'<div style="font-size:14px;color:var(--gray-600);line-height:1.6;margin-bottom:24px">'+mesaj+'</div>'
+      +'<div style="display:flex;gap:10px">'
+      +'<button id="modal-confirmare-nu" class="btn btn-ghost" style="flex:1">Anuleaza</button>'
+      +'<button id="modal-confirmare-da" class="btn btn-danger" style="flex:1"><i class="ti ti-trash"></i> Sterge</button>'
+      +'</div></div>';
+    document.body.appendChild(modal);
+    modal.querySelector('#modal-confirmare-da').onclick = () => { modal.remove(); resolve(true); };
+    modal.querySelector('#modal-confirmare-nu').onclick = () => { modal.remove(); resolve(false); };
+  });
+}
+
 async function stergeCheltuiala(id) {
+  const inreg = cheltuieliData.find(c => c.id === id);
+  if (inreg && inreg.tip === 'venit' && inreg.categorie === 'Vanzare Recolta') {
+    const confirmat = await modalConfirmare(
+      'Sterge venit din recoltă',
+      'Acest venit provine dintr-o recoltă înregistrată. Doriți să ștergeți doar înregistrarea contabilă?'
+    );
+    if (!confirmat) return;
+  }
   showLoading(true);
   await sb.from('cheltuieli').delete().eq('id',id).eq('user_id',currentUser.id);
   showLoading(false);
   showToast('Inregistrare stearsa.','info');
-  const { data,error } = await sb.from('cheltuieli').select('*').eq('user_id',currentUser.id).order('data',{ascending:false});
+  const { data,error } = await sb.from('cheltuieli').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
   if (!error&&data) {
     cheltuieliData=data;
     updateSumeContabilitate();
