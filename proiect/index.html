@@ -295,12 +295,11 @@ if (L.Draw) {
               <option value="2021-2022">2021-2022</option>
             </select>
           </div>
-          <div>
+<div>
             <label>Parcela</label>
-            <select id="cal-parcela"><option value="">Selecteaza...</option></select>
+            <select id="cal-parcela" onchange="autocompletezaSuprafataCal()"><option value="">Selecteaza...</option></select>
           </div>
-        </div>
-        <div class="form-row">
+        </div>        <div class="form-row">
           <div>
             <label>Cultura</label>
             <select id="cal-cultura">
@@ -353,7 +352,7 @@ if (L.Draw) {
 </div>
 <!-- ====== PARCELE ====== -->
 <div class="tab" id="tab-parcele">
-  <div class="section-title"><i class="ti ti-map-2"></i> Parcele </div>
+  <div class="section-title"><i class="ti ti-map-2"></i> Parcele</div>
   <div class="grid2">
     <div class="card">
       <div style="font-weight:700;font-size:15px;margin-bottom:14px" id="form-parcela-titlu"><i class="ti ti-plus" style="color:var(--ai-green)"></i> Adaugă parcelă nouă</div>
@@ -383,7 +382,18 @@ if (L.Draw) {
       <button class="btn btn-primary" id="p-btn" onclick="adaugaParcela()"><i class="ti ti-plus"></i> Adaugă parcelă</button>
     </div>
     <div class="card">
-      <div style="font-weight:700;font-size:15px;margin-bottom:14px">Distribuție Culturi</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;flex-wrap:wrap;gap:8px">
+        <div style="font-weight:700;font-size:15px">Distribuție Culturi</div>
+        <select id="cultura-filter-an" onchange="renderCulturaBars()" style="width:auto;padding:7px 11px;font-size:12px;border:1.5px solid var(--gray-200);border-radius:8px">
+          <option value="">Toate</option>
+          <option value="2026">2026</option>
+          <option value="2025">2025</option>
+          <option value="2024">2024</option>
+          <option value="2023">2023</option>
+          <option value="2022">2022</option>
+          <option value="2021">2021</option>
+        </select>
+      </div>
       <div id="cultura-bars"><div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px">Nicio distribuție.</div></div>
     </div>
   </div>

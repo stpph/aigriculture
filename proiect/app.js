@@ -241,33 +241,32 @@ sb.auth.onAuthStateChange((event) => { if (event==='SIGNED_OUT') showScreen('aut
 // ============================================================
 async function loadParcele() {
   if (!currentUser) return;
-  const { data, error } = await sb.from('parcele').select('*').eq('user_id',currentUser.id).order('created_at',{ascending:false});
-  if (!error && data) { parceleData=data; renderListaParcele(); renderCulturaBars(); updateAllParcelaSelects(); reincarcaParcelePeHarta(); }
+const { data, error } = await sb.from('parcele').select('*,created_at').eq('user_id',currentUser.id).order('created_at',{ascending:false});  if (!error && data) { parceleData=data; renderListaParcele(); renderCulturaBars(); updateAllParcelaSelects(); reincarcaParcelePeHarta(); }
 reincarcaParcelePeHartaFull();
 }
 async function adaugaParcela() {
   const n=document.getElementById('p-nume').value.trim(), ha=parseFloat(document.getElementById('p-ha').value)||0;
-  const c=document.getElementById('p-cultura').value, l=document.getElementById('p-loc').value.trim();
+  const c=document.getElementById('p-cultura')?.value||null;
+  const l=document.getElementById('p-loc').value.trim();
   const d=document.getElementById('p-data').value, note=document.getElementById('p-note').value.trim();
   const coord=document.getElementById('p-coordonate').value, editId=document.getElementById('p-id-edit').value;
-  if (!n||!ha||!c) { showToast('Completați numele, suprafața și cultura.','error'); return; }
+  if (!n||!ha) { showToast('Completați numele și suprafața.','error'); return; }
   setLoading('p-btn',true,'','Se salvează...');
   const payload = {user_id:currentUser.id,nume:n,suprafata_ha:ha,cultura:c,localitate:l||null,data_semanat:d||null,note:note||null,coordonate:coord||null};
   const { error } = editId ? await sb.from('parcele').update(payload).eq('id',editId) : await sb.from('parcele').insert([payload]);
   setLoading('p-btn',false,'ti-plus','Adaugă parcelă');
   if (error) { showToast('Eroare: '+error.message,'error'); return; }
-  // Salvăm automat și în rotație culturi
-  if (!editId && c && d) { const sezon = new Date(d).getFullYear().toString(); await sb.from('rotatie_culturi').insert([{user_id:currentUser.id,parcela_nume:n,sezon,cultura:c}]); }
   showToast(editId?'Parcelă actualizată!':'Parcelă adăugată cu succes!','success');
   resetFormParcela();
-await loadParcele(); await loadRotatie(); updateDashboard();
+  await loadParcele(); await loadRotatie(); updateDashboard();
 }
 function resetFormParcela() {
   document.getElementById('p-id-edit').value=''; document.getElementById('p-coordonate').value='';
   document.getElementById('form-parcela-titlu').innerHTML='<i class="ti ti-plus" style="color:var(--ai-green)"></i> Adaugă parcelă nouă';
   document.getElementById('p-btn').innerHTML='<i class="ti ti-plus"></i> Adaugă parcelă';
   ['p-nume','p-ha','p-loc','p-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  document.getElementById('p-cultura').value='';
+const pCultEl = document.getElementById('p-cultura');
+if (pCultEl) pCultEl.value='';
   if (drawnItems) drawnItems.clearLayers();
 }
 function selecteazaSiIncarcaParcela(id) {
@@ -276,7 +275,9 @@ function selecteazaSiIncarcaParcela(id) {
   document.getElementById('form-parcela-titlu').innerHTML='<i class="ti ti-edit" style="color:var(--wheat)"></i> Editare: '+escapeHTML(p.nume);
   document.getElementById('p-btn').innerHTML='<i class="ti ti-device-floppy"></i> Salvează Modificările';
   document.getElementById('p-nume').value=p.nume; document.getElementById('p-ha').value=p.suprafata_ha;
-  document.getElementById('p-cultura').value=p.cultura; document.getElementById('p-loc').value=p.localitate||'';
+  const pCultEl2 = document.getElementById('p-cultura');
+if (pCultEl2) pCultEl2.value=p.cultura||'';
+ document.getElementById('p-loc').value=p.localitate||'';
   if (p.data_semanat) document.getElementById('p-data').value=p.data_semanat;
   document.getElementById('p-note').value=p.note||''; document.getElementById('p-coordonate').value=p.coordonate||'';
   if (p.coordonate && drawnItems && leafletMap) { try { drawnItems.clearLayers(); const ll=JSON.parse(p.coordonate); L.polygon(ll,{color:'#4a7c2f',fillColor:'#4a7c2f',fillOpacity:0.4}).addTo(drawnItems); leafletMap.fitBounds(drawnItems.getBounds()); } catch(e){} }
@@ -360,59 +361,67 @@ function arataNoteparcela(id) {
   modal.addEventListener('click', e => { if (e.target === modal) modal.remove(); });
 }
 function renderCulturaBars() {
-  const cultMap={};
-  parceleData.forEach(p=>{cultMap[p.cultura]=(cultMap[p.cultura]||0)+p.suprafata_ha;});
-  const cont=document.getElementById('cultura-bars'); if (!cont) return;
-  if (!Object.keys(cultMap).length) { cont.innerHTML='<div style="color:var(--gray-400);font-size:13px;text-align:center;padding:16px">Nicio distributie.</div>'; return; }
+  const cont = document.getElementById('cultura-bars'); if (!cont) return;
+  const anFiltru = document.getElementById('cultura-filter-an')?.value;
+  const counts = {};
+
+  if (anFiltru) {
+    // Din ani_agricoli manual introdusi
+aniAgricoliData.filter(a => a.an_agricol && (a.an_agricol.startsWith(anFiltru+'-') || a.an_agricol.endsWith('-'+anFiltru))).forEach(a => {      if (a.cultura) counts[a.cultura] = (counts[a.cultura]||0) + (parseFloat(a.suprafata_ha)||0);
+    });
+
+    // Din recolte in acel an
+    const dataStart = new Date(parseInt(anFiltru), 9, 1);
+    const dataEnd = new Date(parseInt(anFiltru)+1, 8, 30);
+    recolteData.filter(r => r.data_recolta && new Date(r.data_recolta) >= dataStart && new Date(r.data_recolta) <= dataEnd).forEach(r => {
+      if (r.cultura) counts[r.cultura] = (counts[r.cultura]||0) + (parseFloat(r.suprafata_ha)||0);
+    });
+
+    // Din parcele cu data semanat in acel an
+    parceleData.filter(p => p.data_semanat && new Date(p.data_semanat).getFullYear() === parseInt(anFiltru)).forEach(p => {
+      if (p.cultura) counts[p.cultura] = (counts[p.cultura]||0) + (parseFloat(p.suprafata_ha)||0);
+    });
+  } else {
+    parceleData.forEach(p => { if (p.cultura) counts[p.cultura] = (counts[p.cultura]||0) + (p.suprafata_ha||0); });
+  }
+
+  if (!Object.keys(counts).length) {
+    cont.innerHTML='<div style="color:var(--gray-400);font-size:13px;text-align:center;padding:16px">Nicio distributie pentru acest an.</div>';
+    return;
+  }
+
+  const totalHa = Object.values(counts).reduce((s,v) => s+v, 0);
+  const culoriCulturi = {
+    'Grâu':'#16a34a','Grau':'#16a34a','Orz':'#4ade80','Orzoaică':'#86efac','Orzoaica':'#86efac',
+    'Triticale':'#059669','Secară':'#065f46','Secara':'#065f46','Porumb':'#eab308',
+    'Floarea-soarelui':'#ef4444','Rapiță':'#2563eb','Rapita':'#2563eb','Soia':'#7c3aed',
+    'Mazăre':'#06b6d4','Mazare':'#06b6d4','Fasole':'#0891b2','Sfeclă de zahăr':'#db2777',
+    'Sfecla de zahar':'#db2777','Cartofi':'#d97706','Lucernă':'#0d9488','Lucerna':'#0d9488',
+    'In pentru ulei':'#6366f1','Coriandru':'#f97316','Muștar':'#ca8a04','Mustar':'#ca8a04','Altele':'#94a3b8'
+  };
+  const culoriDefault = ['#16a34a','#2563eb','#d97706','#dc2626','#7c3aed','#0891b2'];
+const entries = Object.entries(counts).filter(([k,v]) => v > 0);
+const labels = entries.map(e => e[0]);
+const valori = entries.map(e => e[1]);
+  const culori = labels.map((l,i) => culoriCulturi[l] || culoriDefault[i % culoriDefault.length]);
 
   cont.innerHTML='<canvas id="cultura-pie-chart" style="max-height:260px"></canvas>';
-
-  const culori=[
-    '#2e8b2e','#c8902a','#1a6bbf','#8B6914',
-    '#6B8E23','#4a7c8e','#8e44ad','#6b3d1e'
-  ];
-  const labels=Object.keys(cultMap);
-  const valori=Object.values(cultMap);
-
   if (window.culturaChart) { window.culturaChart.destroy(); window.culturaChart=null; }
 
-  const ctx=document.getElementById('cultura-pie-chart').getContext('2d');
-  window.culturaChart=new Chart(ctx,{
-    type:'doughnut',
-    data:{
-      labels:labels,
-      datasets:[{
-        data:valori,
-        backgroundColor:culori.slice(0,labels.length),
-        borderColor:'rgba(255, 255, 255, 0)',
-        borderWidth:1,
-        hoverOffset:20
-      }]
+  const ctx = document.getElementById('cultura-pie-chart').getContext('2d');
+  window.culturaChart = new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+      labels,
+      datasets: [{ data: valori, backgroundColor: culori, borderColor: 'rgba(255,255,255,0.5)', borderWidth: 1, hoverOffset: 20 }]
     },
-    options:{
-      responsive:true,
-      plugins:{
-             legend:{
-          position:'bottom',
-          align:'center',
-          labels:{
-            font:{ family:'Inter', size:12 },
-            padding:14,
-            usePointStyle:true,
-            pointStyleWidth:14
-          }
-        },
-        tooltip:{
-          callbacks:{
-            label:function(ctx){
-              const total=ctx.dataset.data.reduce((a,b)=>a+b,0);
-              const pct=Math.round(ctx.parsed/total*100);
-              return ' '+ctx.label+': '+ctx.parsed.toFixed(1)+' ha ('+pct+'%)';
-            }
-          }
-        }
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position:'bottom', labels:{font:{family:'Plus Jakarta Sans',size:12},padding:14,usePointStyle:true} },
+        tooltip: { callbacks: { label: function(ctx) { const pct=Math.round(ctx.parsed/totalHa*100); return ' '+ctx.label+': '+ctx.parsed.toFixed(1)+' ha ('+pct+'%)'; } } }
       },
-      cutout:'60%'
+      cutout: '60%'
     }
   });
 }
@@ -1065,7 +1074,15 @@ function autocompletezaSuprafataCalculator() {
   document.getElementById('calc-ha').value = parcela.suprafata_ha;
   calculeazaTotal();
 }
-
+function autocompletezaSuprafataCal() {
+  const sel = document.getElementById('cal-parcela');
+  if (!sel.value) return;
+  const parcela = parceleData.find(p => p.id === sel.value);
+  if (!parcela) return;
+  const supEl = document.getElementById('cal-suprafata');
+  if (supEl) supEl.value = parcela.suprafata_ha;
+  calcCalProductie();
+}
 function updateIngrLabel() {
   const unitate = document.getElementById('ingr-unitate').value;
   const label = document.getElementById('ingr-pret-label');
@@ -2377,23 +2394,42 @@ async function salveazaAnAgricol() {
   const sup=parseFloat(document.getElementById('cal-suprafata').value)||null;
   const tha=prod&&sup?parseFloat((prod/sup).toFixed(2)):null;
   setLoading('cal-btn',true,'','Se salvează...');
-  const { error } = await sb.from('ani_agricoli').insert([{
-    user_id:currentUser.id,
-    parcela_id:parcelaId||null,
-    parcela_nume:parcelaNume,
-    an_agricol:document.getElementById('cal-an').value,
-    cultura:document.getElementById('cal-cultura').value,
-    status:document.getElementById('cal-status').value,
-    data_semanat:document.getElementById('cal-semanat').value||null,
-    data_recolta:document.getElementById('cal-recolta').value||null,
-    productie_tone:prod,
-    suprafata_ha:sup,
-    productie_tha:tha,
-    note:document.getElementById('cal-note').value.trim()||null
-  }]);
-  setLoading('cal-btn',false,'ti-plus','Salvează');
+const editId = document.getElementById('cal-id-edit')?.value;
+const { error } = editId 
+  ? await sb.from('ani_agricoli').update({
+      parcela_id:parcelaId||null,
+      parcela_nume:parcelaNume,
+      an_agricol:document.getElementById('cal-an').value,
+      cultura:document.getElementById('cal-cultura').value,
+      status:document.getElementById('cal-status').value,
+      data_semanat:document.getElementById('cal-semanat').value||null,
+      data_recolta:document.getElementById('cal-recolta').value||null,
+      productie_tone:prod,
+      suprafata_ha:sup,
+      productie_tha:tha,
+      note:document.getElementById('cal-note').value.trim()||null
+    }).eq('id',editId).eq('user_id',currentUser.id)
+  : await sb.from('ani_agricoli').insert([{
+      user_id:currentUser.id,
+      parcela_id:parcelaId||null,
+      parcela_nume:parcelaNume,
+      an_agricol:document.getElementById('cal-an').value,
+      cultura:document.getElementById('cal-cultura').value,
+      status:document.getElementById('cal-status').value,
+      data_semanat:document.getElementById('cal-semanat').value||null,
+      data_recolta:document.getElementById('cal-recolta').value||null,
+      productie_tone:prod,
+      suprafata_ha:sup,
+      productie_tha:tha,
+      note:document.getElementById('cal-note').value.trim()||null
+    }]);
+      setLoading('cal-btn',false,'ti-plus','Salvează');
   if (error) { showToast('Eroare: '+error.message,'error'); return; }
   showToast('An agricol salvat!','success');
+  const calIdEl = document.getElementById('cal-id-edit');
+if (calIdEl) calIdEl.value = '';
+document.getElementById('cal-form-title').textContent = 'Inregistrare manuala an agricol';
+document.getElementById('cal-btn').innerHTML = '<i class="ti ti-plus"></i> Salveaza';
   ['cal-productie','cal-suprafata','cal-note'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('cal-semanat').value='';
   document.getElementById('cal-recolta').value='';
@@ -2407,6 +2443,31 @@ async function stergeAnAgricol(id) {
   showLoading(false);
   showToast('An agricol sters.','info');
   await loadAniAgricoli();
+}
+function editeazaAnAgricol(id) {
+  const a = aniAgricoliData.find(x => x.id === id);
+  if (!a) return;
+
+  // Deschidem modalul
+  deschideModalAdaugaCal();
+
+  // Setam id-ul de editare
+  document.getElementById('cal-id-edit').value = id;
+  document.getElementById('cal-form-title').textContent = 'Editeaza an agricol';
+  document.getElementById('cal-btn').innerHTML = '<i class="ti ti-device-floppy"></i> Salveaza modificarile';
+
+  // Populam formularul
+  document.getElementById('cal-an').value = a.an_agricol || '';
+  const calParc = document.getElementById('cal-parcela');
+  if (calParc) calParc.value = a.parcela_id || '';
+  document.getElementById('cal-cultura').value = a.cultura || '';
+  document.getElementById('cal-status').value = a.status || 'planificat';
+  document.getElementById('cal-semanat').value = a.data_semanat || '';
+  document.getElementById('cal-recolta').value = a.data_recolta || '';
+  document.getElementById('cal-productie').value = a.productie_tone || '';
+  document.getElementById('cal-suprafata').value = a.suprafata_ha || '';
+  document.getElementById('cal-note').value = a.note || '';
+  if (a.productie_tone && a.suprafata_ha) calcCalProductie();
 }
 
 function filtreazaCalendar() {
@@ -2522,9 +2583,13 @@ if (!window.calendarExtins) ani = ani.slice(0, 1);  if (fa) ani = ani.filter(a =
       const actRecolte = recolteParc.length > 0 ? '<span style="background:#dbeafe;color:#1d4ed8;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:600"><i class="ti ti-grain"></i> '+recolteParc.length+' recolte</span>' : '';
       const actGoale = (!actLucrari && !actTratamente && !actRecolte) ? '<span style="color:var(--gray-400);font-size:11px">Nicio activitate</span>' : '';
 
-      const btnDelete = item.sursa === 'manual' ? '<button class="btn btn-danger btn-sm" onclick="stergeAnAgricol(\''+manualItem.id+'\')" style="width:auto;padding:4px 10px;margin-top:10px"><i class="ti ti-trash"></i> Sterge</button>' : '';
-
-      return '<div style="background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:15px;border-top:3px solid '+col+';box-shadow:var(--shadow-xs);transition:all 0.2s;cursor:pointer" onclick="arataTimelineParcela(\''+escapeHTML(nume)+'\',\''+an+'\')" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'var(--shadow-md)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'var(--shadow-xs)\'">'+
+const btnEdit = item.sursa === 'manual' 
+  ? '<button class="btn btn-ghost btn-sm" onclick="event.stopPropagation();editeazaAnAgricol(\''+manualItem.id+'\')" style="width:auto;padding:4px 10px;margin-top:10px;margin-right:6px"><i class="ti ti-edit"></i> Editeaza</button>'
+  : '';
+const btnDelete = item.sursa === 'manual' 
+  ? '<button class="btn btn-danger btn-sm" onclick="event.stopPropagation();stergeAnAgricol(\''+manualItem.id+'\')" style="width:auto;padding:4px 10px;margin-top:10px"><i class="ti ti-trash"></i> Sterge</button>' 
+  : '';
+        return '<div style="background:var(--white);border:1px solid var(--gray-200);border-radius:12px;padding:15px;border-top:3px solid '+col+';box-shadow:var(--shadow-xs);transition:all 0.2s;cursor:pointer" onclick="arataTimelineParcela(\''+escapeHTML(nume)+'\',\''+an+'\')" onmouseover="this.style.transform=\'translateY(-2px)\';this.style.boxShadow=\'var(--shadow-md)\'" onmouseout="this.style.transform=\'\';this.style.boxShadow=\'var(--shadow-xs)\'">'+
         '<div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">'+
         '<div><div style="font-weight:700;font-size:14px;color:var(--ai-green)">'+escapeHTML(nume)+' <i class="ti ti-timeline" style="font-size:12px"></i></div>'+
         '<div style="font-size:12px;color:var(--gray-500);margin-top:2px">'+escapeHTML(cultura)+'</div></div>'+
@@ -2536,12 +2601,11 @@ if (!window.calendarExtins) ani = ani.slice(0, 1);  if (fa) ani = ani.filter(a =
         '</div>'+
         '<div style="font-size:11px;font-weight:700;color:var(--gray-400);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Activitati</div>'+
         '<div style="display:flex;flex-wrap:wrap;gap:5px">'+actLucrari+actTratamente+actRecolte+actGoale+'</div>'+
-        btnDelete+
+        btnEdit+btnDelete+
         '</div>';
     }).join('');
 
     if (!carduriHTML.trim()) return '';
-
     return '<div style="margin-bottom:28px">'+
       '<div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">'+
       '<div style="background:var(--grad-earth);color:#fff;padding:6px 18px;border-radius:20px;font-size:13px;font-weight:700">'+an+'</div>'+
@@ -3064,5 +3128,15 @@ function arataDetaliiParcelaHarta(parcelaId) {
     +'</div>';
 
   document.body.appendChild(panel);
+}
+function adaugaCulturaAutomata(parcelaId, an) {
+  const parcela = parceleData.find(p => p.id === parcelaId);
+  if (!parcela) return;
+  deschideModalAdaugaCal();
+  document.getElementById('cal-an').value = an;
+  const calParc = document.getElementById('cal-parcela');
+  if (calParc) calParc.value = parcelaId;
+  document.getElementById('cal-suprafata').value = parcela.suprafata_ha || '';
+  document.getElementById('cal-form-title').textContent = 'Adauga cultura — '+parcela.nume;
 }
 initApp();
