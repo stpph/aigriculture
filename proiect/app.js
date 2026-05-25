@@ -106,11 +106,8 @@ function toggleSidebar() {
   const isOpen = sb_el?.classList.toggle('open');
   overlay?.classList.toggle('active');
   
-  // Ascunde/arata harta cand sidebar e deschis pe mobil
   const mapFull = document.getElementById('map-full');
-  const mapModal = document.getElementById('map');
-  if (mapFull) mapFull.style.zIndex = isOpen ? '-1' : '';
-  if (mapModal) mapModal.style.zIndex = isOpen ? '-1' : '';
+  if (mapFull) mapFull.style.visibility = isOpen ? 'hidden' : 'visible';
 }
 function switchTab(id, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -2344,15 +2341,7 @@ function renderNoteUrgente() {
 }
 function filtreazaNote() { const f=document.getElementById('nota-filter').value; renderListaNote(f||null); }
 
-// ============================================================
-//  SIDEBAR TOGGLE (MOBILE)
-// ============================================================
-function toggleSidebar() {
-  const sb_el=document.getElementById('sidebar');
-  const overlay=document.getElementById('sidebar-overlay');
-  sb_el?.classList.toggle('open');
-  overlay?.classList.toggle('active');
-}
+
 
 // ============================================================
 //  START
