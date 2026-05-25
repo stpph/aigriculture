@@ -106,6 +106,8 @@ function toggleSidebar() {
   const isOpen = sb_el?.classList.toggle('open');
   overlay?.classList.toggle('active');
   
+  const tabHarta = document.getElementById('tab-harta');
+  if (tabHarta) tabHarta.style.visibility = isOpen ? 'hidden' : 'visible';
   const mapFull = document.getElementById('map-full');
   if (mapFull) mapFull.style.visibility = isOpen ? 'hidden' : 'visible';
 }
