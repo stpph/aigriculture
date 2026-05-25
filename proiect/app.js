@@ -24,6 +24,8 @@ let leafletMap = null, drawnItems = null;
 let toateStirile = [], chatHistory = [];
 let meteoChart = null;
 let aniAgricoliData = [];
+let cheltuieliListaCurenta = [];
+
 // ============================================================
 //  UTILITARE GENERALE
 // ============================================================
@@ -1024,6 +1026,10 @@ function editeazaLucrare(id) {
   document.getElementById('luc-btn').scrollIntoView({behavior:'smooth',block:'center'});
   showToast('Lucrare incarcata pentru editare.','info');
 }
+let lucrariPaginaCurenta = 1;
+let lucrariListaCurenta = [];
+const LUCRARI_PER_PAGINA = 10;
+
 function renderTabelLucrari(filter) {
   const tbody=document.getElementById('tabel-lucrari'); if (!tbody) return;
   let list=lucrariData;
@@ -1031,10 +1037,18 @@ function renderTabelLucrari(filter) {
   const ft=document.getElementById('luc-filter-tip')?.value;
   if (fp) list=list.filter(l=>l.parcela_id===fp||l.parcela_nume===fp);
   if (ft) list=list.filter(l=>l.tip_lucrare===ft);
-  if (!list.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio lucrare.</td></tr>'; return; }
+  lucrariListaCurenta = list;
+
+  const totalPagini = Math.ceil(list.length / LUCRARI_PER_PAGINA);
+  if (lucrariPaginaCurenta > totalPagini) lucrariPaginaCurenta = 1;
+  const start = (lucrariPaginaCurenta - 1) * LUCRARI_PER_PAGINA;
+  const pagina = list.slice(start, start + LUCRARI_PER_PAGINA);
+
+  if (!list.length) { tbody.innerHTML='<tr><td colspan="8" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio lucrare.</td></tr>'; renderPaginariLucrari(0); return; }
+  
   const statusColors={finalizat:'badge-green',in_progres:'badge-blue',planificat:'badge-wheat'};
   const statusLabels={finalizat:'Finalizat',in_progres:'In progres',planificat:'Planificat'};
-  tbody.innerHTML=list.map(l=>{
+  tbody.innerHTML=pagina.map(l=>{
     return '<tr>'
       +'<td>'+fmtData(l.data_lucrare)+'</td>'
       +'<td>'+escapeHTML(l.tip_lucrare)+'</td>'
@@ -1045,14 +1059,58 @@ function renderTabelLucrari(filter) {
       +'<td><span class="badge '+(statusColors[l.status]||'badge-wheat')+'">'+(statusLabels[l.status]||l.status)+'</span></td>'
       +'<td>'
       +'<div style="display:flex;gap:6px">'
-      +'<button class="btn btn-ghost btn-sm" onclick="editeazaLucrare(\''+l.id+'\')" style="width:auto;padding:5px 10px" title="Editeaza"><i class="ti ti-edit"></i></button>'
-      +'<button class="btn btn-danger btn-sm" onclick="stergeLucrare(\''+l.id+'\')" style="width:auto;padding:5px 10px" title="Sterge"><i class="ti ti-trash"></i></button>'
+      +'<button class="btn btn-ghost btn-sm" onclick="editeazaLucrare(\''+l.id+'\')" style="width:auto;padding:5px 10px"><i class="ti ti-edit"></i></button>'
+      +'<button class="btn btn-danger btn-sm" onclick="stergeLucrare(\''+l.id+'\')" style="width:auto;padding:5px 10px"><i class="ti ti-trash"></i></button>'
       +'</div>'
       +'</td>'
       +'</tr>';
   }).join('');
+
+  renderPaginariLucrari(totalPagini);
 }
 
+function renderPaginariLucrari(totalPagini) {
+  let cont = document.getElementById('lucrari-paginare');
+  if (!cont) {
+    const tabel = document.getElementById('tabel-lucrari')?.closest('table');
+    if (!tabel) return;
+    cont = document.createElement('div');
+    cont.id = 'lucrari-paginare';
+    cont.style.cssText = 'display:flex;justify-content:center;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap';
+    tabel.parentElement.appendChild(cont);
+  }
+  if (totalPagini <= 1) { cont.innerHTML = ''; return; }
+
+  const btnStyle = (activ) => 'width:36px;height:36px;border-radius:8px;border:1.5px solid '+(activ?'var(--ai-green)':'var(--gray-200)')+';background:'+(activ?'var(--ai-green)':'var(--white)')+';color:'+(activ?'#fff':'var(--soil)')+';font-weight:700;font-size:13px;cursor:pointer';
+  const dotStyle = 'width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;color:var(--gray-400);font-size:14px';
+
+  const pagini = [];
+  if (totalPagini <= 7) {
+    for (let i = 1; i <= totalPagini; i++) pagini.push(i);
+  } else {
+    pagini.push(1);
+    if (lucrariPaginaCurenta > 3) pagini.push('...');
+    for (let i = Math.max(2, lucrariPaginaCurenta-1); i <= Math.min(totalPagini-1, lucrariPaginaCurenta+1); i++) pagini.push(i);
+    if (lucrariPaginaCurenta < totalPagini-2) pagini.push('...');
+    pagini.push(totalPagini);
+  }
+
+  let html = '';
+  pagini.forEach(p => {
+    if (p === '...') {
+      html += '<span style="'+dotStyle+'">…</span>';
+    } else {
+      const activ = p === lucrariPaginaCurenta;
+      html += '<button onclick="schimbaPaginaLucrari('+p+')" style="'+btnStyle(activ)+'">'+p+'</button>';
+    }
+  });
+  cont.innerHTML = html;
+}
+
+function schimbaPaginaLucrari(pagina) {
+  lucrariPaginaCurenta = pagina;
+  renderTabelLucrari(null, lucrariListaCurenta);
+}
 function filtreazaLucrari() { renderTabelLucrari(); }
 function renderLucrariStats() {
   const cont=document.getElementById('lucrari-stats'); if (!cont) return;
@@ -1678,11 +1736,25 @@ const { data,error } = await sb.from('cheltuieli').select('*').eq('user_id',curr
     renderTabelCheltuieli(null);
   }
 }
+let cheltuieliPaginaCurenta = 1;
+const CHELTUIELI_PER_PAGINA = 10;
+
+
 function renderTabelCheltuieli(filter, customList) {
-  const tbody=document.getElementById('tabel-cheltuieli'); if (!tbody) return;
+  const tbody = document.getElementById('tabel-cheltuieli'); if (!tbody) return;
   let list = customList || (filter ? cheltuieliData.filter(c=>c.categorie===filter) : cheltuieliData);
-  if (!list.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio inregistrare.</td></tr>'; return; }
-  tbody.innerHTML=list.map(c=>{
+  cheltuieliListaCurenta = list;
+  
+  const total = list.length;
+  const totalPagini = Math.ceil(total / CHELTUIELI_PER_PAGINA);
+  if (cheltuieliPaginaCurenta > totalPagini) cheltuieliPaginaCurenta = 1;
+  
+  const start = (cheltuieliPaginaCurenta - 1) * CHELTUIELI_PER_PAGINA;
+  const pagina = list.slice(start, start + CHELTUIELI_PER_PAGINA);
+
+  if (!list.length) { tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:24px;color:var(--gray-400)">Nicio inregistrare.</td></tr>'; renderPaginare(0); return; }
+  
+  tbody.innerHTML = pagina.map(c=>{
     const culoare=c.tip==='venit'?'var(--ai-green)':'var(--danger)';
     const semn=c.tip==='venit'?'+':'-';
     const badgeClasa=c.tip==='venit'?'badge-green':'badge-red';
@@ -1697,6 +1769,50 @@ function renderTabelCheltuieli(filter, customList) {
       +'<td><button class="btn btn-danger btn-sm" onclick="stergeCheltuiala(\''+c.id+'\')" style="width:auto;padding:5px 10px"><i class="ti ti-trash"></i></button></td>'
       +'</tr>';
   }).join('');
+
+  renderPaginare(totalPagini);
+}
+
+function renderPaginare(totalPagini) {
+  let cont = document.getElementById('cheltuieli-paginare');
+  if (!cont) {
+    const tabel = document.getElementById('tabel-cheltuieli')?.closest('table');
+    if (!tabel) return;
+    cont = document.createElement('div');
+    cont.id = 'cheltuieli-paginare';
+    cont.style.cssText = 'display:flex;justify-content:center;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap';
+    tabel.parentElement.appendChild(cont);
+  }
+  if (totalPagini <= 1) { cont.innerHTML = ''; return; }
+
+let html = '';
+const btnStyle = (activ) => 'width:36px;height:36px;border-radius:8px;border:1.5px solid '+(activ?'var(--ai-green)':'var(--gray-200)')+';background:'+(activ?'var(--ai-green)':'var(--white)')+';color:'+(activ?'#fff':'var(--soil)')+';font-weight:700;font-size:13px;cursor:pointer';
+const dotStyle = 'width:36px;height:36px;display:inline-flex;align-items:center;justify-content:center;color:var(--gray-400);font-size:14px';
+
+const pagini = [];
+if (totalPagini <= 7) {
+  for (let i = 1; i <= totalPagini; i++) pagini.push(i);
+} else {
+  pagini.push(1);
+  if (cheltuieliPaginaCurenta > 3) pagini.push('...');
+  for (let i = Math.max(2, cheltuieliPaginaCurenta-1); i <= Math.min(totalPagini-1, cheltuieliPaginaCurenta+1); i++) pagini.push(i);
+  if (cheltuieliPaginaCurenta < totalPagini-2) pagini.push('...');
+  pagini.push(totalPagini);
+}
+
+pagini.forEach(p => {
+  if (p === '...') {
+    html += '<span style="'+dotStyle+'">…</span>';
+  } else {
+    const activ = p === cheltuieliPaginaCurenta;
+    html += '<button onclick="schimbaPaginaCheltuieli('+p+')" style="'+btnStyle(activ)+'">'+p+'</button>';
+  }
+});  cont.innerHTML = html;
+}
+
+function schimbaPaginaCheltuieli(pagina) {
+  cheltuieliPaginaCurenta = pagina;
+  renderTabelCheltuieli(null, cheltuieliListaCurenta);
 }
 function updateSumeContabilitate() {
   const totalCheltuieli=cheltuieliData.filter(c=>c.tip==='cheltuiala').reduce((s,c)=>s+parseFloat(c.suma||0),0);
