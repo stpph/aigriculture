@@ -884,10 +884,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 }
 .parcela-tooltip::before { display: none; }
 .sidebar {
-  z-index: 500 !important;
+  z-index: 2000 !important;
 }
 .sidebar-overlay {
-  z-index: 499 !important;
+  z-index: 1999 !important;
 }
 @media (max-width: 768px) {
   #meteo-forecast-7 {
