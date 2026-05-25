@@ -125,7 +125,13 @@ if (id === 'contabilitate') { if(typeof renderTabelCheltuieli === 'function') re
   if (id === 'rotatie') renderRotatieTabel();
   if (id === 'stiri' && toateStirile.length === 0) incarcaStiri();
 if (id === 'calendar') { window.calendarExtins=false; renderCalTimeline(); renderCalSumar(); renderRotatieAlerte(); }
-if (id === 'harta') { setTimeout(() => initMapFull(), 100); }
+if (id === 'harta') { 
+  const tabHarta = document.getElementById('tab-harta');
+  if (tabHarta) tabHarta.style.visibility = 'visible';
+  const mapFull = document.getElementById('map-full');
+  if (mapFull) mapFull.style.visibility = 'visible';
+  setTimeout(() => initMapFull(), 100); 
+}
 }
 // ============================================================
 //  AUTENTIFICARE
