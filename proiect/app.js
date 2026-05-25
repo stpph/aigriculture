@@ -106,10 +106,17 @@ function toggleSidebar() {
   const isOpen = sb_el?.classList.toggle('open');
   overlay?.classList.toggle('active');
   
-  const tabHarta = document.getElementById('tab-harta');
-  if (tabHarta) tabHarta.style.visibility = isOpen ? 'hidden' : 'visible';
-  const mapFull = document.getElementById('map-full');
-  if (mapFull) mapFull.style.visibility = isOpen ? 'hidden' : 'visible';
+  if (isOpen) {
+    // Sidebar deschis - ascunde layerele leaflet
+    document.querySelectorAll('.leaflet-pane, .leaflet-control-container').forEach(el => {
+      el.style.visibility = 'hidden';
+    });
+  } else {
+    // Sidebar inchis - arata layerele leaflet
+    document.querySelectorAll('.leaflet-pane, .leaflet-control-container').forEach(el => {
+      el.style.visibility = 'visible';
+    });
+  }
 }
 function switchTab(id, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -127,9 +134,7 @@ if (id === 'contabilitate') { if(typeof renderTabelCheltuieli === 'function') re
 if (id === 'calendar') { window.calendarExtins=false; renderCalTimeline(); renderCalSumar(); renderRotatieAlerte(); }
 if (id === 'harta') { 
   const tabHarta = document.getElementById('tab-harta');
-  if (tabHarta) tabHarta.style.visibility = 'visible';
   const mapFull = document.getElementById('map-full');
-  if (mapFull) mapFull.style.visibility = 'visible';
   setTimeout(() => initMapFull(), 100); 
 }
 }
