@@ -1858,21 +1858,31 @@ const ingrUnitate = ingrUnitateEl ? ingrUnitateEl.value : 'kg';
 }
 async function adaugaDinCalculator() {
   const sup=parseFloat(document.getElementById('calc-ha').value)||0;
+  const pestPerHa=parseFloat(document.getElementById('pest-val').value)||0;
+  const alt=parseFloat(document.getElementById('alt-val').value)||0;
+  const samCant=parseFloat(document.getElementById('sam-cantitate').value)||0;
+  const samPret=parseFloat(document.getElementById('sam-pret').value)||0;
+  const ingrCant=parseFloat(document.getElementById('ingr-cantitate').value)||0;
+  const ingrPret=parseFloat(document.getElementById('ingr-pret').value)||0;
+  const motL=parseFloat(document.getElementById('mot-l').value)||0;
+  const motPret=parseFloat(document.getElementById('mot-pret').value)||0;
+
   const calcParcelaOpt=document.getElementById('calc-parcela');
   const parcela=calcParcelaOpt.options[calcParcelaOpt.selectedIndex]?.text||'Toate parcelele';
   const today=new Date().toISOString().split('T')[0];
   const rows=[];
-  const costSam=sup*(parseFloat(document.getElementById('sam-cantitate').value)||0)*(parseFloat(document.getElementById('sam-pret').value)||0);
-const ingrCant=parseFloat(document.getElementById('ingr-cantitate').value)||0;
-  const ingrPret=parseFloat(document.getElementById('ingr-pret').value)||0;
+
+  const costSam=sup*samCant*samPret;
   const costIngr=sup*(ingrCant/1000)*ingrPret;
-    const costMot=sup*(parseFloat(document.getElementById('mot-l').value)||0)*(parseFloat(document.getElementById('mot-pret').value)||0);
-  const pestPerHa=parseFloat(document.getElementById('pest-val').value)||0;
-const pest=pestPerHa*sup;
-const alt=parseFloat(document.getElementById('alt-val').value)||0;
+  const costMot=sup*motL*motPret;
+  const pest=pestPerHa*sup;
+
   if (costSam>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Seminte / Material Sadit',parcela,suma:costSam,data:today,descriere:'Seminte: '+sup+' ha'});
-if (costIngr>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Ingrasaminte',parcela,suma:costIngr,data:today,descriere:'Ingrasaminte: '+(ingrCant||0)+' kg/ha x '+sup+' ha'});  if (costMot>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Combustibil',parcela,suma:costMot,data:today,descriere:'Motorina: '+sup+' ha'});
-if (pest>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Tratamente fitosanitare',parcela,suma:pest,data:today,descriere:'Pesticide (valoare totala)'});  if (alt>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Altele',parcela,suma:alt,data:today,descriere:'Alte cheltuieli'});
+  if (costIngr>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Ingrasaminte',parcela,suma:costIngr,data:today,descriere:'Ingrasaminte: '+ingrCant+' kg/ha x '+sup+' ha'});
+  if (costMot>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Combustibil',parcela,suma:costMot,data:today,descriere:'Motorina: '+sup+' ha'});
+  if (pest>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Tratamente fitosanitare',parcela,suma:pest,data:today,descriere:'Pesticide: '+pestPerHa+' RON/ha x '+sup+' ha'});
+  if (alt>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Altele',parcela,suma:alt,data:today,descriere:'Alte cheltuieli'});
+
   if (!rows.length) { showToast('Completati cel putin o valoare in calculator.','error'); return; }
   setLoading('calc-adauga-btn',true,'','Se salveaza...');
   const { error } = await sb.from('cheltuieli').insert(rows);
@@ -1883,7 +1893,6 @@ if (pest>0) rows.push({user_id:currentUser.id,tip:'cheltuiala',categorie:'Tratam
   ['sam-cantitate','sam-pret','ingr-cantitate','ingr-pret','mot-l','mot-pret','pest-val','alt-val'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   calculeazaTotal(); await loadCheltuieli(); updateDashboard();
 }
-
 // Export PDF simplu (print)
 function exportaPDF() {
   window.print();
