@@ -2018,7 +2018,7 @@ function exportaPDF() {
 //  PROFITABILITATE
 // ============================================================
 function calculeazaProfitabilitate() {
-  const totalVenit=cheltuieliData.filter(c=>c.tip==='venit').reduce((s,c)=>s+parseFloat(c.suma),0)+recolteData.reduce((s,r)=>s+parseFloat(r.venit_total||0),0);
+const totalVenit=cheltuieliData.filter(c=>c.tip==='venit').reduce((s,c)=>s+parseFloat(c.suma),0);
   const totalChelt=cheltuieliData.filter(c=>c.tip==='cheltuiala').reduce((s,c)=>s+parseFloat(c.suma),0);
   const profit=totalVenit-totalChelt;
   const marja=totalVenit>0?Math.round(profit/totalVenit*100):0;
@@ -2079,7 +2079,8 @@ function calculeazaProfitabilitate() {
 function updateDashboard() {
   const totalHa=parceleData.reduce((s,p)=>s+p.suprafata_ha,0);
   const totalChelt=cheltuieliData.filter(c=>c.tip==='cheltuiala').reduce((s,c)=>s+parseFloat(c.suma),0);
-const totalVenit=cheltuieliData.filter(c=>c.tip==='venit').reduce((s,c)=>s+parseFloat(c.suma),0);  const totalTone=recolteData.reduce((s,r)=>s+parseFloat(r.cantitate_tone||0),0);
+const totalVenit=cheltuieliData.filter(c=>c.tip==='venit').reduce((s,c)=>s+parseFloat(c.suma),0);
+  const totalTone=recolteData.reduce((s,r)=>s+parseFloat(r.cantitate_tone||0),0);
   document.getElementById('d-ha').textContent=totalHa.toFixed(1);
   document.getElementById('d-parcele').textContent=parceleData.length;
   document.getElementById('d-chelt').textContent=totalChelt.toLocaleString('ro-RO');
