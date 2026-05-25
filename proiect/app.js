@@ -101,18 +101,27 @@ function fmtData(d) { return d ? new Date(d).toLocaleDateString('ro-RO') : '—'
 //  SIDEBAR & NAVIGAȚIE
 // ============================================================
 function toggleSidebar() {
-  document.getElementById('sidebar')?.classList.toggle('open');
-  document.getElementById('sidebar-overlay')?.classList.toggle('active');
+  const sb_el = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  const isOpen = sb_el?.classList.toggle('open');
+  overlay?.classList.toggle('active');
+  
+  // Ascunde/arata harta cand sidebar e deschis pe mobil
+  const mapFull = document.getElementById('map-full');
+  const mapModal = document.getElementById('map');
+  if (mapFull) mapFull.style.zIndex = isOpen ? '-1' : '';
+  if (mapModal) mapModal.style.zIndex = isOpen ? '-1' : '';
 }
 function switchTab(id, btn) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
   document.getElementById('tab-'+id)?.classList.add('active');
   if (btn) btn.classList.add('active');
-  // Închide sidebar pe mobile
+// Închide sidebar pe mobile
   document.getElementById('sidebar')?.classList.remove('open');
   document.getElementById('sidebar-overlay')?.classList.remove('active');
-  // Hook-uri per tab
+  const mapFull = document.getElementById('map-full');
+  if (mapFull) mapFull.style.zIndex = '';  // Hook-uri per tab
 if (id === 'contabilitate') { if(typeof renderTabelCheltuieli === 'function') renderTabelCheltuieli(null); updateSumeContabilitate(); renderCatBars(); }  if (id === 'profitabilitate') calculeazaProfitabilitate();
   if (id === 'rotatie') renderRotatieTabel();
   if (id === 'stiri' && toateStirile.length === 0) incarcaStiri();
