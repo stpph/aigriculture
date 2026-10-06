@@ -20,6 +20,7 @@ const EVALSCRIPTS = {
     return [0.05, 0.40, 0.15, 1];
   }`,
 
+// NDRE: Clorofilă / Azot (Roșu/Portocaliu -> Galben -> Verde Deschis -> Verde Închis)
   ndre: `
   //VERSION=3
   function setup() {
@@ -28,11 +29,11 @@ const EVALSCRIPTS = {
   function evaluatePixel(sample) {
     if (sample.dataMask === 0) return [0, 0, 0, 0];
     let v = (sample.B08 - sample.B05) / (sample.B08 + sample.B05);
-    if (v < 0.1) return [0.80, 0.20, 0.20, 1];
-    if (v < 0.2) return [0.95, 0.60, 0.10, 1];
-    if (v < 0.3) return [0.90, 0.90, 0.20, 1];
-    if (v < 0.4) return [0.20, 0.70, 0.85, 1];
-    return [0.10, 0.30, 0.70, 1];
+    if (v < 0.1) return [0.80, 0.25, 0.15, 1]; // Roșu (Clorofilă foarte scăzută)
+    if (v < 0.2) return [0.95, 0.60, 0.10, 1]; // Portocaliu
+    if (v < 0.3) return [0.90, 0.90, 0.20, 1]; // Galben (Mediu)
+    if (v < 0.4) return [0.40, 0.75, 0.25, 1]; // Verde deschis
+    return [0.10, 0.50, 0.15, 1];             // Verde închis (Vigoare & Clorofilă excelentă)
   }`,
 
   ndmi: `
