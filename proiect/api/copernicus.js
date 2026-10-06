@@ -131,7 +131,7 @@ export default async function handler(req, res) {
 
     const token = await getCopernicusToken();
 
-    const copernicusRes = await fetch('https://sh.dataspace.copernicus.eu/api/v1/process', {
+const copernicusRes = await fetch('https://sh.dataspace.copernicus.eu/api/v1/process', {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -144,14 +144,18 @@ export default async function handler(req, res) {
             type: "sentinel-2-l2a",
             dataFilter: {
               timeRange: { from: fromIso, to: toIso },
-              maxCloudCoverage: 50, // Permite doar imagini cu maxim 50% acoperire cu nori
+              maxCloudCoverage: 50,
               mosaickingOrder: "mostRecent"
+            },
+            processing: {
+              upsampling: "BICUBIC",   // Netezește pixelii când se face zoom
+              downsampling: "BICUBIC"
             }
           }]
         },
         output: {
-          width: 512,
-          height: 512,
+          width: 1024,  // Rezoluție dublă pentru claritate sporită
+          height: 1024,
           responses: [{ identifier: "default", format: { type: "image/png" } }]
         },
         evalscript: evalscript
