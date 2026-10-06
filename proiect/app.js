@@ -772,17 +772,30 @@ async function incarcaScene(p, indice, data) {
 
   const ll = latlngsParcela(p);
   if (ll.length < 3) return null;
+
+  // Calculăm Bounding Box-ul dreptunghiular
   const lats = ll.map(c => c[0]), lngs = ll.map(c => c[1]);
   const s = Math.min(...lats), n = Math.max(...lats), w = Math.min(...lngs), e = Math.max(...lngs);
   const bboxStr = `${w},${s},${e},${n}`;
 
-  // Facem request către fișierul api/copernicus.js
-  const r = await fetch(`/api/copernicus?bbox=${encodeURIComponent(bboxStr)}&indice=${indice}&data=${data}`);
+  // Creăm poligonul GeoJSON exact (GeoJSON folosește ordinea [lng, lat])
+  const geojsonPolygon = {
+    type: "Polygon",
+    coordinates: [
+      [
+        ...ll.map(c => [c[1], c[0]]),
+        [ll[0][1], ll[0][0]] // Închidem poligonul cu primul punct
+      ]
+    ]
+  };
+
+  const indiceCode = String(indice).toLowerCase();
+
+  const r = await fetch(`/api/copernicus?bbox=${encodeURIComponent(bboxStr)}&indice=${indiceCode}&data=${data}&geometry=${encodeURIComponent(JSON.stringify(geojsonPolygon))}`);
   if (!r.ok) return null;
   const j = await r.json();
   return j && j.url ? { url: j.url, bounds: L.latLngBounds(j.bounds) } : null;
 }
-
 /* ---------- harta ---------- */
 function initMapFull() {
   if (leafletMapFull) { leafletMapFull.invalidateSize(); return; }

@@ -13,11 +13,11 @@ const EVALSCRIPTS = {
   function evaluatePixel(sample) {
     if (sample.dataMask === 0) return [0, 0, 0, 0];
     let v = (sample.B08 - sample.B04) / (sample.B08 + sample.B04);
-    if (v < 0.1) return [0.36, 0.23, 0.12, 1];
-    if (v < 0.3) return [0.77, 0.50, 0.17, 1];
-    if (v < 0.5) return [0.94, 0.85, 0.29, 1];
-    if (v < 0.7) return [0.61, 0.83, 0.35, 1];
-    return [0.18, 0.62, 0.29, 1];
+    if (v < 0.1) return [0.45, 0.26, 0.12, 1];
+    if (v < 0.3) return [0.90, 0.75, 0.25, 1];
+    if (v < 0.5) return [0.55, 0.78, 0.25, 1];
+    if (v < 0.7) return [0.20, 0.65, 0.25, 1];
+    return [0.05, 0.40, 0.15, 1];
   }`,
 
   ndre: `
@@ -28,11 +28,11 @@ const EVALSCRIPTS = {
   function evaluatePixel(sample) {
     if (sample.dataMask === 0) return [0, 0, 0, 0];
     let v = (sample.B08 - sample.B05) / (sample.B08 + sample.B05);
-    if (v < 0.05) return [0.36, 0.23, 0.12, 1];
-    if (v < 0.2)  return [0.77, 0.50, 0.17, 1];
-    if (v < 0.35) return [0.94, 0.85, 0.29, 1];
-    if (v < 0.5)  return [0.61, 0.83, 0.35, 1];
-    return [0.18, 0.62, 0.29, 1];
+    if (v < 0.1) return [0.80, 0.20, 0.20, 1];
+    if (v < 0.2) return [0.95, 0.60, 0.10, 1];
+    if (v < 0.3) return [0.90, 0.90, 0.20, 1];
+    if (v < 0.4) return [0.20, 0.70, 0.85, 1];
+    return [0.10, 0.30, 0.70, 1];
   }`,
 
   ndmi: `
@@ -43,11 +43,10 @@ const EVALSCRIPTS = {
   function evaluatePixel(sample) {
     if (sample.dataMask === 0) return [0, 0, 0, 0];
     let v = (sample.B08 - sample.B11) / (sample.B08 + sample.B11);
-    if (v < -0.2) return [0.55, 0.32, 0.04, 1];
-    if (v < 0.0)  return [0.85, 0.70, 0.39, 1];
-    if (v < 0.2)  return [0.96, 0.91, 0.76, 1];
-    if (v < 0.4)  return [0.50, 0.80, 0.76, 1];
-    return [0.00, 0.40, 0.37, 1];
+    if (v < -0.2) return [0.65, 0.25, 0.05, 1];
+    if (v < 0.0)  return [0.90, 0.75, 0.40, 1];
+    if (v < 0.2)  return [0.40, 0.80, 0.90, 1];
+    return [0.05, 0.40, 0.80, 1];
   }`,
 
   rgb: `
@@ -93,7 +92,7 @@ async function getCopernicusToken() {
 
 export default async function handler(req, res) {
   try {
-    const { bbox, data, indice } = req.query; 
+    const { bbox, data, indice, geometry } = req.query; 
     if (!bbox || !data) return res.status(400).json({ error: 'Lipsește bbox sau data.' });
 
     const bboxArray = bbox.split(',').map(Number);
@@ -103,7 +102,7 @@ export default async function handler(req, res) {
 
     const evalscript = EVALSCRIPTS[indice] || EVALSCRIPTS.ndvi;
 
-    // Fereastră flexibilă de +/- 3 zile în jurul datei selectate
+    // Interval de +/- 3 zile
     const targetDate = new Date(data);
     const startDate = new Date(targetDate);
     startDate.setDate(startDate.getDate() - 3);
@@ -112,6 +111,21 @@ export default async function handler(req, res) {
 
     const fromIso = startDate.toISOString().split('T')[0] + 'T00:00:00Z';
     const toIso = endDate.toISOString().split('T')[0] + 'T23:59:59Z';
+
+    // Construim obiectul de delimitare teritorială (bounds)
+    const boundsObj = {
+      bbox: bboxArray,
+      properties: { crs: "http://www.opengis.net/def/crs/EPSG/0/4326" }
+    };
+
+    // Dacă am primit geometria exactă a parcelei, o atașăm pentru decupare
+    if (geometry) {
+      try {
+        boundsObj.geometry = JSON.parse(geometry);
+      } catch (e) {
+        console.warn("Geometria trimisă nu este un JSON valid, se folosește doar bbox.");
+      }
+    }
 
     const token = await getCopernicusToken();
 
@@ -123,15 +137,12 @@ export default async function handler(req, res) {
       },
       body: JSON.stringify({
         input: {
-          bounds: {
-            bbox: bboxArray,
-            properties: { crs: "http://www.opengis.net/def/crs/EPSG/0/4326" }
-          },
+          bounds: boundsObj,
           data: [{
             type: "sentinel-2-l2a",
             dataFilter: {
               timeRange: { from: fromIso, to: toIso },
-              maxCloudCoverage: 80,
+              maxCloudCoverage: 50, // Permite doar imagini cu maxim 50% acoperire cu nori
               mosaickingOrder: "mostRecent"
             }
           }]
@@ -146,7 +157,7 @@ export default async function handler(req, res) {
     });
 
     if (!copernicusRes.ok) {
-      return res.status(404).json({ error: 'Nu există imagini disponibile pentru perioada respectivă.' });
+      return res.status(404).json({ error: 'Nu există imagini curate (sub 50% nori) pentru perioada respectivă.' });
     }
 
     const arrayBuffer = await copernicusRes.arrayBuffer();
