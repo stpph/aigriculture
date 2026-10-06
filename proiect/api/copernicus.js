@@ -36,6 +36,7 @@ const EVALSCRIPTS = {
     return [0.10, 0.50, 0.15, 1];             // Verde închis (Vigoare & Clorofilă excelentă)
   }`,
 
+  // NDMI: Umiditatea vegetației (Maro/Galben -> Verde deschis -> Albastru închis)
   ndmi: `
   //VERSION=3
   function setup() {
@@ -44,12 +45,12 @@ const EVALSCRIPTS = {
   function evaluatePixel(sample) {
     if (sample.dataMask === 0) return [0, 0, 0, 0];
     let v = (sample.B08 - sample.B11) / (sample.B08 + sample.B11);
-    if (v < -0.2) return [0.65, 0.25, 0.05, 1];
-    if (v < 0.0)  return [0.90, 0.75, 0.40, 1];
-    if (v < 0.2)  return [0.40, 0.80, 0.90, 1];
-    return [0.05, 0.40, 0.80, 1];
+    if (v < -0.2) return [0.65, 0.25, 0.05, 1]; // Uscat / Stres hidric sever (Maro)
+    if (v < 0.0)  return [0.90, 0.75, 0.40, 1]; // Umiditate scăzută (Galben-Maro)
+    if (v < 0.2)  return [0.90, 0.90, 0.50, 1]; // Umiditate moderată (Galben-Verde)
+    if (v < 0.4)  return [0.25, 0.65, 0.55, 1]; // Umiditate bună (Turcoaz/Verde-Albastru)
+    return [0.05, 0.30, 0.60, 1];             // Umiditate excelentă (Albastru închis)
   }`,
-
   rgb: `
   //VERSION=3
   function setup() {
