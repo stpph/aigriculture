@@ -765,21 +765,18 @@ function dateDemo(sezon) {
   return out.reverse();
 }
 async function listaDateIndici(sezon) {
-  if (HARTA_INDICI_DEMO) return dateDemo(sezon);
-  const r = await fetch('/api/indici/date?sezon=' + encodeURIComponent(sezon));
-  return r.ok ? await r.json() : [];
+  return dateDemo(sezon);
 }
 async function incarcaScene(p, indice, data) {
   if (HARTA_INDICI_DEMO) return sceneDemo(p, indice, data);
 
-  // Extragere coordonate minime/maxime (Bounding Box) din parcela curentă
   const ll = latlngsParcela(p);
   if (ll.length < 3) return null;
   const lats = ll.map(c => c[0]), lngs = ll.map(c => c[1]);
   const s = Math.min(...lats), n = Math.max(...lats), w = Math.min(...lngs), e = Math.max(...lngs);
   const bboxStr = `${w},${s},${e},${n}`;
 
-  // Apelăm fișierul nostru din folderul api/ Copennicus
+  // Facem request către fișierul api/copernicus.js
   const r = await fetch(`/api/copernicus?bbox=${encodeURIComponent(bboxStr)}&indice=${indice}&data=${data}`);
   if (!r.ok) return null;
   const j = await r.json();
