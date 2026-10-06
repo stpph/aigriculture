@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Lora:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Lexend:wght@600;700;800&display=swap');
 
 /* ============================================================
    VARIABILE & RESET
@@ -873,6 +873,7 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
 .card[style*="background:linear-gradient"] {
   background: unset !important;
 }
+}
 .parcela-tooltip {
   background: var(--white);
   border: 1px solid var(--gray-200);
@@ -895,4 +896,175 @@ button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-
     overflow-x: auto !important;
   }
 }
+
+
+/* ============================================================
+   REDESIGN v2 — contrast mare pentru lumina din câmp, text bold,
+   mișcare fină și utilă. Șterge tot de aici în jos ca să revii.
+   ============================================================ */
+:root{
+  --navy:#0B1B33; --sun:#FFB800; --sun-dark:#E5A500; --on-sun:#0B1B33;
+  --btn:#1A56DB; --btn-hover:#1445B0;
+  --font-ui:'Plus Jakarta Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-display:'Lexend','Plus Jakarta Sans',system-ui,sans-serif;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  --ai-blue:#1A56DB; --ai-blue-dark:#1445B0; --ai-blue-light:#E1EBFF;
+  --ai-green:#0E7C3A; --ai-green-dark:#0A5E2B; --ai-green-mid:#16A34A; --ai-green-light:#DDF5E5;
+  --soil:#0B1B33; --soil-mid:#2B3A55; --bark:#92400E; --wheat:#B45309; --wheat-light:#FFF1C2;
+  --cream:#EDF1F7; --mist:#E2E8F1; --white:#FFFFFF;
+  --gray-50:#F5F7FB; --gray-100:#E9EEF5; --gray-200:#D2DAE6; --gray-300:#AAB6C8; --gray-400:#6B7A92; --gray-500:#475569; --gray-600:#334155;
+  --danger:#D92D20; --danger-dark:#B42318; --danger-light:#FEE4E2; --success:#0E7C3A; --warning:#B45309;
+  --grad-green:#0E7C3A; --grad-blue:#1A56DB; --grad-warm:#FFB800; --grad-earth:#0B1B33; --grad-sidebar:#0B1B33;
+  --shadow-xs:0 1px 2px rgba(11,27,51,.08); --shadow-sm:0 2px 8px rgba(11,27,51,.10); --shadow-md:0 8px 24px rgba(11,27,51,.15);
+  --shadow-lg:0 12px 36px rgba(11,27,51,.20); --shadow-xl:0 20px 60px rgba(11,27,51,.28); --shadow-green:none; --shadow-blue:none;
 }
+body.dark-mode{
+  --btn:#2F6BEB; --btn-hover:#4A80F5;
+  --cream:#0A111F; --mist:#101A2C; --white:#131E33;
+  --gray-50:#131E33; --gray-100:#1B2840; --gray-200:#2A3A58; --gray-300:#3F5276; --gray-400:#8EA0BC; --gray-500:#B6C3D8; --gray-600:#D3DCEA;
+  --soil:#F4F7FB; --soil-mid:#D3DCEA;
+  --ai-green:#4ADE80; --ai-green-dark:#86EFAC; --ai-green-light:#0F2A1B; --ai-blue:#7FB0FF; --ai-blue-light:#12254A;
+  --danger-light:#3A1512; --wheat:#FBBF24; --wheat-light:#3A2A05;
+  --grad-earth:#060C18; --grad-sidebar:#060C18; --grad-green:#16A34A;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.45); --shadow-md:0 8px 24px rgba(0,0,0,.55); --shadow-lg:0 12px 36px rgba(0,0,0,.65);
+}
+
+/* Text: mai mare, mai gros, contrast mare */
+body{font-family:var(--font-ui);font-size:16px;font-weight:500;line-height:1.5}
+input,select,textarea,.btn,.auth-tab,.nav-btn,.logout-btn,.stiri-filter-btn,.chat-suggest-btn{font-family:var(--font-ui)}
+h1,h2,h3,h4,.section-title,.stat-val,.success-title,.auth-side-title,.map-modal-header h3,[style*="Lora"]{font-family:var(--font-display) !important}
+.section-title{font-size:28px;font-weight:800;letter-spacing:-.4px;margin-bottom:24px}
+.section-title i{color:var(--ai-blue);font-size:26px}
+.field-name{font-size:16px;font-weight:700}
+.field-meta{font-size:13.5px;font-weight:500;color:var(--gray-500)}
+td{font-weight:500;font-size:14.5px}
+th{background:transparent;text-transform:none;letter-spacing:0;font-size:13px;font-weight:700;color:var(--gray-600);border-bottom:2px solid var(--gray-300)}
+tr:hover td{background:var(--gray-50)}
+label{font-size:13.5px;font-weight:700;text-transform:none;letter-spacing:0;color:var(--gray-600)}
+.calc-section-title{text-transform:none;letter-spacing:0;font-size:13px;color:var(--gray-600)}
+
+/* Carduri: rotunjite, umbră moale, reacție la hover */
+.card{border:1px solid var(--gray-200);border-radius:18px;box-shadow:var(--shadow-sm);padding:24px;transition:box-shadow .25s var(--ease),border-color .25s var(--ease)}
+.card:hover{box-shadow:var(--shadow-md);border-color:var(--gray-300)}
+.stat-card{--strip:var(--ai-green);background:var(--white);border:1px solid var(--gray-200);border-radius:18px;box-shadow:var(--shadow-sm);text-align:left;padding:20px;display:flex;flex-direction:column;align-items:flex-start;transition:transform .25s var(--ease),box-shadow .25s var(--ease),border-color .25s var(--ease)}
+.stat-card.stat-blue{--strip:#1A56DB;background:var(--white);border-color:var(--gray-200)}
+.stat-card.stat-wheat{--strip:#FFB800;background:var(--white);border-color:var(--gray-200)}
+.stat-card.stat-red{--strip:#D92D20;background:var(--white);border-color:var(--gray-200)}
+.stat-card::before,.stat-card::after{display:none}
+.stat-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--gray-300)}
+.stat-icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;font-size:22px;margin-bottom:14px;background:var(--strip);color:#fff !important}
+.stat-card.stat-wheat .stat-icon{color:var(--on-sun) !important}
+.stat-val{font-size:32px;font-weight:800;letter-spacing:-.8px;font-variant-numeric:tabular-nums}
+.stat-label{font-size:14px;font-weight:600;text-transform:none;letter-spacing:0;color:var(--gray-500);margin-top:4px}
+
+/* Cadru: bară și meniu, navy plin, text clar */
+.topbar{box-shadow:0 2px 12px rgba(11,27,51,.25)}
+.top-weather-badge{color:rgba(255,255,255,.88);font-weight:600}
+.sidebar{box-shadow:none}
+.sidebar::after{display:none}
+.sidebar-section-label{text-transform:none;letter-spacing:0;font-size:12.5px;font-weight:700;color:rgba(255,255,255,.55);padding:20px 20px 6px}
+.nav-btn{min-height:44px;font-size:14.5px;font-weight:600;color:rgba(255,255,255,.8);border-radius:12px;transition:background .2s var(--ease),color .2s var(--ease),transform .2s var(--ease)}
+.nav-btn i{transition:none}
+.nav-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.nav-btn:hover i{transform:none}
+.nav-btn:active{transform:scale(.98)}
+.nav-btn.active{background:rgba(255,255,255,.14);border:none;color:#fff;font-weight:700}
+.nav-btn.active::before{top:10%;bottom:10%;width:4px;background:var(--sun);box-shadow:none}
+.nav-btn.active i{color:var(--sun)}
+.sidebar-footer-info strong{font-size:14px}
+.sidebar-footer-info span{color:rgba(255,255,255,.65)}
+.content{max-width:1400px;padding:28px 32px}
+
+/* Butoane: ținte mari, contrast mare, apăsare vizibilă */
+.btn{min-height:46px;border-radius:12px;font-size:14.5px;font-weight:700;letter-spacing:0;transition:background .2s var(--ease),transform .15s var(--ease),box-shadow .2s var(--ease)}
+.btn-sm{min-height:36px;font-size:13px}
+.btn:active{transform:scale(.97)}
+.btn-primary{background:var(--btn);color:#fff;box-shadow:0 4px 14px rgba(26,86,219,.30)}
+.btn-primary:hover{background:var(--btn-hover);box-shadow:0 6px 18px rgba(26,86,219,.38);transform:translateY(-1px)}
+.btn-primary:active{transform:scale(.97)}
+.btn-primary:disabled{background:var(--gray-200);color:var(--gray-400);box-shadow:none}
+.btn-secondary{background:var(--navy);color:#fff;box-shadow:none}
+.btn-secondary:hover{background:#18305A;box-shadow:none;transform:translateY(-1px)}
+.btn-wheat{background:var(--sun);color:var(--on-sun);box-shadow:none}
+.btn-wheat:hover{background:var(--sun-dark);box-shadow:none;transform:translateY(-1px)}
+.btn-danger{background:var(--danger);color:#fff;box-shadow:none}
+.btn-danger:hover{background:var(--danger-dark);box-shadow:none;transform:translateY(-1px)}
+.btn-ghost{border:2px solid var(--gray-300);color:var(--soil)}
+.btn-ghost:hover{background:var(--gray-100);border-color:var(--ai-blue);color:var(--ai-blue)}
+
+/* Formulare: 16px, margini vizibile, focus clar */
+input,select,textarea{font-size:16px;font-weight:500;padding:13px 14px;border:2px solid var(--gray-300);border-radius:12px;background:var(--white);transition:border-color .2s var(--ease),box-shadow .2s var(--ease)}
+input:hover,select:hover,textarea:hover{border-color:var(--gray-400);background:var(--white)}
+input:focus,select:focus,textarea:focus{border-color:var(--ai-blue);box-shadow:0 0 0 4px rgba(26,86,219,.18);background:var(--white)}
+input::placeholder{color:var(--gray-400);font-weight:500}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--ai-blue);outline-offset:2px}
+.sidebar button:focus-visible{outline-color:var(--sun)}
+
+/* Liste, alerte, insigne */
+.field-item{background:var(--gray-50);border:1px solid var(--gray-200);border-left-width:6px;border-radius:12px;box-shadow:none;transition:transform .2s var(--ease),box-shadow .2s var(--ease),background .2s var(--ease)}
+.field-item:hover{transform:translateX(4px);background:var(--white);box-shadow:var(--shadow-sm)}
+.nota-card{border-left-width:6px;border-radius:12px;transition:transform .2s var(--ease),box-shadow .2s var(--ease)}
+.alert-box{background:var(--wheat-light);border:1px solid #F5C400;border-left:6px solid var(--sun);border-radius:12px;font-weight:600;color:var(--soil)}
+.alert-box i{color:var(--wheat)}
+.alert-box-blue{background:var(--ai-blue-light);border-color:#9DBBF5;border-left-color:var(--ai-blue)}
+.alert-meta{font-size:13px;font-weight:500;color:var(--gray-600)}
+.badge{padding:5px 12px;font-size:12.5px;font-weight:700}
+.badge-green{background:#CDF2D9;color:#0A5E2B} .badge-wheat{background:#FFE9A6;color:#7A4B00}
+.badge-blue{background:#D6E4FF;color:#143E9C} .badge-red{background:#FDD5D1;color:#A3231A}
+.progress-bar{height:10px;border-radius:6px}
+.progress-fill{border-radius:6px;background:var(--ai-green-mid)}
+.msg-box{font-weight:600}
+
+/* Mesaje, filtre, chat */
+.toast{font-size:14.5px;font-weight:700;border-radius:14px}
+.toast-success{background:var(--ai-green);color:#fff} .toast-error{background:var(--danger);color:#fff} .toast-info{background:var(--ai-blue);color:#fff}
+.stiri-filter-btn{font-weight:700;font-size:13px;padding:8px 16px;border:2px solid var(--gray-300);color:var(--gray-600);transition:all .2s var(--ease)}
+.stiri-filter-btn.active{background:var(--navy);color:#fff;border-color:var(--navy);box-shadow:none}
+.chat-avatar{background:var(--sun);color:var(--on-sun);box-shadow:none}
+.chat-bubble{font-weight:500;font-size:14.5px}
+.chat-user-bubble{background:var(--btn);color:#fff;box-shadow:none;font-weight:600;font-size:14.5px}
+.chat-suggest-btn{font-weight:700;font-size:12.5px;border-color:var(--gray-300);background:var(--white);color:var(--soil)}
+.chat-suggest-btn:hover{background:var(--navy);border-color:var(--navy);color:#fff}
+.map-search-container button{background:var(--btn)}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-thumb:hover{background:var(--ai-blue)}
+
+/* Mișcare: o singură intrare orchestrată + reacții la acțiune */
+.tab{animation:tabIn .25s var(--ease)}
+@keyframes riseIn{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.tab.active .stat-card{animation:riseIn .4s var(--ease) backwards}
+.tab.active .stat-card:nth-child(2){animation-delay:.05s}.tab.active .stat-card:nth-child(3){animation-delay:.1s}
+.tab.active .stat-card:nth-child(4){animation-delay:.15s}.tab.active .stat-card:nth-child(5){animation-delay:.2s}
+.tab.active .stat-card:nth-child(6){animation-delay:.25s}.tab.active .stat-card:nth-child(7){animation-delay:.3s}
+.tab.active .stat-card:nth-child(8){animation-delay:.35s}
+
+/* Mod întunecat (suprascrie regulile vechi cu !important) */
+body.dark-mode .card,body.dark-mode .stat-card,body.dark-mode .chat-bubble,body.dark-mode .stiri-filter-btn,
+body.dark-mode .forecast-day,body.dark-mode .calc-section,body.dark-mode .map-modal-content{background:var(--white) !important;border-color:var(--gray-200) !important}
+body.dark-mode .field-item,body.dark-mode .nota-card{background:var(--gray-100) !important}
+body.dark-mode .alert-box{background:var(--wheat-light) !important;border-color:#6B5316 !important}
+body.dark-mode .alert-box-blue{background:var(--ai-blue-light) !important;border-color:#2B4E96 !important}
+body.dark-mode .content-area{background:var(--cream)}
+body.dark-mode .progress-bar{background:var(--gray-200) !important}
+body.dark-mode input,body.dark-mode select,body.dark-mode textarea{background:var(--gray-100) !important;border-color:var(--gray-300) !important;color:var(--soil) !important}
+body.dark-mode input:focus,body.dark-mode select:focus,body.dark-mode textarea:focus{border-color:var(--ai-blue) !important;box-shadow:0 0 0 4px rgba(127,176,255,.25) !important}
+body.dark-mode .stat-val,body.dark-mode .section-title,body.dark-mode .field-name,body.dark-mode td,
+body.dark-mode .chat-bubble,body.dark-mode .alert-box b,body.dark-mode .alert-box div{color:var(--soil) !important}
+body.dark-mode .field-meta,body.dark-mode .stat-label,body.dark-mode th,body.dark-mode label,body.dark-mode .calc-section-title,body.dark-mode .alert-meta{color:var(--gray-500) !important}
+body.dark-mode th{background:transparent !important;border-color:var(--gray-300) !important}
+body.dark-mode td{border-color:var(--gray-200) !important}
+body.dark-mode tr:hover td{background:var(--gray-100) !important}
+body.dark-mode .map-modal-header,body.dark-mode .map-modal-footer{background:var(--gray-100) !important;border-color:var(--gray-200) !important}
+body.dark-mode .badge-green{background:#16402A !important;color:#9BE8B5 !important}
+body.dark-mode .badge-blue{background:#1A3366 !important;color:#A9C8FF !important}
+body.dark-mode .badge-wheat{background:#4A3708 !important;color:#FFD866 !important}
+body.dark-mode .badge-red{background:#4A1B17 !important;color:#FFA89F !important}
+body.dark-mode .setup-banner,body.dark-mode .avertizare-rotatie,body.dark-mode .legal-banner{background:var(--wheat-light) !important;border-color:#6B5316 !important}
+body.dark-mode .pauza-activa{background:var(--danger-light) !important;border-color:#6B2A20 !important}
+body.dark-mode .stiri-filter-btn.active{background:var(--btn) !important;color:#fff !important;border-color:var(--btn) !important}
+body.dark-mode .btn-secondary{background:var(--gray-200);color:var(--soil)}
+body.dark-mode .btn-ghost{color:var(--soil)}
+
+/* Mobil + accesibilitate */
+@media (max-width:768px){.content{padding:14px}.section-title{font-size:22px}.stat-val{font-size:24px}}
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important}}

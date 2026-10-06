@@ -406,20 +406,37 @@ if (L.Draw) {
 <!-- ====== HARTA ====== -->
 <div class="tab" id="tab-harta">
   <div class="section-title"><i class="ti ti-map-2"></i> Harta Fermei</div>
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px">
-    <select id="harta-filter-an" onchange="filtreazaHartaAn()" style="width:auto;padding:7px 11px;font-size:12px;border:1.5px solid var(--gray-200);border-radius:8px">
 
-      <option value="2025-2026">2025-2026</option>
-      <option value="2024-2025">2024-2025</option>
-      <option value="2023-2024">2023-2024</option>
-      <option value="2022-2023">2022-2023</option>
-      <option value="2021-2022">2021-2022</option>
-    </select>
+  <div class="card" style="padding:16px;margin-bottom:12px">
+    <div style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap">
+      <div style="min-width:160px">
+        <label>Sezon</label>
+        <select id="harta-filter-an" onchange="filtreazaHartaAn()"></select>
+      </div>
+      <div style="min-width:200px">
+        <label>Strat</label>
+        <select id="harta-strat" onchange="schimbaStratHarta()">
+          <option value="culturi">Culturi</option>
+          <option value="ndvi">NDVI · vigoarea vegetației</option>
+          <option value="ndre">NDRE · clorofilă / azot</option>
+          <option value="ndmi">NDMI · umiditatea vegetației</option>
+          <option value="rgb">Culoare naturală</option>
+        </select>
+      </div>
+      <div id="harta-data-wrap" style="display:none;min-width:170px">
+        <label>Data imaginii</label>
+        <select id="harta-data" onchange="schimbaDataHarta()"></select>
+      </div>
+    </div>
+    <div id="harta-info" style="font-size:14px;font-weight:600;color:var(--gray-600);margin-top:10px"></div>
   </div>
-<div style="border-radius:16px;overflow:hidden;box-shadow:var(--shadow-md)">
-    <div id="map-full" style="width:100%;height:calc(100vh - 200px);min-height:500px;"></div>
+
+  <div style="position:relative;border-radius:18px;overflow:hidden;box-shadow:var(--shadow-md)">
+    <div id="map-full" style="width:100%;height:calc(100vh - 300px);min-height:500px;"></div>
+    <div id="harta-legenda" style="display:none;position:absolute;left:12px;bottom:28px;z-index:1000;background:var(--white);color:var(--soil);border-radius:12px;padding:12px 14px;box-shadow:var(--shadow-md);font-size:13.5px;font-weight:600;max-width:230px;max-height:45%;overflow:auto"></div>
   </div>
 </div>
+
 
         <!-- ====== LUCRĂRI AGRICOLE ====== -->
                  <div class="tab" id="tab-lucrari">
@@ -716,77 +733,107 @@ if (L.Draw) {
 </div>
 
         <!-- ====== METEO ====== -->
-        <!-- ====== METEO ====== -->
 <div class="tab" id="tab-meteo">
   <div class="section-title"><i class="ti ti-sun"></i> Meteo & Recomandări Agricole</div>
 
-  <!-- Search -->
+  <!-- Căutare + selector parcelă -->
   <div class="card" style="margin-bottom:16px">
     <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
       <div style="flex:1;min-width:200px">
         <label>Localitate / Județ</label>
         <input type="text" id="meteo-loc" placeholder="ex: Iasi, Vaslui, Bacau...">
       </div>
+      <div style="min-width:200px">
+        <label>Parcelă</label>
+        <select id="meteo-parcela" onfocus="populeazaSelectorParcele()" onchange="meteoDinParcela()">
+          <option value="">Locația căutată</option>
+        </select>
+      </div>
       <button class="btn btn-primary" onclick="cautaMeteo()" style="width:auto;padding:10px 20px"><i class="ti ti-search"></i> Caută</button>
     </div>
   </div>
 
-  <!-- Current weather -->
+  <!-- Vremea curentă + recomandare -->
   <div class="grid2" style="margin-bottom:16px">
-    <div class="card" id="meteo-current-card" style="background:linear-gradient(145deg,#f5fdf5,#eef8f0)">
-      <div id="meteo-city-name" style="font-family:'Playfair Display',serif;font-size:22px;font-weight:600;color:var(--soil);margin-bottom:4px">—</div>
-      <div style="font-size:12px;color:var(--gray-400);margin-bottom:16px" id="meteo-data-azi">—</div>
+    <div class="card" id="meteo-current-card">
+      <div id="meteo-city-name" style="font-family:var(--font-display);font-size:24px;font-weight:800;color:var(--soil);margin-bottom:4px">—</div>
+      <div style="font-size:14px;font-weight:600;color:var(--gray-500);margin-bottom:16px" id="meteo-data-azi">—</div>
       <div style="display:flex;align-items:center;gap:20px;margin-bottom:16px">
         <i id="meteo-icon" class="ti ti-sun" style="font-size:64px;color:var(--wheat)"></i>
         <div>
-          <div id="meteo-temp" style="font-size:56px;font-weight:700;font-family:'Playfair Display',serif;line-height:1;color:var(--soil)">—°C</div>
-          <div id="meteo-desc" style="font-size:14px;font-weight:600;color:var(--gray-600);margin-top:4px;text-transform:capitalize">—</div>
+          <div id="meteo-temp" style="font-size:56px;font-weight:800;font-family:var(--font-display);line-height:1;color:var(--soil)">—°C</div>
+          <div id="meteo-desc" style="font-size:15px;font-weight:700;color:var(--gray-600);margin-top:4px;text-transform:capitalize">—</div>
         </div>
       </div>
       <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-        <div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:10px;text-align:center">
-          <i class="ti ti-droplet" style="color:var(--ai-blue);font-size:18px"></i>
-          <div style="font-weight:700;font-size:15px;margin-top:4px" id="meteo-umiditate-val">—</div>
-          <div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;font-weight:600">Umiditate</div>
+        <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:12px 8px;text-align:center">
+          <i class="ti ti-droplet" style="color:var(--ai-blue);font-size:20px"></i>
+          <div style="font-weight:800;font-size:17px;margin-top:4px" id="meteo-umiditate-val">—</div>
+          <div style="font-size:13px;color:var(--gray-500);font-weight:600">Umiditate</div>
         </div>
-        <div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:10px;text-align:center">
-          <i class="ti ti-wind" style="color:var(--ai-green);font-size:18px"></i>
-          <div style="font-weight:700;font-size:15px;margin-top:4px" id="meteo-vant-val">—</div>
-          <div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;font-weight:600">Vânt</div>
+        <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:12px 8px;text-align:center">
+          <i class="ti ti-wind" style="color:var(--ai-green);font-size:20px"></i>
+          <div style="font-weight:800;font-size:17px;margin-top:4px" id="meteo-vant-val">—</div>
+          <div style="font-size:13px;color:var(--gray-500);font-weight:600">Vânt</div>
         </div>
-        <div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:10px;text-align:center">
-          <i class="ti ti-eye" style="color:var(--wheat);font-size:18px"></i>
-          <div style="font-weight:700;font-size:15px;margin-top:4px" id="meteo-presiune-val">—</div>
-          <div style="font-size:11px;color:var(--gray-400);text-transform:uppercase;font-weight:600">Presiune</div>
+        <div style="background:var(--gray-50);border:1px solid var(--gray-200);border-radius:12px;padding:12px 8px;text-align:center">
+          <i class="ti ti-eye" style="color:var(--wheat);font-size:20px"></i>
+          <div style="font-weight:800;font-size:17px;margin-top:4px" id="meteo-presiune-val">—</div>
+          <div style="font-size:13px;color:var(--gray-500);font-weight:600">Presiune</div>
         </div>
       </div>
     </div>
 
-    <div class="card" style="background:linear-gradient(145deg,#f5fdf5,#eef8f0)">
-      <div style="font-weight:700;font-size:15px;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--ai-green)">
+    <div class="card">
+      <div style="font-weight:800;font-size:16px;margin-bottom:14px;display:flex;align-items:center;gap:8px;color:var(--ai-green)">
         <i class="ti ti-bulb" style="font-size:20px"></i> Recomandare AIgriculture
       </div>
-      <p id="meteo-recomandare" style="font-size:14px;line-height:1.7;color:var(--soil)">
+      <p id="meteo-recomandare" style="font-size:15px;line-height:1.7;color:var(--soil)">
         Introduceți o localitate pentru recomandări personalizate.
       </p>
       <div id="meteo-detalii-agro" style="margin-top:14px"></div>
     </div>
   </div>
 
+  <!-- Fereastră de stropit -->
+  <div class="card" style="margin-bottom:16px">
+    <div style="font-weight:800;font-size:16px;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+      <i class="ti ti-spray" style="color:var(--ai-blue);font-size:20px"></i> Fereastră de stropit · următoarele 48 de ore
+    </div>
+    <div id="meteo-stropit-sumar" style="font-size:14.5px;margin-bottom:14px">Caută o localitate sau alege o parcelă.</div>
+    <div id="meteo-stropit"></div>
+  </div>
+
+  <!-- Alerte + Sol și apă -->
+  <div class="grid2" style="margin-bottom:16px">
+    <div class="card">
+      <div style="font-weight:800;font-size:16px;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+        <i class="ti ti-alert-triangle" style="color:var(--wheat);font-size:20px"></i> Alerte
+      </div>
+      <div id="meteo-alerte"></div>
+    </div>
+    <div class="card">
+      <div style="font-weight:800;font-size:16px;margin-bottom:6px;display:flex;align-items:center;gap:8px">
+        <i class="ti ti-plant" style="color:var(--ai-green);font-size:20px"></i> Sol și apă
+      </div>
+      <div id="meteo-sol"></div>
+    </div>
+  </div>
+
   <!-- Prognoza 7 zile -->
   <div class="card">
-    <div style="font-weight:700;font-size:15px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
-      <i class="ti ti-calendar-week" style="color:var(--ai-blue)"></i> Prognoză 7 zile
+    <div style="font-weight:800;font-size:16px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <i class="ti ti-calendar-week" style="color:var(--ai-blue);font-size:20px"></i> Prognoză 7 zile
     </div>
-<div id="meteo-forecast-7" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;overflow-x:auto">
-        <div style="color:var(--gray-400);font-size:13px;text-align:center;padding:20px;grid-column:1/-1">Caută o localitate pentru prognoză.</div>
+    <div id="meteo-forecast-7" style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px;overflow-x:auto">
+      <div style="color:var(--gray-500);font-size:14px;text-align:center;padding:20px;grid-column:1/-1">Caută o localitate pentru prognoză.</div>
     </div>
   </div>
 
   <!-- Grafic temperaturi -->
   <div class="card" style="margin-top:4px">
-    <div style="font-weight:700;font-size:15px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
-      <i class="ti ti-chart-line" style="color:var(--wheat)"></i> Evolutie temperaturi 7 zile
+    <div style="font-weight:800;font-size:16px;margin-bottom:16px;display:flex;align-items:center;gap:8px">
+      <i class="ti ti-chart-line" style="color:var(--wheat);font-size:20px"></i> Evoluție temperaturi 7 zile
     </div>
     <canvas id="meteo-chart" style="max-height:200px"></canvas>
   </div>

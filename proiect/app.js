@@ -540,7 +540,6 @@ if (lucImplementSel) {
   if (valCurenta) lucImplementSel.value = valCurenta;
 }
 }
-
 // ============================================================
 //  HARTĂ LEAFLET
 // ============================================================
@@ -554,8 +553,8 @@ function initMap() {
     tapTolerance: 15
   }).setView([45.9432, 24.9668], 7);
 
-L.tileLayer('https://mt1.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}&hl=ro&gl=RO', {
-      maxZoom: 21
+  L.tileLayer('https://mt1.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}&hl=ro&gl=RO', {
+    maxZoom: 21
   }).addTo(leafletMap);
 
   drawnItems = new L.FeatureGroup();
@@ -596,26 +595,28 @@ L.tileLayer('https://mt1.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}&hl=ro&gl=RO', 
   });
 
   leafletMap.addControl(drawControl);
-// Buton custom de cautare
-const SearchControl = L.Control.extend({
-  options: { position: 'topleft' },
-  onAdd: function() {
-    const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
-    div.innerHTML = '<a href="#" title="Cauta localitate" style="font-size:16px;display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:#fff;text-decoration:none;color:#333" id="map-search-toggle"><i class="ti ti-search"></i></a>'
-      + '<div id="map-search-popup" style="display:none;position:absolute;left:36px;top:0;background:#fff;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);padding:8px;display:none;gap:6px;min-width:260px;z-index:1000">'
-      + '<input type="text" id="map-search-input" placeholder="Cauta localitate..." style="flex:1;padding:7px 10px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:13px;outline:none;width:200px">'
-      + '<button onclick="cautaLocatieHarta()" style="background:#16a34a;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:13px"><i class="ti ti-search"></i></button>'
-      + '</div>';
-    L.DomEvent.disableClickPropagation(div);
-    L.DomEvent.on(div.querySelector('#map-search-toggle'), 'click', function(e) {
-      L.DomEvent.preventDefault(e);
-      const popup = div.querySelector('#map-search-popup');
-      popup.style.display = popup.style.display === 'none' ? 'flex' : 'none';
-    });
-    return div;
-  }
-});
-leafletMap.addControl(new SearchControl());
+
+  // Buton custom de cautare
+  const SearchControl = L.Control.extend({
+    options: { position: 'topleft' },
+    onAdd: function() {
+      const div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+      div.innerHTML = '<a href="#" title="Cauta localitate" style="font-size:16px;display:flex;align-items:center;justify-content:center;width:30px;height:30px;background:#fff;text-decoration:none;color:#333" id="map-search-toggle"><i class="ti ti-search"></i></a>'
+        + '<div id="map-search-popup" style="display:none;position:absolute;left:36px;top:0;background:#fff;border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,0.2);padding:8px;display:none;gap:6px;min-width:260px;z-index:1000">'
+        + '<input type="text" id="map-search-input" placeholder="Cauta localitate..." style="flex:1;padding:7px 10px;border:1.5px solid #e5e7eb;border-radius:6px;font-size:13px;outline:none;width:200px">'
+        + '<button onclick="cautaLocatieHarta()" style="background:#16a34a;color:#fff;border:none;padding:7px 12px;border-radius:6px;cursor:pointer;font-size:13px"><i class="ti ti-search"></i></button>'
+        + '</div>';
+      L.DomEvent.disableClickPropagation(div);
+      L.DomEvent.on(div.querySelector('#map-search-toggle'), 'click', function(e) {
+        L.DomEvent.preventDefault(e);
+        const popup = div.querySelector('#map-search-popup');
+        popup.style.display = popup.style.display === 'none' ? 'flex' : 'none';
+      });
+      return div;
+    }
+  });
+  leafletMap.addControl(new SearchControl());
+
   leafletMap.on(L.Draw.Event.CREATED, function(e) {
     drawnItems.clearLayers();
     const layer = e.layer;
@@ -624,7 +625,7 @@ leafletMap.addControl(new SearchControl());
     showToast('Parcela conturata! Suprafata calculata automat.', 'success');
   });
 
-leafletMap.on(L.Draw.Event.EDITED, function(e) {
+  leafletMap.on(L.Draw.Event.EDITED, function(e) {
     e.layers.eachLayer(function(layer) {
       if (layer.getLatLngs && typeof layer.getLatLngs === 'function') {
         const latlngs = layer.getLatLngs();
@@ -644,7 +645,7 @@ leafletMap.on(L.Draw.Event.EDITED, function(e) {
 
   leafletMap.on('draw:drawvertex', function(e) {
     const layers = e.layers;
-if (layers) {
+    if (layers) {
       layers.eachLayer(function(layer) {
         if (!layer.getLatLngs || typeof layer.getLatLngs !== 'function') return;
         const latlngs = layer.getLatLngs();
@@ -652,7 +653,7 @@ if (layers) {
         if (flatLatlngs && flatLatlngs.length > 2) {
           const area = L.GeometryUtil.geodesicArea(flatLatlngs);
           const ha = (area / 10000).toFixed(2);
-                    const haEl = document.getElementById('p-ha');
+          const haEl = document.getElementById('p-ha');
           if (haEl) haEl.value = ha;
         }
       });
@@ -680,90 +681,237 @@ if (layers) {
   reincarcaParcelePeHarta();
   showToast('Apasa iconita polygon din stanga pentru a contura parcela.', 'info', 5000);
 }
+
 let leafletMapFull = null;
 
+/* ===== HARTA COMPLETĂ: culturi + indici de vegetație ===== */
+// true = imagini SIMULATE, doar ca să testezi interfața. Pune false când există /api/indici (vezi mai jos).
+const HARTA_INDICI_DEMO = false;
+// false = în modurile NDVI/NDRE/NDMI parcelele nu au niciun contur propriu, se văd doar culorile stratului. true = contur alb subțire.
+const HARTA_CONTUR_INDICI = true;
+
+const CULORI_CULTURI = {
+  'Grâu': '#16a34a', 'Orz': '#4ade80', 'Orzoaică': '#86efac', 'Triticale': '#059669', 'Secară': '#065f46',
+  'Porumb': '#eab308', 'Floarea-soarelui': '#ef4444', 'Rapiță': '#2563eb', 'Soia': '#7c3aed',
+  'Mazăre': '#06b6d4', 'Fasole': '#0891b2', 'Sfeclă de zahăr': '#db2777', 'Cartofi': '#d97706',
+  'Lucernă': '#0d9488', 'In pentru ulei': '#6366f1', 'Coriandru': '#f97316', 'Muștar': '#ca8a04', 'Altele': '#94a3b8'
+};
+const CULORI_PARCELE = ['#16a34a', '#2563eb', '#d97706', '#dc2626', '#7c3aed', '#0891b2'];
+
+// Rampe de culoare cu luminozitate variabilă, ca să se distingă și la daltonism sau lumină puternică
+const RAMPA_VEG = ['#5c3a1e', '#c47f2c', '#f0d84a', '#9bd35a', '#2e9e4a', '#0b5d2f'];
+const RAMPA_APA = ['#8c510a', '#d8b365', '#f6e8c3', '#80cdc1', '#35978f', '#01665e'];
+const RAMPA_RGB = ['#4a3a28', '#7a6240', '#a58f5c', '#7d8f4a', '#4f7a36', '#2f5a28'];
+const INDICI = {
+  ndvi: { nume: 'NDVI', sub: 'vigoarea vegetației', min: 0, max: 0.9, rampa: RAMPA_VEG },
+  ndre: { nume: 'NDRE', sub: 'clorofilă / azot', min: 0, max: 0.6, rampa: RAMPA_VEG },
+  ndmi: { nume: 'NDMI', sub: 'umiditatea vegetației', min: -0.2, max: 0.6, rampa: RAMPA_APA },
+  rgb: { nume: 'Culoare naturală', sub: '', min: 0, max: 1, rampa: RAMPA_RGB }
+};
+
+let hartaStrat = 'culturi', hartaAn = null, hartaOverlays = [], hartaTokenIndici = 0, hartaCulturiLegenda = {}, hartaAttr = null;
+
+/* ---------- utilitare ---------- */
+function _isoLocal(d) { return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function _hash(s) { return [...String(s)].reduce((h, c) => (h * 31 + c.charCodeAt(0)) >>> 0, 7); }
+function _hex(h) { return [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)); }
+function culoareRampa(rampa, t) {
+  t = Math.max(0, Math.min(1, t));
+  const x = t * (rampa.length - 1), i = Math.min(Math.floor(x), rampa.length - 2), f = x - i, a = _hex(rampa[i]), b = _hex(rampa[i + 1]);
+  return a.map((v, k) => Math.round(v + (b[k] - v) * f));
+}
+function latlngsParcela(p) { return JSON.parse(p.coordonate).map(c => [c.lat || c[0], c.lng || c[1]]); }
+function sezonCurent() { const a = new Date(), s = a.getMonth() >= 9 ? a.getFullYear() : a.getFullYear() - 1; return s + '-' + (s + 1); }
+function sezonActiv() { return (document.getElementById('harta-filter-an') || {}).value || sezonCurent(); }
+
+function populeazaSezoaneHarta() {
+  const sel = document.getElementById('harta-filter-an');
+  if (!sel || sel.options.length > 1) return;
+  sel.innerHTML = '<option value="">Cultura curentă</option>';
+  const start = parseInt(sezonCurent());
+  for (let a = start; a >= start - 5; a--) sel.add(new Option(a + '-' + (a + 1), a + '-' + (a + 1)));
+}
+
+/* ---------- surse de date pentru indici ----------
+   Contract pentru backend (Pasul 2):
+   GET /api/indici/date?sezon=2026-2027      -> ["2026-10-04", "2026-09-29", ...]  (cele mai noi primele, doar scene valide)
+   GET /api/indici?parcela=ID&indice=ndvi&data=2026-10-04 -> { url: "https://.../ndvi.png", bounds: [[sud,vest],[nord,est]] } */
+function sceneDemo(p, indice, data) {
+  const I = INDICI[indice], ll = latlngsParcela(p);
+  if (ll.length < 3) return null;
+  const lats = ll.map(c => c[0]), lngs = ll.map(c => c[1]);
+  const s = Math.min(...lats), n = Math.max(...lats), w = Math.min(...lngs), e = Math.max(...lngs);
+  const W = 192, H = 192, seed = _hash(p.id) % 100;
+  const d = new Date(data + 'T12:00'), doy = Math.floor((d - new Date(d.getFullYear(), 0, 0)) / 864e5);
+  const baza = 0.1 + 0.7 * Math.exp(-Math.pow((doy - 150) / 55, 2));
+  const tmp = document.createElement('canvas'); tmp.width = W; tmp.height = H;
+  const tc = tmp.getContext('2d'), img = tc.createImageData(W, H);
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+    const u = x / W, v = y / H;
+    const nz = 0.5 * Math.sin(u * 6 + seed) * Math.cos(v * 5 + seed * 0.7) + 0.3 * Math.sin((u + v) * 11 + seed * 1.3) + 0.2 * Math.sin(u * 19 - v * 13 + seed);
+    const c = culoareRampa(I.rampa, baza + 0.14 * nz), k = (y * W + x) * 4;
+    img.data[k] = c[0]; img.data[k + 1] = c[1]; img.data[k + 2] = c[2]; img.data[k + 3] = 255;
+  }
+  tc.putImageData(img, 0, 0);
+  const cv = document.createElement('canvas'); cv.width = W; cv.height = H;
+  const ctx = cv.getContext('2d'); ctx.beginPath();
+  ll.forEach(([la, lo], i) => { const x = (lo - w) / ((e - w) || 1) * W, y = (n - la) / ((n - s) || 1) * H; i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+  ctx.closePath(); ctx.clip(); ctx.drawImage(tmp, 0, 0);
+  return { url: cv.toDataURL('image/png'), bounds: L.latLngBounds([[s, w], [n, e]]) };
+}
+function dateDemo(sezon) {
+  const [a, b] = sezon.split('-').map(Number), azi = new Date(), out = [];
+  for (let d = new Date(a, 9, 1); d <= new Date(b, 8, 30) && d <= azi; d.setDate(d.getDate() + 5)) out.push(_isoLocal(d));
+  return out.reverse();
+}
+async function listaDateIndici(sezon) {
+  if (HARTA_INDICI_DEMO) return dateDemo(sezon);
+  const r = await fetch('/api/indici/date?sezon=' + encodeURIComponent(sezon));
+  return r.ok ? await r.json() : [];
+}
+async function incarcaScene(p, indice, data) {
+  if (HARTA_INDICI_DEMO) return sceneDemo(p, indice, data);
+
+  // Extragere coordonate minime/maxime (Bounding Box) din parcela curentă
+  const ll = latlngsParcela(p);
+  if (ll.length < 3) return null;
+  const lats = ll.map(c => c[0]), lngs = ll.map(c => c[1]);
+  const s = Math.min(...lats), n = Math.max(...lats), w = Math.min(...lngs), e = Math.max(...lngs);
+  const bboxStr = `${w},${s},${e},${n}`;
+
+  // Apelăm fișierul nostru din folderul api/ Copennicus
+  const r = await fetch(`/api/copernicus?bbox=${encodeURIComponent(bboxStr)}&indice=${indice}&data=${data}`);
+  if (!r.ok) return null;
+  const j = await r.json();
+  return j && j.url ? { url: j.url, bounds: L.latLngBounds(j.bounds) } : null;
+}
+
+/* ---------- harta ---------- */
 function initMapFull() {
   if (leafletMapFull) { leafletMapFull.invalidateSize(); return; }
-  
-  leafletMapFull = L.map('map-full', {
-    zoomControl: true,
-    attributionControl: false,
-    tap: true,
-    tapTolerance: 15
-  }).setView([45.9432, 24.9668], 7);
-
-  L.tileLayer('https://mt1.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
-    maxZoom: 21
-  }).addTo(leafletMapFull);
-
+  populeazaSezoaneHarta();
+  leafletMapFull = L.map('map-full', { zoomControl: true, attributionControl: false, tap: true, tapTolerance: 15 }).setView([45.9432, 24.9668], 7);
+  hartaAttr = L.control.attribution({ prefix: false }).addTo(leafletMapFull);
+  const baze = {
+    'Satelit': L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      { maxNativeZoom: 18, maxZoom: 20, attribution: 'Imagini © Esri, Maxar, Earthstar Geographics' }),
+    'Hartă stradală': L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+      { maxNativeZoom: 19, maxZoom: 20, attribution: '© OpenStreetMap' })
+  };
+  baze['Satelit'].addTo(leafletMapFull);
+  L.control.layers(baze, null, { position: 'topright' }).addTo(leafletMapFull);
+  leafletMapFull.createPane('indici').style.zIndex = 350;   // sub conturul parcelelor
   reincarcaParcelePeHartaFull();
 }
-function reincarcaParcelePeHarta() {
-  if (!leafletMap) return;
-  leafletMap.eachLayer(l=>{if(l._isParcelaFundal)leafletMap.removeLayer(l);});
-  const cols=['#4a7c2f','#c8902a','#2e6fa3','#6b3d1e','#8e44ad'];
-  parceleData.forEach((p,i)=>{
-    if (!p.coordonate) return;
-    try {
-      const ll=JSON.parse(p.coordonate);
-      const poly=L.polygon(ll,{color:cols[i%cols.length],fillColor:cols[i%cols.length],fillOpacity:0.2,weight:2});
-      poly._isParcelaFundal=true;
-      poly.bindTooltip(p.nume+' ('+p.suprafata_ha+' ha)',{permanent:false});
-      poly.addTo(leafletMap);
-    } catch(e){}
-  });
-}
+
 function reincarcaParcelePeHartaFull(anFiltru) {
   if (!leafletMapFull) return;
-  leafletMapFull.eachLayer(l => { if (l instanceof L.Polygon) leafletMapFull.removeLayer(l); });
+  hartaAn = anFiltru || null;
+  (leafletMapFull._customLayers || []).forEach(l => leafletMapFull.removeLayer(l));
+  leafletMapFull._customLayers = [];
+  hartaCulturiLegenda = {};
+  const modIndici = hartaStrat !== 'culturi', bounds = [];
 
-  const culoriCulturi = {
-    'Grâu': '#22c55e', 'Orz': '#86efac', 'Orzoaică': '#bbf7d0',
-    'Triticale': '#4ade80', 'Secară': '#16a34a', 'Porumb': '#facc15',
-    'Floarea-soarelui': '#ef4444', 'Rapiță': '#f97316', 'Soia': '#a3e635',
-    'Mazăre': '#bef264', 'Fasole': '#84cc16', 'Sfeclă de zahăr': '#e879f9',
-    'Cartofi': '#d97706', 'Lucernă': '#2dd4bf', 'In pentru ulei': '#818cf8',
-    'Coriandru': '#fb923c', 'Muștar': '#fbbf24', 'Altele': '#94a3b8'
-  };
-  const culoriParcele = ['#16a34a','#2563eb','#d97706','#dc2626','#7c3aed','#0891b2'];
-
-  const bounds = [];
   parceleData.forEach((p, index) => {
     if (!p.coordonate) return;
     try {
       const coords = JSON.parse(p.coordonate);
       if (!coords.length) return;
-      const latlngs = coords.map(c => [c.lat||c[0], c.lng||c[1]]);
-      const culoare = culoriCulturi[p.cultura] || culoriParcele[index % culoriParcele.length];
-      
-      let labelExtra = '';
-      if (anFiltru && aniAgricoliData.length) {
+      const latlngs = coords.map(c => [c.lat || c[0], c.lng || c[1]]);
+      let cultura = p.cultura;
+      if (anFiltru) {
+        const parti = anFiltru.split('-'), anStart = new Date(parseInt(parti[0]), 9, 1), anEnd = new Date(parseInt(parti[1]), 8, 30);
         const anInfo = aniAgricoliData.find(a => a.parcela_id === p.id && a.an_agricol === anFiltru);
-        if (anInfo) labelExtra = '<br><b>'+anInfo.cultura+'</b> · '+anInfo.status+(anInfo.productie_tone?' · '+anInfo.productie_tone+'t':'');
+        const recolta = recolteData.find(r => r.parcela_id === p.id && new Date(r.data_recolta) >= anStart && new Date(r.data_recolta) <= anEnd);
+        if (anInfo) cultura = anInfo.cultura;
+        else if (recolta) cultura = recolta.cultura;
+        else if (p.data_semanat && new Date(p.data_semanat) >= anStart && new Date(p.data_semanat) <= anEnd) cultura = p.cultura;
+        else cultura = null;
       }
+      const culoare = cultura ? (CULORI_CULTURI[cultura] || CULORI_PARCELE[index % CULORI_PARCELE.length]) : '#94a3b8';
+      if (cultura) hartaCulturiLegenda[cultura] = culoare;
 
-      const polygon = L.polygon(latlngs, {
-        color: culoare, fillColor: culoare, fillOpacity: 0.35, weight: 2.5
-      }).addTo(leafletMapFull);
-
-      polygon.bindPopup('<div style="min-width:160px">'
-        +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">'
-        +'<div style="width:12px;height:12px;border-radius:3px;background:'+culoare+'"></div>'
-        +'<b style="font-size:14px">'+escapeHTML(p.nume)+'</b></div>'
-        +'<div style="font-size:12px;color:#6b7280">'+escapeHTML(p.cultura||'—')+' · '+(p.suprafata_ha||0)+' ha</div>'
-        +labelExtra+'</div>');
-
+      const poly = L.polygon(latlngs, { stroke: !modIndici || HARTA_CONTUR_INDICI, color: modIndici ? '#ffffff' : culoare, weight: modIndici ? 1.5 : 2.5, fillColor: culoare, fillOpacity: modIndici ? 0 : 0.35 }).addTo(leafletMapFull);
+      poly.on('click', () => arataDetaliiParcelaHarta(p.id));
+      poly.bindTooltip('<b>' + escapeHTML(p.nume) + '</b><br>' + escapeHTML(cultura || 'Necultivat') + ' · ' + p.suprafata_ha + ' ha', { sticky: true, className: 'parcela-tooltip' });
+      leafletMapFull._customLayers.push(poly);
       bounds.push(...latlngs);
-    } catch(e) {}
+    } catch (e) { console.error('Eroare parcela', p.nume, e); }
   });
 
-  if (bounds.length) leafletMapFull.fitBounds(bounds, { padding: [30, 30] });
+  if (bounds.length && !leafletMapFull._fitFacut) { leafletMapFull.fitBounds(bounds, { padding: [30, 30] }); leafletMapFull._fitFacut = true; }
+  deseneazaLegenda();
 }
 
-function filtreazaHartaAn() {
-  const an = document.getElementById('harta-filter-an')?.value;
-  reincarcaParcelePeHartaFull(an && an !== '' ? an : null);
+/* ---------- controale ---------- */
+async function populeazaDateHarta() {
+  const sel = document.getElementById('harta-data'); if (!sel) return;
+  const date = await listaDateIndici(sezonActiv());
+  sel.innerHTML = date.length
+    ? date.map(d => '<option value="' + d + '">' + new Date(d + 'T12:00').toLocaleDateString('ro-RO', { day: 'numeric', month: 'short', year: 'numeric' }) + '</option>').join('')
+    : '<option value="">Nicio imagine disponibilă</option>';
 }
+async function filtreazaHartaAn() {
+  const an = document.getElementById('harta-filter-an')?.value;
+  reincarcaParcelePeHartaFull(an || null);
+  if (hartaStrat !== 'culturi') { await populeazaDateHarta(); await afiseazaStratIndice(); }
+}
+async function schimbaStratHarta() {
+  hartaStrat = document.getElementById('harta-strat').value;
+  const ind = hartaStrat !== 'culturi';
+  document.getElementById('harta-data-wrap').style.display = ind ? '' : 'none';
+  if (ind) await populeazaDateHarta();
+  reincarcaParcelePeHartaFull(hartaAn);
+  await afiseazaStratIndice();
+}
+function schimbaDataHarta() { afiseazaStratIndice(); }
+
+// Scoate culoarea și conturul parcelelor în modurile cu indici (rămân doar culorile stratului; parcelele rămân clicabile)
+function stilParceleIndici() {
+  if (hartaStrat === 'culturi' || !leafletMapFull) return;
+  (leafletMapFull._customLayers || []).forEach(l => l.setStyle && l.setStyle({ stroke: HARTA_CONTUR_INDICI, color: '#ffffff', weight: 1.5, fillOpacity: 0 }));
+}
+
+async function afiseazaStratIndice() {
+  if (!leafletMapFull) return;
+  const token = ++hartaTokenIndici, info = document.getElementById('harta-info');
+  hartaOverlays.forEach(l => leafletMapFull.removeLayer(l)); hartaOverlays = [];
+  stilParceleIndici();
+  if (hartaAttr) hartaAttr.removeAttribution('Contains modified Copernicus Sentinel data');
+  if (hartaStrat === 'culturi') { if (info) info.textContent = ''; return; }
+  const data = document.getElementById('harta-data')?.value;
+  if (!data) { if (info) info.textContent = 'Nu există imagini disponibile pentru acest sezon.'; return; }
+  if (info) info.textContent = 'Se încarcă imaginile…';
+  const rez = await Promise.all(parceleData.filter(p => p.coordonate).map(p => incarcaScene(p, hartaStrat, data).catch(() => null)));
+  if (token !== hartaTokenIndici) return;                      // utilizatorul a schimbat între timp
+  rez.forEach(sc => { if (sc) hartaOverlays.push(L.imageOverlay(sc.url, sc.bounds, { pane: 'indici', interactive: false }).addTo(leafletMapFull)); });
+  if (!hartaOverlays.length) { if (info) info.textContent = 'Nu s-au putut încărca imaginile.'; return; }
+  if (!HARTA_INDICI_DEMO && hartaAttr) hartaAttr.addAttribution('Contains modified Copernicus Sentinel data');
+  const dataTxt = new Date(data + 'T12:00').toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
+  if (info) info.innerHTML = INDICI[hartaStrat].nume + ' · imagine din ' + dataTxt +
+    (HARTA_INDICI_DEMO ? ' · <span style="color:var(--danger);font-weight:800">DATE SIMULATE, doar pentru test</span>' : '');
+}
+
+function deseneazaLegenda() {
+  const el = document.getElementById('harta-legenda'); if (!el) return;
+  let h = '';
+  if (hartaStrat === 'culturi') {
+    const k = Object.keys(hartaCulturiLegenda);
+    if (!k.length) { el.style.display = 'none'; return; }
+    h = '<div style="font-weight:800;margin-bottom:6px">Culturi</div>' + k.map(c =>
+      '<div style="display:flex;align-items:center;gap:8px;margin:4px 0"><span style="width:14px;height:14px;border-radius:4px;flex:none;background:' + hartaCulturiLegenda[c] + '"></span>' + escapeHTML(c) + '</div>').join('');
+  } else if (hartaStrat === 'rgb') { el.style.display = 'none'; return; }
+  else {
+    const I = INDICI[hartaStrat];
+    h = '<div style="font-weight:800">' + I.nume + '</div><div style="font-size:12.5px;color:var(--gray-500);margin-bottom:8px">' + I.sub + '</div>'
+      + '<div style="height:12px;border-radius:6px;background:linear-gradient(90deg,' + I.rampa.join(',') + ')"></div>'
+      + '<div style="display:flex;justify-content:space-between;font-size:12.5px;font-weight:700;margin-top:4px"><span>' + I.min + '</span><span>' + I.max + '</span></div>'
+      + (HARTA_INDICI_DEMO ? '<div style="margin-top:8px;font-size:12px;font-weight:800;color:var(--danger)">DATE SIMULATE</div>' : '');
+  }
+  el.innerHTML = h; el.style.display = 'block';
+}
+
+/* ---------- restul funcțiilor hărții (neschimbate, cu o singură corecție în vizualizeazaParcela) ---------- */
 async function cautaLocatieSilent(localitate) {
   try {
     const res = await fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(localitate)+'&count=1&language=ro&format=json');
@@ -779,90 +927,20 @@ function salveazaPoligon(latlngs) {
   document.getElementById('p-coordonate').value=JSON.stringify(latlngs.map(p=>({lat:p.lat,lng:p.lng})));
   showToast(`Suprafață calculată: ${ha} ha`,'info');
 }
-function reincarcaParcelePeHartaFull(anFiltru) {
-  if (!leafletMapFull) return;
-  
-  // Stergem toate layerele custom
-  if (!leafletMapFull._customLayers) leafletMapFull._customLayers = [];
-  leafletMapFull._customLayers.forEach(l => leafletMapFull.removeLayer(l));
-  leafletMapFull._customLayers = [];
-
-const culoriCulturi = {
-  'Grâu': '#16a34a',        // verde puternic
-  'Orz': '#4ade80',         // verde deschis
-  'Orzoaică': '#86efac',    // verde pal
-  'Triticale': '#059669',   // verde inchis
-  'Secară': '#065f46',      // verde foarte inchis
-  'Porumb': '#eab308',      // galben puternic
-  'Floarea-soarelui': '#ef4444', // rosu puternic
-  'Rapiță': '#2563eb',      // albastru puternic
-  'Soia': '#7c3aed',        // violet
-  'Mazăre': '#06b6d4',      // cyan
-  'Fasole': '#0891b2',      // cyan inchis
-  'Sfeclă de zahăr': '#db2777', // roz puternic
-  'Cartofi': '#d97706',     // portocaliu
-  'Lucernă': '#0d9488',     // teal
-  'In pentru ulei': '#6366f1', // indigo
-  'Coriandru': '#f97316',   // portocaliu deschis
-  'Muștar': '#ca8a04',      // galben inchis
-  'Altele': '#94a3b8'       // gri
-};
-  const culoriParcele = ['#16a34a','#2563eb','#d97706','#dc2626','#7c3aed','#0891b2'];
-
-  const bounds = [];
-  parceleData.forEach((p, index) => {
+function reincarcaParcelePeHarta() {
+  if (!leafletMap) return;
+  leafletMap.eachLayer(l=>{if(l._isParcelaFundal)leafletMap.removeLayer(l);});
+  const cols=['#4a7c2f','#c8902a','#2e6fa3','#6b3d1e','#8e44ad'];
+  parceleData.forEach((p,i)=>{
     if (!p.coordonate) return;
     try {
-      const coords = JSON.parse(p.coordonate);
-      if (!coords.length) return;
-      const latlngs = coords.map(c => [c.lat||c[0], c.lng||c[1]]);
-
-      let culturaAfisata = p.cultura;
-      let labelExtra = '';
-
-if (anFiltru) {
-  const parti = anFiltru.split('-');
-  const anStart = new Date(parseInt(parti[0]), 9, 1);
-  const anEnd = new Date(parseInt(parti[1]), 8, 30);
-
-  // Cauta mai intai in ani_agricoli
-  const anInfo = aniAgricoliData.find(a => a.parcela_id === p.id && a.an_agricol === anFiltru);
-  if (anInfo) {
-    culturaAfisata = anInfo.cultura;
-    labelExtra = '<br><b>'+escapeHTML(anInfo.cultura)+'</b> · '+anInfo.status+(anInfo.productie_tone?' · '+anInfo.productie_tone+'t':'');
-  } else {
-    // Cauta in recolte pentru acest an
-    const recolta = recolteData.find(r => r.parcela_id === p.id && new Date(r.data_recolta) >= anStart && new Date(r.data_recolta) <= anEnd);
-    if (recolta) {
-      culturaAfisata = recolta.cultura;
-      labelExtra = '<br><b>'+escapeHTML(recolta.cultura)+'</b> · '+(recolta.cantitate_tone||0)+' t';
-    } else if (p.data_semanat && new Date(p.data_semanat) >= anStart && new Date(p.data_semanat) <= anEnd) {
-      // Cauta in parcele dupa data semanat
-      culturaAfisata = p.cultura;
-    } else {
-      culturaAfisata = null;
-    }
-  }
-}
-      const culoare = culturaAfisata
-        ? (culoriCulturi[culturaAfisata] || culoriParcele[index % culoriParcele.length])
-        : '#94a3b8';
-
-      const polygon = L.polygon(latlngs, {
-        color: culoare, fillColor: culoare, fillOpacity: 0.35, weight: 2.5
-      }).addTo(leafletMapFull);
-
-polygon.on('click', function() {
-        arataDetaliiParcelaHarta(p.id);
-      });
-
-      polygon.bindTooltip('<b>'+escapeHTML(p.nume)+'</b><br>'+escapeHTML(culturaAfisata||'Necultivat')+' · '+p.suprafata_ha+' ha', {sticky:true, className:'parcela-tooltip'});
-      leafletMapFull._customLayers.push(polygon);
-      bounds.push(...latlngs);
-    } catch(e) { console.error('Eroare parcela', p.nume, e); }
+      const ll=JSON.parse(p.coordonate);
+      const poly=L.polygon(ll,{color:cols[i%cols.length],fillColor:cols[i%cols.length],fillOpacity:0.2,weight:2});
+      poly._isParcelaFundal=true;
+      poly.bindTooltip(escapeHTML(p.nume)+' ('+p.suprafata_ha+' ha)',{permanent:false});
+      poly.addTo(leafletMap);
+    } catch(e){}
   });
-
-  if (bounds.length) leafletMapFull.fitBounds(bounds, { padding: [30, 30] });
 }
 function deschideModalHarta() {
   document.getElementById('map-modal').style.display='flex';
@@ -894,13 +972,12 @@ function vizualizeazaParcela(id) {
         fillOpacity: 0.4
       }).addTo(drawnItems);
       leafletMap.fitBounds(polygon.getBounds());
-polygon.bindTooltip('<b>'+escapeHTML(p.nume)+'</b><br>'+escapeHTML(culturaAfisata||'Necultivat')+' · '+p.suprafata_ha+' ha', {sticky:true, className:'parcela-tooltip'});
-
-polygon.on('click', function(e) {
-  L.DomEvent.stopPropagation(e);
-  arataDetaliiParcelaHarta(p.id);
-});
-    } 
+      polygon.bindTooltip('<b>'+escapeHTML(p.nume)+'</b><br>'+escapeHTML(p.cultura||'Necultivat')+' · '+p.suprafata_ha+' ha', {sticky:true, className:'parcela-tooltip'});
+      polygon.on('click', function(e) {
+        L.DomEvent.stopPropagation(e);
+        arataDetaliiParcelaHarta(p.id);
+      });
+    }
     catch(e) { console.error('Eroare parcela', p.nume, e); }
   }, 300);
 }
@@ -2114,162 +2191,310 @@ const totalVenit=cheltuieliData.filter(c=>c.tip==='venit').reduce((s,c)=>s+parse
   }
 }
 
+/* ===== METEO v2 — Open-Meteo (fără cheie) =====
+   Înlocuiește funcția cautaMeteo() din app.js cu tot conținutul acestui fișier.
+   Folosește globalele existente: parceleData, meteoChart, showLoading, showToast, Chart.
+   Pragurile de mai jos sunt orientative: ajustează-le după etichetele produselor și experiența ta. */
+
+const METEO_CACHE_MIN = 30;
+let meteoCtx = { lat: null, lon: null, nume: '' };          // ultima localitate căutată
+const PRAG_SEMANAT = { 'floarea-soarelui': 8, 'porumb': 10, 'soia': 12 }; // °C sol la 6 cm
+const STROP = { vantBun: 15, vantMax: 20, tMinBun: 8, tMaxBun: 25, tMin: 5, tMax: 30 };
+const STROP_CULORI = { g: '#0E7C3A', y: '#FFB800', r: '#D92D20' };
+const STROP_HASURI = 'background-image:repeating-linear-gradient(45deg,transparent 0 4px,rgba(255,255,255,.4) 4px 6px);';
+
+/* ---------- utilitare ---------- */
+function _esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function _fara(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim(); }
+function numeParcela(p) { return p.nume || p.name || p.denumire || ('Parcela ' + (p.id != null ? p.id : '')); }
+
+function meteoInfoCod(code) {
+  if (code === 0) return { icon: 'ti-sun', color: 'var(--wheat)', desc: 'Cer senin' };
+  if (code <= 2) return { icon: 'ti-cloud-sun', color: 'var(--wheat)', desc: 'Parțial noros' };
+  if (code <= 3) return { icon: 'ti-cloud', color: '#95a5a6', desc: 'Noros' };
+  if (code <= 49) return { icon: 'ti-mist', color: '#95a5a6', desc: 'Ceață' };
+  if (code <= 59) return { icon: 'ti-cloud-drizzle', color: 'var(--ai-blue)', desc: 'Burniță' };
+  if (code <= 69) return { icon: 'ti-cloud-rain', color: 'var(--ai-blue)', desc: 'Ploaie' };
+  if (code <= 79) return { icon: 'ti-snowflake', color: '#a0c0ff', desc: 'Ninsoare' };
+  if (code <= 82) return { icon: 'ti-cloud-rain', color: 'var(--ai-blue)', desc: 'Averse' };
+  if (code <= 86) return { icon: 'ti-snowflake', color: '#a0c0ff', desc: 'Averse de ninsoare' };
+  if (code <= 99) return { icon: 'ti-bolt', color: 'var(--wheat)', desc: 'Furtună' };
+  return { icon: 'ti-cloud', color: '#95a5a6', desc: 'Variabil' };
+}
+
+/* ---------- centrul unei parcele (acceptă GeoJSON, liste de puncte sau lat/lng) ---------- */
+function _colecteazaPuncte(x, out) {
+  if (!x) return;
+  if (typeof x === 'string') { try { x = JSON.parse(x); } catch (e) { return; } }
+  if (Array.isArray(x)) {
+    if (x.length >= 2 && typeof x[0] === 'number' && typeof x[1] === 'number') { out.push([x[0], x[1]]); return; }
+    x.forEach(i => _colecteazaPuncte(i, out)); return;
+  }
+  if (typeof x === 'object') {
+    if (x.geometry) return _colecteazaPuncte(x.geometry, out);
+    if (x.coordinates) return _colecteazaPuncte(x.coordinates, out);
+    const la = x.lat, lo = x.lng != null ? x.lng : x.lon;
+    if (typeof la === 'number' && typeof lo === 'number') out.push([la, lo]);
+  }
+}
+function centruParcela(p) {
+  const pts = [];
+  _colecteazaPuncte({ lat: p.lat, lng: p.lng != null ? p.lng : p.lon }, pts);
+  ['geojson', 'geometrie', 'geometry', 'coordonate', 'coordinates', 'poligon', 'coords', 'centru', 'center']
+    .forEach(k => { if (p[k]) _colecteazaPuncte(p[k], pts); });
+  const ok = [];
+  pts.forEach(([a, b]) => {                       // detectează ordinea (lat,lon) sau (lon,lat) pentru România
+    if (a >= 43 && a <= 49 && b >= 20 && b <= 30) ok.push([a, b]);
+    else if (b >= 43 && b <= 49 && a >= 20 && a <= 30) ok.push([b, a]);
+  });
+  if (!ok.length) return null;
+  return { lat: ok.reduce((s, c) => s + c[0], 0) / ok.length, lon: ok.reduce((s, c) => s + c[1], 0) / ok.length };
+}
+
+/* ---------- selector de parcele ---------- */
+function populeazaSelectorParcele() {
+  const sel = document.getElementById('meteo-parcela');
+  if (!sel || typeof parceleData === 'undefined' || !parceleData) return;
+  if (sel.options.length - 1 === parceleData.length) return;
+  const v = sel.value;
+  sel.innerHTML = '<option value="">Locația căutată</option>' +
+    parceleData.map((p, i) => '<option value="' + i + '">' + _esc(numeParcela(p)) + (p.cultura ? ' · ' + _esc(p.cultura) : '') + '</option>').join('');
+  sel.value = v;
+}
+
+/* ---------- date: Open-Meteo cu cache în browser ---------- */
+async function meteoFetch(lat, lon) {
+  const key = 'meteo:' + lat.toFixed(2) + ',' + lon.toFixed(2);
+  try {
+    const c = JSON.parse(sessionStorage.getItem(key) || 'null');
+    if (c && Date.now() - c.t < METEO_CACHE_MIN * 60000) return c.d;
+  } catch (e) { }
+  const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lat.toFixed(4) + '&longitude=' + lon.toFixed(4)
+    + '&current=temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure,weather_code'
+    + '&hourly=temperature_2m,precipitation,precipitation_probability,wind_speed_10m,wind_gusts_10m,soil_temperature_6cm,soil_moisture_3_to_9cm'
+    + '&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max,precipitation_sum,et0_fao_evapotranspiration'
+    + '&wind_speed_unit=kmh&timezone=Europe%2FBucharest&forecast_days=7';
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('Open-Meteo ' + r.status);
+  const d = await r.json();
+  try { sessionStorage.setItem(key, JSON.stringify({ t: Date.now(), d })); } catch (e) { }
+  return d;
+}
+
+/* ---------- acțiuni din interfață ---------- */
 async function cautaMeteo() {
-  const locEl=document.getElementById('meteo-loc');
-  if (!locEl||!locEl.value.trim()) return;
-  const loc=locEl.value.trim();
+  const locEl = document.getElementById('meteo-loc');
+  if (!locEl || !locEl.value.trim()) return;
+  populeazaSelectorParcele();
   showLoading(true);
   try {
-    // Pas 1: Geocoding - gasim coordonatele localitatii
-    const geoRes=await fetch('https://geocoding-api.open-meteo.com/v1/search?name='+encodeURIComponent(loc)+'&count=1&language=ro&format=json');
-    const geoData=await geoRes.json();
-    if (!geoData.results||!geoData.results.length) { showToast('Localitate negasita.','error'); showLoading(false); return; }
-    const geo=geoData.results[0];
-    const lat=geo.latitude, lon=geo.longitude;
-    const numeOras=geo.name+', Romania';
-
-    // Pas 2: Vremea curenta + prognoza 7 zile
-    const meteoRes=await fetch('https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&current=temperature_2m,relative_humidity_2m,wind_speed_10m,surface_pressure,weather_code&daily=temperature_2m_max,temperature_2m_min,weather_code,precipitation_probability_max&wind_speed_unit=kmh&timezone=Europe%2FBucharest&forecast_days=7');
-    const meteo=await meteoRes.json();
+    const geoRes = await fetch('https://geocoding-api.open-meteo.com/v1/search?name=' + encodeURIComponent(locEl.value.trim()) + '&count=1&language=ro&format=json');
+    const geoData = await geoRes.json();
+    if (!geoData.results || !geoData.results.length) { showLoading(false); showToast('Localitate negăsită.', 'error'); return; }
+    const g = geoData.results[0];
+    meteoCtx = { lat: g.latitude, lon: g.longitude, nume: g.name + ', Romania' };
+    const sel = document.getElementById('meteo-parcela'); if (sel) sel.value = '';
     showLoading(false);
-
-    const current=meteo.current;
-    const daily=meteo.daily;
-    const temp=Math.round(current.temperature_2m);
-    const wcode=current.weather_code;
-
-    // Functie helper pentru weather code -> icon si descriere
-    function getWeatherInfo(code) {
-      if (code===0) return {icon:'ti-sun',color:'var(--wheat)',desc:'Cer senin'};
-      if (code<=2) return {icon:'ti-cloud-sun',color:'var(--wheat)',desc:'Partial noros'};
-      if (code<=3) return {icon:'ti-cloud',color:'#95a5a6',desc:'Noros'};
-      if (code<=49) return {icon:'ti-mist',color:'#95a5a6',desc:'Ceata'};
-      if (code<=59) return {icon:'ti-cloud-drizzle',color:'var(--ai-blue)',desc:'Burnitoare'};
-      if (code<=69) return {icon:'ti-cloud-rain',color:'var(--ai-blue)',desc:'Ploaie'};
-      if (code<=79) return {icon:'ti-snowflake',color:'#a0c0ff',desc:'Ninsoare'};
-      if (code<=82) return {icon:'ti-cloud-rain',color:'var(--ai-blue)',desc:'Averse'};
-      if (code<=86) return {icon:'ti-snowflake',color:'#a0c0ff',desc:'Averse de ninsoare'};
-      if (code<=99) return {icon:'ti-bolt',color:'var(--wheat)',desc:'Furtuna'};
-      return {icon:'ti-cloud',color:'#95a5a6',desc:'Variabil'};
-    }
-
-    const wi=getWeatherInfo(wcode);
-    const azi=new Date().toLocaleDateString('ro-RO',{weekday:'long',day:'numeric',month:'long'});
-
-    // Vremea curenta
-    document.getElementById('meteo-city-name').textContent=numeOras;
-    document.getElementById('meteo-data-azi').textContent=azi.charAt(0).toUpperCase()+azi.slice(1);
-    document.getElementById('meteo-temp').textContent=temp+'°C';
-    document.getElementById('meteo-desc').textContent=wi.desc;
-    document.getElementById('meteo-umiditate-val').textContent=current.relative_humidity_2m+'%';
-    document.getElementById('meteo-vant-val').textContent=Math.round(current.wind_speed_10m)+' km/h';
-    document.getElementById('meteo-presiune-val').textContent=Math.round(current.surface_pressure)+' hPa';
-
-    const iconEl=document.getElementById('meteo-icon');
-    if (iconEl) { iconEl.className='ti '+wi.icon; iconEl.style.color=wi.color; }
-
-    const topWeath=document.getElementById('top-weather');
-    if (topWeath) topWeath.innerHTML='<i class="ti '+wi.icon+'"></i> '+temp+'°C';
-    if (document.getElementById('d-temp-azi')) document.getElementById('d-temp-azi').textContent=temp+'°';
-
-    // Recomandare agronomica
-    const recEl=document.getElementById('meteo-recomandare');
-  if (recEl) {
-  // Verificam si prognoza urmatoarele 24h pentru recomandari mai precise
-  const ploaieUrmeaza = daily && daily.weather_code &&
-    (daily.weather_code[0] >= 60 || (daily.weather_code[1] && daily.weather_code[1] >= 60));
-  const precipitatiMaxime = daily?.precipitation_probability_max?.[0] || 0;
-
-  if (wcode >= 95) {
-    recEl.textContent = 'Furtuna activa. Opriti toate lucrarile mecanice. Asigurati adapostul utilajelor si animalelor.';
-  } else if (wcode >= 60) {
-    recEl.textContent = 'Ploaie in desfasurare. Amanati tratamentele fitosanitare si fertilizarile foliare. Verificati drenajul parcelelor.';
-  } else if (precipitatiMaxime >= 60) {
-    recEl.textContent = 'Atentie! Probabilitate ridicata de ploaie (' + precipitatiMaxime + '%). Amanati tratamentele fitosanitare cu cel putin 24h. Planificati lucrarile pentru dupa trecerea frontului.';
-  } else if (ploaieUrmeaza && precipitatiMaxime >= 30) {
-    recEl.textContent = 'Ploaie posibila in urmatoarele zile (probabilitate ' + precipitatiMaxime + '%). Efectuati tratamentele fitosanitare cat mai curand daca este necesar.';
-  } else if (wcode >= 70) {
-    recEl.textContent = 'Ninsoare. Protejati culturile de toamna. Verificati rezistenta la inghet a soiurilor sensibile.';
-  } else if (temp > 32) {
-    recEl.textContent = 'Canicula! Irigati dimineata devreme (5-8 AM). Evitati lucrarile solului in orele de varf. Monitorizati stresul hidric la porumb si floarea-soarelui.';
-  } else if (temp > 25) {
-    recEl.textContent = 'Temperatura ridicata. Irigare recomandata pentru culturi sensibile. Conditii bune pentru uscarea cerealelor recoltate.';
-  } else if (temp < 0) {
-    recEl.textContent = 'Inghet! Protejati culturile de toamna. Nu efectuati lucrari mecanice. Verificati starea culturilor de rapita si grau dupa inghet.';
-  } else if (temp < 5) {
-    recEl.textContent = 'Temperaturi scazute. Risc de inghet nocturn. Nu semanati porumb sau floarea-soarelui. Monitorizati culturile de toamna.';
-  } else if (precipitatiMaxime < 20 && wcode < 3) {
-    recEl.textContent = 'Conditii excelente pentru lucrari agricole. Ideal pentru tratamente fitosanitare, fertilizari foliare si lucrari mecanice. Profitati de aceasta fereastra meteo favorabila.';
-  } else {
-    recEl.textContent = 'Conditii acceptabile pentru lucrari agricole. Verificati prognoza detaliata inainte de a aplica tratamente fitosanitare.';
+    await incarcaMeteo(meteoCtx.lat, meteoCtx.lon, meteoCtx.nume, null);
+  } catch (e) {
+    showLoading(false); console.error('Eroare meteo:', e); showToast('Eroare la încărcarea meteo: ' + e.message, 'error');
   }
 }
 
-    // Detalii agro
-    const detaliiEl=document.getElementById('meteo-detalii-agro');
-    if (detaliiEl) {
-      const culturi=parceleData.length?[...new Set(parceleData.map(p=>p.cultura))].join(', '):'nedefinite';
-      detaliiEl.innerHTML='<div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:12px;font-size:13px;margin-top:10px">'
-        +'<div style="font-weight:700;color:var(--soil);margin-bottom:4px"><i class="ti ti-plant-2"></i> Culturile tale: '+culturi+'</div>'
-        +'<div style="color:var(--gray-600)">Temperatura sol estimata: <b>'+(temp-2)+'°C</b> · Evapotranspiratie: <b>'+(temp>20?'Ridicata':'Moderata')+'</b></div>'
-        +'</div>';
+async function meteoDinParcela() {
+  const sel = document.getElementById('meteo-parcela');
+  if (!sel) return;
+  if (sel.value === '') { if (meteoCtx.lat != null) incarcaMeteo(meteoCtx.lat, meteoCtx.lon, meteoCtx.nume, null); return; }
+  const p = parceleData[+sel.value];
+  const c = p && centruParcela(p);
+  if (!c) { showToast('Parcela nu are coordonate valide.', 'error'); sel.value = ''; return; }
+  incarcaMeteo(c.lat, c.lon, numeParcela(p), p);
+}
+
+/* ---------- logică agronomică ---------- */
+function recomandareAgro(temp, wcode, daily) {
+  const ploaieUrmeaza = daily && daily.weather_code && (daily.weather_code[0] >= 60 || (daily.weather_code[1] && daily.weather_code[1] >= 60));
+  const pp = (daily && daily.precipitation_probability_max && daily.precipitation_probability_max[0]) || 0;
+  if (wcode >= 95) return 'Furtună activă. Opriți toate lucrările mecanice. Asigurați adăpostul utilajelor și animalelor.';
+  if (wcode >= 60) return 'Ploaie în desfășurare. Amânați tratamentele fitosanitare și fertilizările foliare. Verificați drenajul parcelelor.';
+  if (pp >= 60) return 'Atenție! Probabilitate ridicată de ploaie (' + pp + '%). Amânați tratamentele fitosanitare cu cel puțin 24h. Planificați lucrările pentru după trecerea frontului.';
+  if (ploaieUrmeaza && pp >= 30) return 'Ploaie posibilă în următoarele zile (probabilitate ' + pp + '%). Efectuați tratamentele fitosanitare cât mai curând dacă este necesar.';
+  if (wcode >= 70) return 'Ninsoare. Protejați culturile de toamnă. Verificați rezistența la îngheț a soiurilor sensibile.';
+  if (temp > 32) return 'Caniculă! Irigați dimineața devreme (5-8 AM). Evitați lucrările solului în orele de vârf. Monitorizați stresul hidric la porumb și floarea-soarelui.';
+  if (temp > 25) return 'Temperatură ridicată. Irigare recomandată pentru culturi sensibile. Condiții bune pentru uscarea cerealelor recoltate.';
+  if (temp < 0) return 'Îngheț! Protejați culturile de toamnă. Nu efectuați lucrări mecanice. Verificați starea culturilor de rapiță și grâu după îngheț.';
+  if (temp < 5) return 'Temperaturi scăzute. Risc de îngheț nocturn. Nu semănați porumb sau floarea-soarelui. Monitorizați culturile de toamnă.';
+  if (pp < 20 && wcode < 3) return 'Condiții excelente pentru lucrări agricole. Ideal pentru tratamente fitosanitare, fertilizări foliare și lucrări mecanice. Profitați de această fereastră meteo favorabilă.';
+  return 'Condiții acceptabile pentru lucrări agricole. Verificați prognoza detaliată înainte de a aplica tratamente fitosanitare.';
+}
+
+function _evalStropit(h, i) {
+  const vant = h.wind_speed_10m[i] || 0, raf = h.wind_gusts_10m[i] || 0, t = h.temperature_2m[i];
+  let ploaie = 0, prob = 0;
+  for (let k = i; k < Math.min(i + 3, h.time.length); k++) { ploaie += h.precipitation[k] || 0; prob = Math.max(prob, h.precipitation_probability[k] || 0); }
+  if (ploaie > 0.2 || prob >= 60 || vant > STROP.vantMax || raf > 35 || t < STROP.tMin || t > STROP.tMax) return 'r';
+  if (ploaie > 0 || prob >= 30 || vant > STROP.vantBun || t < STROP.tMinBun || t > STROP.tMaxBun) return 'y';
+  return 'g';
+}
+
+function _numeZi(data, azi) {
+  const dz = Math.round((new Date(data + 'T12:00') - new Date(azi + 'T12:00')) / 864e5);
+  if (dz === 0) return 'Azi';
+  if (dz === 1) return 'Mâine';
+  return new Date(data + 'T12:00').toLocaleDateString('ro-RO', { weekday: 'long' });
+}
+
+function _randStropit(h, idx, azi) {
+  const st = h.time.map((_, i) => _evalStropit(h, i));
+  const fin = Math.min(idx + 48, h.time.length);
+  let best = null, start = -1;                       // cea mai lungă fereastră verde din următoarele 48h
+  for (let i = idx; i <= fin; i++) {
+    if (i < fin && st[i] === 'g') { if (start < 0) start = i; }
+    else if (start >= 0) { if (!best || i - start > best.n) best = { i0: start, n: i - start }; start = -1; }
+  }
+  let sumar;
+  if (best) {
+    const i0 = best.i0, i1 = best.i0 + best.n - 1;
+    const hh = i => h.time[i].slice(11, 13);
+    sumar = '<b>Cea mai bună fereastră:</b> ' + _numeZi(h.time[i0].slice(0, 10), azi) + ' ' + hh(i0) + ':00–' + String((+hh(i1) + 1) % 24).padStart(2, '0') + ':00 (' + best.n + ' h)';
+  } else sumar = '<b>Nicio fereastră bună în următoarele 48 de ore.</b> Vânt, ploaie sau temperatură în afara limitelor.';
+
+  const zile = [...new Set(h.time.map(t => t.slice(0, 10)))].slice(0, 2);
+  const grid = 'display:grid;grid-template-columns:repeat(24,minmax(13px,1fr));gap:3px;';
+  const randuri = zile.map(z => {
+    const ore = h.time.map((t, i) => i).filter(i => h.time[i].startsWith(z));
+    const celule = ore.map(i => {
+      const s = st[i];
+      return '<div title="' + h.time[i].slice(11, 16) + ' · vânt ' + Math.round(h.wind_speed_10m[i]) + ' km/h · ' + Math.round(h.temperature_2m[i]) + '°C · ' + (h.precipitation[i] || 0) + ' mm"'
+        + ' style="height:38px;border-radius:6px;background:' + STROP_CULORI[s] + ';' + (s === 'r' ? STROP_HASURI : '') + (i < idx ? 'opacity:.3;' : '') + '"></div>';
+    }).join('');
+    const et = ore.map(i => '<div style="font-size:12px;font-weight:700;color:var(--gray-500);white-space:nowrap">' + (+h.time[i].slice(11, 13) % 3 === 0 ? h.time[i].slice(11, 13) : '') + '</div>').join('');
+    return '<div style="margin-bottom:14px"><div style="font-size:14px;font-weight:700;margin-bottom:6px">' + _numeZi(z, azi) + '</div>'
+      + '<div style="' + grid + '">' + celule + '</div><div style="' + grid + 'margin-top:4px">' + et + '</div></div>';
+  }).join('');
+
+  const chip = (s, t) => '<span style="display:inline-flex;align-items:center;gap:6px;margin-right:16px;font-size:13px;font-weight:600"><span style="width:14px;height:14px;border-radius:4px;background:' + STROP_CULORI[s] + ';' + (s === 'r' ? STROP_HASURI : '') + '"></span>' + t + '</span>';
+  return {
+    sumar,
+    html: '<div style="overflow-x:auto"><div style="min-width:420px">' + randuri + '</div></div>'
+      + '<div style="margin-top:4px">' + chip('g', 'Bun') + chip('y', 'Cu atenție') + chip('r', 'Nu stropi') + '</div>'
+  };
+}
+
+function _alerte(d, h, idx) {
+  const A = [], fin = Math.min(idx + 48, h.time.length);
+  const tMin = Math.min(d.temperature_2m_min[0], d.temperature_2m_min[1]);
+  const tMax = Math.max(d.temperature_2m_max[0], d.temperature_2m_max[1]);
+  const ploaie = (d.precipitation_sum[0] || 0) + (d.precipitation_sum[1] || 0);
+  let raf = 0; for (let i = idx; i < fin; i++) raf = Math.max(raf, h.wind_gusts_10m[i] || 0);
+  if (tMin <= 0) A.push(['r', 'ti-snowflake', 'Îngheț', 'Minima ajunge la ' + Math.round(tMin) + '°C. Protejează culturile sensibile.']);
+  else if (tMin <= 2) A.push(['y', 'ti-snowflake', 'Risc de îngheț', 'Minima de ' + Math.round(tMin) + '°C poate aduce îngheț la sol noaptea.']);
+  if (tMax >= 35) A.push(['r', 'ti-temperature-sun', 'Caniculă', 'Maxima ajunge la ' + Math.round(tMax) + '°C. Evită lucrările în orele de vârf.']);
+  else if (tMax >= 32) A.push(['y', 'ti-temperature-sun', 'Căldură puternică', 'Maxima de ' + Math.round(tMax) + '°C poate provoca stres hidric.']);
+  if (ploaie >= 20) A.push(['r', 'ti-cloud-rain', 'Ploaie puternică', Math.round(ploaie) + ' mm în 48 h. Amână tratamentele și lucrările pe teren umed.']);
+  else if (ploaie >= 8) A.push(['y', 'ti-cloud-rain', 'Ploaie semnificativă', 'Aproximativ ' + Math.round(ploaie) + ' mm în 48 h.']);
+  if (raf >= 60) A.push(['r', 'ti-wind', 'Vânt puternic', 'Rafale de până la ' + Math.round(raf) + ' km/h.']);
+  else if (raf >= 45) A.push(['y', 'ti-wind', 'Rafale de vânt', 'Rafale de până la ' + Math.round(raf) + ' km/h.']);
+  return A;
+}
+
+/* ---------- afișare ---------- */
+async function incarcaMeteo(lat, lon, nume, parcela) {
+  showLoading(true);
+  try {
+    const m = await meteoFetch(lat, lon);
+    showLoading(false);
+    const cur = m.current, daily = m.daily, h = m.hourly;
+    const temp = Math.round(cur.temperature_2m), wcode = cur.weather_code, wi = meteoInfoCod(wcode);
+    const aziData = cur.time.slice(0, 10);
+    let idx = h.time.findIndex(t => t >= cur.time.slice(0, 13) + ':00'); if (idx < 0) idx = 0;
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+
+    // Vremea curentă
+    const azi = new Date().toLocaleDateString('ro-RO', { weekday: 'long', day: 'numeric', month: 'long' });
+    set('meteo-city-name', nume);
+    set('meteo-data-azi', azi.charAt(0).toUpperCase() + azi.slice(1));
+    set('meteo-temp', temp + '°C');
+    set('meteo-desc', wi.desc);
+    set('meteo-umiditate-val', cur.relative_humidity_2m + '%');
+    set('meteo-vant-val', Math.round(cur.wind_speed_10m) + ' km/h');
+    set('meteo-presiune-val', Math.round(cur.surface_pressure) + ' hPa');
+    const iconEl = document.getElementById('meteo-icon');
+    if (iconEl) { iconEl.className = 'ti ' + wi.icon; iconEl.style.color = wi.color; }
+    if (!parcela) {
+      const tw = document.getElementById('top-weather');
+      if (tw) tw.innerHTML = '<i class="ti ' + wi.icon + '"></i> ' + temp + '°C';
+      set('d-temp-azi', temp + '°');
     }
+    set('meteo-recomandare', recomandareAgro(temp, wcode, daily));
+
+    // Sol și apă (date de model, nu măsurători)
+    const solT = h.soil_temperature_6cm[idx], solU = h.soil_moisture_3_to_9cm[idx];
+    const suma = a => a.reduce((s, x) => s + (x || 0), 0);
+    const ploaie7 = suma(daily.precipitation_sum), et7 = suma(daily.et0_fao_evapotranspiration), bilant = ploaie7 - et7;
+    const culturi = parcela ? [parcela.cultura].filter(Boolean)
+      : (typeof parceleData !== 'undefined' && parceleData.length ? [...new Set(parceleData.map(p => p.cultura).filter(Boolean))] : []);
+    const rand = (a, b, extra) => '<div style="display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid var(--gray-200);font-size:14.5px"><span style="color:var(--gray-600)">' + a + '</span><b style="text-align:right">' + b + (extra || '') + '</b></div>';
+    let solHtml = rand('Temperatura solului (6 cm)', solT != null ? solT.toFixed(1) + '°C' : '—')
+      + rand('Umiditatea solului (3–9 cm)', solU != null ? Math.round(solU * 100) + '%' : '—')
+      + rand('Evapotranspirație azi (ET₀)', (daily.et0_fao_evapotranspiration[0] || 0).toFixed(1) + ' mm')
+      + rand('Bilanț apă, 7 zile', (bilant >= 0 ? '+' : '') + bilant.toFixed(0) + ' mm', '<span style="font-weight:500;color:var(--gray-500);font-size:12.5px"> (ploaie ' + ploaie7.toFixed(0) + ' − ET₀ ' + et7.toFixed(0) + ')</span>');
+    culturi.forEach(c => {
+      const prag = PRAG_SEMANAT[_fara(c)];
+      if (prag != null && solT != null) solHtml += rand('Semănat ' + _esc(c), solT >= prag ? 'Sol destul de cald' : 'Sol prea rece', '<span style="font-weight:500;color:var(--gray-500);font-size:12.5px"> (prag ' + prag + '°C)</span>');
+    });
+    solHtml += '<div style="font-size:12.5px;color:var(--gray-500);margin-top:10px">Valori estimate de model pentru locația aleasă, nu măsurători din sol.</div>';
+    const solEl = document.getElementById('meteo-sol'); if (solEl) solEl.innerHTML = solHtml;
+
+    const detEl = document.getElementById('meteo-detalii-agro');
+    if (detEl) detEl.innerHTML = '<div style="background:rgba(255,255,255,0.7);border-radius:10px;padding:12px;font-size:13.5px;margin-top:10px">'
+      + '<div style="font-weight:700;color:var(--soil);margin-bottom:4px"><i class="ti ti-plant-2"></i> ' + (parcela ? 'Parcela: ' + _esc(numeParcela(parcela)) + (parcela.cultura ? ' · ' + _esc(parcela.cultura) : '') : 'Culturile tale: ' + (culturi.length ? culturi.map(_esc).join(', ') : 'nedefinite')) + '</div>'
+      + '<div style="color:var(--gray-600)">Sol (6 cm): <b>' + (solT != null ? solT.toFixed(1) + '°C' : '—') + '</b> · ET₀ azi: <b>' + (daily.et0_fao_evapotranspiration[0] || 0).toFixed(1) + ' mm</b></div></div>';
+
+    // Fereastră de stropit + alerte
+    const sp = _randStropit(h, idx, aziData);
+    const spS = document.getElementById('meteo-stropit-sumar'); if (spS) spS.innerHTML = sp.sumar;
+    const spH = document.getElementById('meteo-stropit'); if (spH) spH.innerHTML = sp.html;
+    const al = _alerte(daily, h, idx), alEl = document.getElementById('meteo-alerte');
+    if (alEl) alEl.innerHTML = al.length ? al.map(([nivel, ico, titlu, text]) =>
+      '<div class="alert-box"' + (nivel === 'r' ? ' style="background:var(--danger-light);border-left-color:var(--danger)"' : '') + '><i class="ti ' + ico + '"' + (nivel === 'r' ? ' style="color:var(--danger)"' : '') + '></i>'
+      + '<div><b>' + titlu + '</b><div class="alert-meta">' + text + '</div></div></div>').join('')
+      : '<div class="msg-box msg-success"><i class="ti ti-circle-check"></i> Nicio alertă în următoarele 48 de ore.</div>';
 
     // Prognoza 7 zile
-    const forecastCont=document.getElementById('meteo-forecast-7');
-    const zileSaptamana=['Dum','Lun','Mar','Mie','Joi','Vin','Sam'];
-    if (forecastCont&&daily) {
-      forecastCont.innerHTML=daily.time.map((data,i)=>{
-        const tMax=Math.round(daily.temperature_2m_max[i]);
-        const tMin=Math.round(daily.temperature_2m_min[i]);
-        const wInfo=getWeatherInfo(daily.weather_code[i]);
-        const precip=daily.precipitation_probability_max[i]||0;
-        const d=new Date(data);
-        const numeZi=i===0?'Azi':zileSaptamana[d.getDay()];
-        const ziLuna=d.getDate()+' '+d.toLocaleDateString('ro-RO',{month:'short'});
-        return '<div style="background:var(--mist);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid rgba(0,0,0,0.05)">'
-          +'<div style="font-size:11px;font-weight:700;color:var(--gray-600);text-transform:uppercase">'+numeZi+'</div>'
-          +'<div style="font-size:11px;color:var(--gray-400);margin-bottom:8px">'+ziLuna+'</div>'
-          +'<i class="ti '+wInfo.icon+'" style="font-size:28px;color:'+wInfo.color+'"></i>'
-          +'<div style="font-weight:700;font-size:16px;color:var(--soil);margin-top:6px">'+tMax+'°</div>'
-          +'<div style="font-size:12px;color:var(--gray-400)">'+tMin+'°</div>'
-          +(precip>0?'<div style="font-size:11px;color:var(--ai-blue);margin-top:4px;font-weight:600"><i class="ti ti-droplet"></i> '+precip+'%</div>':'')
-          +'</div>';
-      }).join('');
-    }
+    const zile = ['Dum', 'Lun', 'Mar', 'Mie', 'Joi', 'Vin', 'Sâm'];
+    const fc = document.getElementById('meteo-forecast-7');
+    if (fc) fc.innerHTML = daily.time.map((data, i) => {
+      const wInfo = meteoInfoCod(daily.weather_code[i]), pr = daily.precipitation_probability_max[i] || 0, d = new Date(data);
+      return '<div style="background:var(--mist);border-radius:12px;padding:12px 8px;text-align:center;border:1px solid rgba(0,0,0,0.05)">'
+        + '<div style="font-size:13px;font-weight:800;color:var(--gray-600)">' + (i === 0 ? 'Azi' : zile[d.getDay()]) + '</div>'
+        + '<div style="font-size:12.5px;color:var(--gray-500);margin-bottom:8px">' + d.getDate() + ' ' + d.toLocaleDateString('ro-RO', { month: 'short' }) + '</div>'
+        + '<i class="ti ' + wInfo.icon + '" style="font-size:28px;color:' + wInfo.color + '"></i>'
+        + '<div style="font-weight:800;font-size:17px;color:var(--soil);margin-top:6px">' + Math.round(daily.temperature_2m_max[i]) + '°</div>'
+        + '<div style="font-size:13px;font-weight:600;color:var(--gray-500)">' + Math.round(daily.temperature_2m_min[i]) + '°</div>'
+        + (pr > 0 ? '<div style="font-size:12.5px;color:var(--ai-blue);margin-top:4px;font-weight:700"><i class="ti ti-droplet"></i> ' + pr + '%</div>' : '') + '</div>';
+    }).join('');
 
     // Grafic temperaturi
-    if (meteoChart) { meteoChart.destroy(); meteoChart=null; }
-    const ctx=document.getElementById('meteo-chart')?.getContext('2d');
-    if (ctx&&daily) {
-      const labele=daily.time.map((data,i)=>{
-        const d=new Date(data);
-        return i===0?'Azi':zileSaptamana[d.getDay()]+' '+d.getDate();
-      });
-      meteoChart=new Chart(ctx,{
-        type:'line',
-        data:{
-          labels:labele,
-          datasets:[
-            {label:'Max °C',data:daily.temperature_2m_max.map(t=>Math.round(t)),borderColor:'#d63031',backgroundColor:'rgba(214,48,49,0.1)',tension:0.4,fill:false,pointBackgroundColor:'#d63031',pointRadius:5},
-            {label:'Min °C',data:daily.temperature_2m_min.map(t=>Math.round(t)),borderColor:'#1a6bbf',backgroundColor:'rgba(26,107,191,0.1)',tension:0.4,fill:false,pointBackgroundColor:'#1a6bbf',pointRadius:5}
-          ]
-        },
-        options:{
-          responsive:true,
-          plugins:{legend:{position:'top',labels:{font:{family:'Inter',size:12},usePointStyle:true}}},
-          scales:{
-            y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{callback:v=>v+'°C',font:{family:'Inter',size:11}}},
-            x:{grid:{display:false},ticks:{font:{family:'Inter',size:11}}}
-          }
-        }
-      });
-    }
-
-  } catch(e) {
-    showLoading(false);
-    console.error('Eroare meteo:', e);
-    showToast('Eroare la incarcarea meteo: '+e.message,'error');
+    if (typeof meteoChart !== 'undefined' && meteoChart) { meteoChart.destroy(); meteoChart = null; }
+    const cv = document.getElementById('meteo-chart'), ctx = cv && cv.getContext('2d');
+    if (ctx) meteoChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: daily.time.map((data, i) => i === 0 ? 'Azi' : zile[new Date(data).getDay()] + ' ' + new Date(data).getDate()),
+        datasets: [
+          { label: 'Max °C', data: daily.temperature_2m_max.map(Math.round), borderColor: '#d63031', tension: 0.4, fill: false, pointBackgroundColor: '#d63031', pointRadius: 5 },
+          { label: 'Min °C', data: daily.temperature_2m_min.map(Math.round), borderColor: '#1a6bbf', tension: 0.4, fill: false, pointBackgroundColor: '#1a6bbf', pointRadius: 5 }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: 'top', labels: { font: { family: 'Inter', size: 12 }, usePointStyle: true } } },
+        scales: { y: { grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { callback: v => v + '°C', font: { family: 'Inter', size: 11 } } }, x: { grid: { display: false }, ticks: { font: { family: 'Inter', size: 11 } } } }
+      }
+    });
+  } catch (e) {
+    showLoading(false); console.error('Eroare meteo:', e); showToast('Eroare la încărcarea meteo: ' + e.message, 'error');
   }
 }
 
