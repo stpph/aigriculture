@@ -3,10 +3,16 @@
 let cachedToken = null;
 let tokenExpiresAt = 0;
 
-// Obține token-ul securizat din Copernicus CDSE
 async function getCopernicusToken() {
   if (cachedToken && Date.now() < tokenExpiresAt) {
     return cachedToken;
+  }
+
+  const clientId = process.env.COPERNICUS_CLIENT_ID;
+  const clientSecret = process.env.COPERNICUS_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new Error('Lipsește COPERNICUS_CLIENT_ID sau COPERNICUS_CLIENT_SECRET din variabilele de mediu Vercel.');
   }
 
   const res = await fetch('https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token', {
@@ -14,20 +20,21 @@ async function getCopernicusToken() {
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       grant_type: 'client_credentials',
-      client_id: process.env.COPERNICUS_CLIENT_ID,
-      client_secret: process.env.COPERNICUS_CLIENT_SECRET
+      client_id: clientId,
+      client_secret: clientSecret
     })
   });
 
   const data = await res.json();
-  if (!res.ok) throw new Error('Eroare autentificare Copernicus: ' + JSON.stringify(data));
+  if (!res.ok) {
+    throw new Error('Eroare autentificare CDSE: ' + (data.error_description || JSON.stringify(data)));
+  }
 
   cachedToken = data.access_token;
-  tokenExpiresAt = Date.now() + (data.expires_in - 60) * 1000;
+  tokenExpiresAt = Date.now() + ((data.expires_in || 3600) - 60) * 1000;
   return cachedToken;
 }
 
-// Script-ul de procesare al imaginii NDVI (Red & NIR)
 const EVALSCRIPT_NDVI = `
 //VERSION=3
 function setup() {
@@ -50,12 +57,15 @@ function evaluatePixel(sample) {
 export default async function handler(req, res) {
   try {
     const { bbox, data } = req.query; 
-    // bbox vine sub formă de text: "minLng,minLat,maxLng,maxLat"
     if (!bbox || !data) {
-      return res.status(400).json({ error: 'Lipsește bbox sau data.' });
+      return res.status(400).json({ error: 'Lipsește parametrul bbox sau data.' });
     }
 
     const bboxArray = bbox.split(',').map(Number);
+    if (bboxArray.length !== 4 || bboxArray.some(isNaN)) {
+      return res.status(400).json({ error: 'Format bbox invalid.' });
+    }
+
     const token = await getCopernicusToken();
 
     const copernicusRes = await fetch('https://sh.dataspace.copernicus.eu/api/v1/process', {
@@ -77,7 +87,7 @@ export default async function handler(req, res) {
                 from: `${data}T00:00:00Z`,
                 to: `${data}T23:59:59Z`
               },
-              maxCloudCoverage: 30
+              maxCloudCoverage: 50
             }
           }]
         },
@@ -91,7 +101,9 @@ export default async function handler(req, res) {
     });
 
     if (!copernicusRes.ok) {
-      return res.status(404).json({ error: 'Imagine indisponibilă pentru data selectată.' });
+      const errText = await copernicusRes.text();
+      console.error('Copernicus Process API Error:', errText);
+      return res.status(404).json({ error: 'Imagine indisponibilă pentru data respectivă.', details: errText });
     }
 
     const arrayBuffer = await copernicusRes.arrayBuffer();
@@ -103,7 +115,7 @@ export default async function handler(req, res) {
     });
 
   } catch (err) {
-    console.error(err);
+    console.error('Serverless Function Error:', err.message);
     return res.status(500).json({ error: err.message });
   }
 }
