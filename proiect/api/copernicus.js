@@ -3,6 +3,26 @@
 let cachedToken = null;
 let tokenExpiresAt = 0;
 
+// Script-ul de procesare al imaginii NDVI (Red & NIR)
+const EVALUSCRIPT_NDVI = `
+//VERSION=3
+function setup() {
+  return {
+    input: ["B04", "B08", "dataMask"],
+    output: { bands: 4 }
+  };
+}
+function evaluatePixel(sample) {
+  if (sample.dataMask === 0) return [0, 0, 0, 0];
+  let ndvi = (sample.B08 - sample.B04) / (sample.B08 + sample.B04);
+  if (ndvi < 0.1) return [0.36, 0.23, 0.12, 1];
+  if (ndvi < 0.3) return [0.77, 0.50, 0.17, 1];
+  if (ndvi < 0.5) return [0.94, 0.85, 0.29, 1];
+  if (ndvi < 0.7) return [0.61, 0.83, 0.35, 1];
+  return [0.18, 0.62, 0.29, 1];
+}
+`;
+
 async function getCopernicusToken() {
   if (cachedToken && Date.now() < tokenExpiresAt) {
     return cachedToken;
@@ -34,25 +54,6 @@ async function getCopernicusToken() {
   tokenExpiresAt = Date.now() + ((data.expires_in || 3600) - 60) * 1000;
   return cachedToken;
 }
-
-const EVALSCRIPT_NDVI = `
-//VERSION=3
-function setup() {
-  return {
-    input: ["B04", "B08", "dataMask"],
-    output: { bands: 4 }
-  };
-}
-function evaluatePixel(sample) {
-  if (sample.dataMask === 0) return [0, 0, 0, 0];
-  let ndvi = (sample.B08 - sample.B04) / (sample.B08 + sample.B04);
-  if (ndvi < 0.1) return [0.36, 0.23, 0.12, 1];
-  if (ndvi < 0.3) return [0.77, 0.50, 0.17, 1];
-  if (ndvi < 0.5) return [0.94, 0.85, 0.29, 1];
-  if (ndvi < 0.7) return [0.61, 0.83, 0.35, 1];
-  return [0.18, 0.62, 0.29, 1];
-}
-`;
 
 export default async function handler(req, res) {
   try {
