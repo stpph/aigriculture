@@ -851,6 +851,138 @@ function reincarcaParcelePeHartaFull(anFiltru) {
 
   if (bounds.length && !leafletMapFull._fitFacut) { leafletMapFull.fitBounds(bounds, { padding: [30, 30] }); leafletMapFull._fitFacut = true; }
   deseneazaLegenda();
+let chartInstance = null;
+
+async function genereazaGraficSezon(parcela) {
+  // 1. Obținem coordonatele centrului parcelei
+  const ll = latlngsParcela(parcela);
+  const latMediu = ll.reduce((sum, c) => sum + c[0], 0) / ll.length;
+  const lngMediu = ll.reduce((sum, c) => sum + c[1], 0) / ll.length;
+
+  // Setăm intervalul sezonului curent (ex: 1 Februarie -> Prezent)
+  const anCurent = new Date().getFullYear();
+  const startDate = `${anCurent}-02-01`;
+  const endDate = new Date().toISOString().split('T')[0];
+
+  // 2. Extragerea datelor (NDVI, Meteo, Calendar Lucrări)
+  // a) Lucrările din calendarul parcelei (stocate local sau în DB)
+  const lucrari = parcela.lucrari || [
+    { data: `${anCurent}-03-15`, titlu: 'Semănat' },
+    { data: `${anCurent}-04-10`, titlu: 'Fertilizare N1' },
+    { data: `${anCurent}-05-02`, titlu: 'Erbicidare' }
+  ];
+
+  // b) Preluăm precipitațiile din API-ul nostru
+  const resMeteo = await fetch(`/api/meteo?lat=${latMediu}&lng=${lngMediu}&startDate=${startDate}&endDate=${endDate}`);
+  const dateMeteo = resMeteo.ok ? await resMeteo.json() : [];
+
+  // c) Preluăm/generăm valorile NDVI istorice ale parcelei
+  // (Puteți folosi valorile din istoricul salvat al parcelei)
+  const dateNDVI = parcela.istoricNDVI || [
+    { data: `${anCurent}-02-15`, ndvi: 0.18 },
+    { data: `${anCurent}-03-01`, ndvi: 0.22 },
+    { data: `${anCurent}-03-20`, ndvi: 0.35 },
+    { data: `${anCurent}-04-05`, ndvi: 0.52 },
+    { data: `${anCurent}-04-20`, ndvi: 0.68 },
+    { data: `${anCurent}-05-05`, ndvi: 0.74 }
+  ];
+
+  // 3. Aliniem etichetele de pe axa X (Toate zilele din interval)
+  const eticheteZile = dateMeteo.map(m => m.data);
+
+  // Potrivim NDVI pe axa X
+  const ndviMap = new Map(dateNDVI.map(i => [i.data, i.ndvi]));
+  const dateNDVIAliniate = eticheteZile.map(d => ndviMap.get(d) || null);
+
+  // Potrivim Precipitațiile pe axa X
+  const precipitatiiAliniate = dateMeteo.map(m => m.precipitatii);
+
+  // 4. Generăm adnotările pentru lucrările agricole (Linii verticale)
+  const adnotariLucrari = {};
+  lucrari.forEach((lucrare, index) => {
+    if (eticheteZile.includes(lucrare.data)) {
+      adnotariLucrari[`line${index}`] = {
+        type: 'line',
+        xMin: lucrare.data,
+        xMax: lucrare.data,
+        borderColor: '#e74c3c',
+        borderWidth: 2,
+        borderDash: [4, 4],
+        label: {
+          display: true,
+          content: lucrare.titlu,
+          position: 'start',
+          backgroundColor: '#e74c3c',
+          color: '#fff',
+          font: { size: 10 }
+        }
+      };
+    }
+  });
+
+  // 5. Randare Chart.js
+  const ctx = document.getElementById('chartNDVI').getContext('2d');
+  
+  if (chartInstance) chartInstance.destroy(); // Resetează graficul vechi
+
+  chartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: eticheteZile,
+      datasets: [
+        {
+          type: 'line',
+          label: 'Evoluție NDVI',
+          data: dateNDVIAliniate,
+          borderColor: '#2ecc71',
+          backgroundColor: 'rgba(46, 204, 113, 0.1)',
+          borderWidth: 3,
+          spanGaps: true, // Unește punctele între zilele fără trecere de satelit
+          yAxisID: 'yNDVI',
+          tension: 0.3
+        },
+        {
+          type: 'bar',
+          label: 'Precipitații (mm)',
+          data: precipitatiiAliniate,
+          backgroundColor: 'rgba(52, 152, 219, 0.5)',
+          yAxisID: 'yMeteo'
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      interaction: { mode: 'index', intersect: false },
+      scales: {
+        x: { grid: { display: false } },
+        yNDVI: {
+          type: 'linear',
+          position: 'left',
+          min: 0,
+          max: 1,
+          title: { display: true, text: 'Indice NDVI' }
+        },
+        yMeteo: {
+          type: 'linear',
+          position: 'right',
+          min: 0,
+          suggestedMax: 30,
+          grid: { drawOnChartArea: false },
+          title: { display: true, text: 'Precipitații (mm)' }
+        }
+      },
+      plugins: {
+        annotation: { annotations: adnotariLucrari }
+      }
+    }
+  });
+
+  document.getElementById('modal-grafic').style.display = 'block';
+}
+
+function inchideModalGrafic() {
+  document.getElementById('modal-grafic').style.display = 'none';
+}
 }
 
 /* ---------- controale ---------- */
