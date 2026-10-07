@@ -2098,20 +2098,10 @@ async function adaugaDinCalculator() {
 }
 /* ===== CONTABILITATE: print curat + export Excel =====
    În app.js înlocuiește funcția exportaPDF() veche cu tot conținutul acestui fișier.
-   Funcționează pe tabelul afișat (#tabel-cheltuieli), deci respectă filtrele și sortarea active. */
+   Ia TOATE înregistrările care corespund filtrelor active (pe toate paginile), în ordinea sortării alese. */
 
-/* ---------- citirea tabelului ---------- */
-function _fc(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+/* ---------- citirea datelor (lista completă, nu doar pagina afișată) ---------- */
 function _escC(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
-function _sumaDinText(t) {
-  let s = String(t).replace(/[^\d.,-]/g, '');
-  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');
-  if (c > -1 && p > -1) s = c > p ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
-  else if (c > -1) s = /,\d{1,2}$/.test(s) ? s.replace(',', '.') : s.replace(/,/g, '');
-  else if (p > -1 && /\.\d{3}(?!\d)/.test(s) && !/\.\d{1,2}$/.test(s)) s = s.replace(/\./g, '');
-  const n = parseFloat(s);
-  return isNaN(n) ? 0 : Math.abs(n);
-}
 function _dataDinText(t) {
   let m = String(t).match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/);
   if (m) return new Date(+m[3], +m[2] - 1, +m[1], 12);
@@ -2119,15 +2109,16 @@ function _dataDinText(t) {
   return m ? new Date(+m[1], +m[2] - 1, +m[3], 12) : null;
 }
 function _randuriContabilitate() {
-  const out = [];
-  document.querySelectorAll('#tabel-cheltuieli tr').forEach(tr => {
-    const td = tr.querySelectorAll('td');
-    if (td.length < 6) return;                               // sare peste rândul „Nicio înregistrare”
-    const t = i => td[i].textContent.replace(/\s+/g, ' ').trim();
-    const venit = /venit|subventi/.test(_fc(t(5))) || /^\+/.test(t(4));
-    out.push({ data: t(0), dataObj: _dataDinText(t(0)), categorie: t(1), parcela: t(2), descriere: t(3), suma: _sumaDinText(t(4)), tip: venit ? 'venit' : 'cheltuiala' });
-  });
-  return out;
+  // cheltuieliListaCurenta = lista filtrată și sortată, înainte de împărțirea pe pagini (setată de renderTabelCheltuieli)
+  return (typeof cheltuieliListaCurenta !== 'undefined' ? cheltuieliListaCurenta : []).map(c => ({
+    data: typeof fmtData === 'function' ? fmtData(c.data) : String(c.data || ''),
+    dataObj: _dataDinText(String(c.data || '')),
+    categorie: c.categorie || '',
+    parcela: c.parcela || '-',
+    descriere: c.descriere || '-',
+    suma: Math.abs(parseFloat(c.suma) || 0),
+    tip: c.tip === 'venit' ? 'venit' : 'cheltuiala'
+  }));
 }
 function _totaluriContabilitate(rows) {
   const venituri = rows.filter(r => r.tip === 'venit').reduce((s, r) => s + r.suma, 0);
@@ -2135,10 +2126,9 @@ function _totaluriContabilitate(rows) {
   return { venituri, cheltuieli, profit: venituri - cheltuieli };
 }
 function _filtreContabilitate() {
-  const v = id => document.getElementById(id);
-  const sel = id => { const e = v(id); return e && e.value ? e.options[e.selectedIndex].text : ''; };
-  const tip = v('filter-tip-chelt') && v('filter-tip-chelt').classList.contains('btn-primary') ? 'Doar cheltuieli'
-    : v('filter-tip-venit') && v('filter-tip-venit').classList.contains('btn-primary') ? 'Doar venituri' : 'Venituri și cheltuieli';
+  const sel = id => { const e = document.getElementById(id); return e && e.value ? e.options[e.selectedIndex].text : ''; };
+  const t = typeof cheltuieliTipFilter !== 'undefined' ? cheltuieliTipFilter : '';
+  const tip = t === 'cheltuiala' ? 'Doar cheltuieli' : t === 'venit' ? 'Doar venituri' : 'Venituri și cheltuieli';
   return [tip, sel('filter-parcela-chelt'), sel('filter-cat'), sel('filter-perioada')].filter(Boolean).join(' · ');
 }
 const _ron = n => n.toLocaleString('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' RON';
@@ -2231,7 +2221,6 @@ async function exportaExcel() {
   XLSX.writeFile(wb, nume + '.xlsx');
   showToast('Fișier Excel generat.', 'success');
 }
-
 // ============================================================
 //  PROFITABILITATE
 // ============================================================
