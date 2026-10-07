@@ -1113,11 +1113,15 @@ function vizualizeazaParcela(id) {
         fillColor: '#4a7c2f',
         fillOpacity: 0.4
       }).addTo(drawnItems);
-      leafletMap.fitBounds(polygon.getBounds());
+leafletMap.fitBounds(polygon.getBounds());
       polygon.bindTooltip('<b>'+escapeHTML(p.nume)+'</b><br>'+escapeHTML(p.cultura||'Necultivat')+' · '+p.suprafata_ha+' ha', {sticky:true, className:'parcela-tooltip'});
       polygon.on('click', function(e) {
         L.DomEvent.stopPropagation(e);
+        window.parcelaSelectata = p;
         arataDetaliiParcelaHarta(p.id);
+        if (typeof genereazaGraficSezon === 'function') {
+          genereazaGraficSezon(p);
+        }
       });
     }
     catch(e) { console.error('Eroare parcela', p.nume, e); }
