@@ -951,7 +951,6 @@ if (L.Draw) {
     <option>Subventie APIA</option>
     <option>Altele</option>
   </select>
-  </select>
   <select id="filter-perioada" onchange="filtreazaCheltuieli()" style="width:auto;padding:7px 11px;font-size:12px">
     <option value="">Toata perioada</option>
     <option value="30">Ultimele 30 zile</option>
@@ -959,7 +958,8 @@ if (L.Draw) {
     <option value="180">Ultimele 6 luni</option>
     <option value="365">Ultimul an</option>
   </select>
-  <button class="btn btn-primary btn-sm" onclick="exportaPDF()" style="width:auto"><i class="ti ti-file-type-pdf"></i> Export PDF</button>
+  <button class="btn btn-primary btn-sm" onclick="printContabilitate()" style="width:auto"><i class="ti ti-printer"></i> Printează / PDF</button>
+<button class="btn btn-secondary btn-sm" onclick="exportaExcel()" style="width:auto"><i class="ti ti-file-spreadsheet"></i> Export Excel</button>
 </div>
 </div>
 <div style="overflow-x:auto">
@@ -1131,6 +1131,7 @@ if (L.Draw) {
     </div>
   </div>
 </div>
+  FeedBACK
 <div id="modal-feedback" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;padding:20px">
   <div style="background:var(--white);border-radius:20px;width:100%;max-width:460px;box-shadow:0 24px 64px rgba(0,0,0,0.3)">
     <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200);display:flex;justify-content:space-between;align-items:center">

@@ -9,11 +9,13 @@ export default async function handler(req, res) {
 
   try {
     if (action === 'create_subscription') {
+      // Cream customer
       const customer = await stripe.customers.create({
         email: userEmail,
         metadata: { userId }
       });
 
+      // Cream PaymentIntent pentru abonament
       const subscription = await stripe.subscriptions.create({
         customer: customer.id,
         items: [{ price: priceId }],

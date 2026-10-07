@@ -3,8 +3,8 @@
 //  Cache offline pentru functionalitate fara internet
 // ============================================================
 
-const CACHE_NAME = 'aigriculture-v1';
-const CACHE_STATIC = 'aigriculture-static-v1';
+const CACHE_NAME = 'aigriculture-v2';
+const CACHE_STATIC = 'aigriculture-static-v2';
 
 // Fisierele care se cacheaza la instalare
 const STATIC_ASSETS = [

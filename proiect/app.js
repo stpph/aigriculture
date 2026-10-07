@@ -2096,9 +2096,140 @@ async function adaugaDinCalculator() {
   ['sam-cantitate','sam-pret','ingr-cantitate','ingr-pret','mot-l','mot-pret','pest-val','alt-val'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   calculeazaTotal(); await loadCheltuieli(); updateDashboard();
 }
-// Export PDF simplu (print)
-function exportaPDF() {
-  window.print();
+/* ===== CONTABILITATE: print curat + export Excel =====
+   În app.js înlocuiește funcția exportaPDF() veche cu tot conținutul acestui fișier.
+   Funcționează pe tabelul afișat (#tabel-cheltuieli), deci respectă filtrele și sortarea active. */
+
+/* ---------- citirea tabelului ---------- */
+function _fc(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+function _escC(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
+function _sumaDinText(t) {
+  let s = String(t).replace(/[^\d.,-]/g, '');
+  const c = s.lastIndexOf(','), p = s.lastIndexOf('.');
+  if (c > -1 && p > -1) s = c > p ? s.replace(/\./g, '').replace(',', '.') : s.replace(/,/g, '');
+  else if (c > -1) s = /,\d{1,2}$/.test(s) ? s.replace(',', '.') : s.replace(/,/g, '');
+  else if (p > -1 && /\.\d{3}(?!\d)/.test(s) && !/\.\d{1,2}$/.test(s)) s = s.replace(/\./g, '');
+  const n = parseFloat(s);
+  return isNaN(n) ? 0 : Math.abs(n);
+}
+function _dataDinText(t) {
+  let m = String(t).match(/^(\d{1,2})[.\/-](\d{1,2})[.\/-](\d{4})/);
+  if (m) return new Date(+m[3], +m[2] - 1, +m[1], 12);
+  m = String(t).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? new Date(+m[1], +m[2] - 1, +m[3], 12) : null;
+}
+function _randuriContabilitate() {
+  const out = [];
+  document.querySelectorAll('#tabel-cheltuieli tr').forEach(tr => {
+    const td = tr.querySelectorAll('td');
+    if (td.length < 6) return;                               // sare peste rândul „Nicio înregistrare”
+    const t = i => td[i].textContent.replace(/\s+/g, ' ').trim();
+    const venit = /venit|subventi/.test(_fc(t(5))) || /^\+/.test(t(4));
+    out.push({ data: t(0), dataObj: _dataDinText(t(0)), categorie: t(1), parcela: t(2), descriere: t(3), suma: _sumaDinText(t(4)), tip: venit ? 'venit' : 'cheltuiala' });
+  });
+  return out;
+}
+function _totaluriContabilitate(rows) {
+  const venituri = rows.filter(r => r.tip === 'venit').reduce((s, r) => s + r.suma, 0);
+  const cheltuieli = rows.filter(r => r.tip !== 'venit').reduce((s, r) => s + r.suma, 0);
+  return { venituri, cheltuieli, profit: venituri - cheltuieli };
+}
+function _filtreContabilitate() {
+  const v = id => document.getElementById(id);
+  const sel = id => { const e = v(id); return e && e.value ? e.options[e.selectedIndex].text : ''; };
+  const tip = v('filter-tip-chelt') && v('filter-tip-chelt').classList.contains('btn-primary') ? 'Doar cheltuieli'
+    : v('filter-tip-venit') && v('filter-tip-venit').classList.contains('btn-primary') ? 'Doar venituri' : 'Venituri și cheltuieli';
+  return [tip, sel('filter-parcela-chelt'), sel('filter-cat'), sel('filter-perioada')].filter(Boolean).join(' · ');
+}
+const _ron = n => n.toLocaleString('ro-RO', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' RON';
+
+/* ---------- print: doar raportul, nu toată pagina ---------- */
+function printContabilitate() {
+  const rows = _randuriContabilitate();
+  if (!rows.length) { showToast('Nu există înregistrări de printat.', 'info'); return; }
+  const T = _totaluriContabilitate(rows), azi = new Date().toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
+  const tr = rows.map(r => '<tr><td>' + _escC(r.data) + '</td><td>' + (r.tip === 'venit' ? 'Venit' : 'Cheltuială') + '</td><td>' + _escC(r.categorie) + '</td><td>' + _escC(r.parcela) + '</td><td>' + _escC(r.descriere)
+    + '</td><td class="n ' + (r.tip === 'venit' ? 'v' : 'c') + '">' + (r.tip === 'venit' ? '+' : '−') + _ron(r.suma) + '</td></tr>').join('');
+  const html = '<!doctype html><html lang="ro"><head><meta charset="utf-8"><title>Raport financiar</title><style>'
+    + '@page{size:A4;margin:14mm}*{box-sizing:border-box}body{font-family:Arial,Helvetica,sans-serif;color:#111;font-size:11.5px;margin:0}'
+    + 'h1{font-size:20px;margin:0 0 2px}.m{color:#555;margin-bottom:14px}.s{display:flex;gap:10px;margin-bottom:16px}'
+    + '.b{flex:1;border:1.5px solid #bbb;border-radius:6px;padding:10px 12px}.b small{display:block;color:#555;font-size:11px}.b strong{font-size:16px}'
+    + '.v{color:#0a6b30}.c{color:#b42318}table{width:100%;border-collapse:collapse}th{text-align:left;border-bottom:2px solid #111;padding:6px 6px;font-size:11px}'
+    + 'td{border-bottom:1px solid #ddd;padding:6px}tr{page-break-inside:avoid}thead{display:table-header-group}.n{text-align:right;white-space:nowrap;font-weight:700}'
+    + '.t td{border-top:2px solid #111;border-bottom:none;font-weight:700}</style></head><body>'
+    + '<h1>Raport financiar · AIgriculture</h1><div class="m">Generat la ' + azi + (_filtreContabilitate() ? ' · Filtre: ' + _escC(_filtreContabilitate()) : '') + '</div>'
+    + '<div class="s"><div class="b"><small>Total venituri</small><strong class="v">' + _ron(T.venituri) + '</strong></div>'
+    + '<div class="b"><small>Total cheltuieli</small><strong class="c">' + _ron(T.cheltuieli) + '</strong></div>'
+    + '<div class="b"><small>Profit</small><strong class="' + (T.profit >= 0 ? 'v' : 'c') + '">' + _ron(T.profit) + '</strong></div></div>'
+    + '<table><thead><tr><th>Data</th><th>Tip</th><th>Categorie</th><th>Parcela</th><th>Descriere</th><th class="n">Sumă</th></tr></thead><tbody>' + tr
+    + '<tr class="t"><td colspan="5">Profit (venituri − cheltuieli)</td><td class="n ' + (T.profit >= 0 ? 'v' : 'c') + '">' + _ron(T.profit) + '</td></tr></tbody></table></body></html>';
+  const f = document.createElement('iframe');
+  f.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0';
+  document.body.appendChild(f);
+  const d = f.contentWindow.document; d.open(); d.write(html); d.close();
+  setTimeout(() => { f.contentWindow.focus(); f.contentWindow.print(); setTimeout(() => f.remove(), 1500); }, 300);
+}
+function exportaPDF() { printContabilitate(); }          // păstrează compatibilitatea cu butonul vechi (în print poți alege „Salvează ca PDF”)
+
+/* ---------- export Excel (.xlsx), cu rezervă CSV ---------- */
+function _incarcaXLSX() {
+  if (window.XLSX) return Promise.resolve(true);
+  return new Promise(res => {
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = () => res(true); s.onerror = () => res(false);
+    document.head.appendChild(s);
+  });
+}
+function _descarcaFisier(blob, nume) {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nume;
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+async function exportaExcel() {
+  const rows = _randuriContabilitate();
+  if (!rows.length) { showToast('Nu există înregistrări de exportat.', 'info'); return; }
+  const T = _totaluriContabilitate(rows), n = rows.length, nume = 'contabilitate_AIgriculture_' + new Date().toISOString().slice(0, 10);
+  const ok = await _incarcaXLSX();
+
+  if (!ok) {                                                     // rezervă: CSV pe care Excel îl deschide direct
+    const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"', num = v => v == null ? '' : String(v).replace('.', ',');
+    const csv = ['Data;Tip;Categorie;Parcela;Descriere;Venit (RON);Cheltuiala (RON)'].concat(rows.map(r =>
+      [q(r.data), r.tip === 'venit' ? 'Venit' : 'Cheltuiala', q(r.categorie), q(r.parcela), q(r.descriere), r.tip === 'venit' ? num(r.suma) : '', r.tip === 'venit' ? '' : num(r.suma)].join(';')))
+      .concat(['', 'Total venituri;;;;;' + num(T.venituri), 'Total cheltuieli;;;;;;' + num(T.cheltuieli), 'Profit;;;;;' + num(T.profit)]).join('\r\n');
+    _descarcaFisier(new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }), nume + '.csv');
+    showToast('Biblioteca Excel nu s-a putut încărca. Am exportat CSV (se deschide în Excel).', 'info', 5000);
+    return;
+  }
+
+  const aoa = [['Data', 'Tip', 'Categorie', 'Parcela', 'Descriere', 'Venit (RON)', 'Cheltuială (RON)']];
+  rows.forEach(r => aoa.push([r.dataObj || r.data, r.tip === 'venit' ? 'Venit' : 'Cheltuială', r.categorie, r.parcela, r.descriere,
+    r.tip === 'venit' ? r.suma : null, r.tip === 'venit' ? null : r.suma]));
+  aoa.push(['Total', '', '', '', '', { t: 'n', v: T.venituri, f: 'SUM(F2:F' + (n + 1) + ')' }, { t: 'n', v: T.cheltuieli, f: 'SUM(G2:G' + (n + 1) + ')' }]);
+  const ws = XLSX.utils.aoa_to_sheet(aoa, { cellDates: true });
+  for (let i = 2; i <= n + 2; i++) {
+    if (ws['A' + i] && ws['A' + i].t === 'd') ws['A' + i].z = 'dd.mm.yyyy';
+    ['F', 'G'].forEach(c => { if (ws[c + i]) ws[c + i].z = '#,##0.00'; });
+  }
+  ws['!cols'] = [{ wch: 12 }, { wch: 12 }, { wch: 26 }, { wch: 20 }, { wch: 40 }, { wch: 16 }, { wch: 18 }];
+
+  const rez = XLSX.utils.aoa_to_sheet([
+    ['Raport financiar AIgriculture'],
+    ['Generat la', new Date()],
+    ['Filtre', _filtreContabilitate()],
+    [],
+    ['Total venituri (RON)', { t: 'n', v: T.venituri, f: 'Tranzactii!F' + (n + 2) }],
+    ['Total cheltuieli (RON)', { t: 'n', v: T.cheltuieli, f: 'Tranzactii!G' + (n + 2) }],
+    ['Profit (RON)', { t: 'n', v: T.profit, f: 'B5-B6' }]
+  ], { cellDates: true });
+  ['B5', 'B6', 'B7'].forEach(a => { rez[a].z = '#,##0.00'; });
+  if (rez.B2) rez.B2.z = 'dd.mm.yyyy';
+  rez['!cols'] = [{ wch: 26 }, { wch: 40 }];
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, rez, 'Rezumat');
+  XLSX.utils.book_append_sheet(wb, ws, 'Tranzactii');
+  XLSX.writeFile(wb, nume + '.xlsx');
+  showToast('Fișier Excel generat.', 'success');
 }
 
 // ============================================================
