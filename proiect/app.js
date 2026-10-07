@@ -1973,6 +1973,11 @@ if (fp) {
   const parcelaGasita = parceleData.find(p => p.id === fp);
   const numeParc = parcelaGasita ? parcelaGasita.nume : fp;
   list = list.filter(c => c.parcela === numeParc);
+  const per = parseInt(document.getElementById('filter-perioada')?.value || '');
+  if (per) {
+    const lim = new Date(); lim.setDate(lim.getDate() - per);
+    list = list.filter(c => new Date(c.data) >= lim);
+  }
 }
   if (cheltuieliSortCol) {
     list = [...list].sort((a, b) => {
@@ -2097,9 +2102,6 @@ async function adaugaDinCalculator() {
   calculeazaTotal(); await loadCheltuieli(); updateDashboard();
 }
 /* ===== CONTABILITATE: print curat + export Excel =====
-   În app.js înlocuiește funcția exportaPDF() veche cu tot conținutul acestui fișier.
-   Ia TOATE înregistrările care corespund filtrelor active (pe toate paginile), în ordinea sortării alese. */
-
 /* ---------- citirea datelor (lista completă, nu doar pagina afișată) ---------- */
 function _escC(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 function _dataDinText(t) {
