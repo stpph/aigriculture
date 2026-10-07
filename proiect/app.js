@@ -1967,18 +1967,24 @@ async function stergeCheltuiala(id) {
 function filtreazaCheltuieli() {
   const f = document.getElementById('filter-cat').value;
   const fp = document.getElementById('filter-parcela-chelt')?.value || '';
+  const per = parseInt(document.getElementById('filter-perioada')?.value || '', 10);
   let list = cheltuieliTipFilter ? cheltuieliData.filter(c => c.tip === cheltuieliTipFilter) : cheltuieliData;
   if (f) list = list.filter(c => c.categorie === f);
-if (fp) {
-  const parcelaGasita = parceleData.find(p => p.id === fp);
-  const numeParc = parcelaGasita ? parcelaGasita.nume : fp;
-  list = list.filter(c => c.parcela === numeParc);
-  const per = parseInt(document.getElementById('filter-perioada')?.value || '');
-  if (per) {
-    const lim = new Date(); lim.setDate(lim.getDate() - per);
-    list = list.filter(c => new Date(c.data) >= lim);
+  if (fp) {
+    const parcelaGasita = parceleData.find(p => p.id === fp);
+    const numeParc = parcelaGasita ? parcelaGasita.nume : fp;
+    list = list.filter(c => c.parcela === numeParc);
   }
-}
+  if (per) {
+    const lim = new Date(); lim.setHours(0, 0, 0, 0); lim.setDate(lim.getDate() - per);
+    const dataDin = v => {
+      const s = String(v || '');
+      let m = s.match(/^(\d{4})-(\d{2})-(\d{2})/); if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+      m = s.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/); if (m) return new Date(+m[3], +m[2] - 1, +m[1]);
+      const d = new Date(s); return isNaN(d) ? null : d;
+    };
+    list = list.filter(c => { const d = dataDin(c.data); return d && d >= lim; });
+  }
   if (cheltuieliSortCol) {
     list = [...list].sort((a, b) => {
       if (cheltuieliSortCol === 'data') return (new Date(a.data) - new Date(b.data)) * cheltuieliSortDir;
